@@ -1,8 +1,8 @@
 #!usr/bin/env python
 # -*- coding: utf-8 -*-
 # 
-#  Quantum Lattice Boltzmann 
-#  (c) 2015 Fabian Thüring, ETH Zürich
+#	Quantum Lattice Boltzmann 
+#	(c) 2015 Fabian Thüring, ETH Zürich
 # 
 #	This script will plot the spreads of a particle against time. The script
 #	makes use of Python's Matplotlib and NumPy.
@@ -10,12 +10,12 @@
 #	Usage: 	python plot_spread.py INPUT_FILE [options]
 #	
 #	options:
-#		INPUT_FILE			The file containing the data for plotting stored
-#							as N x k matrix where k indicates the number of 
-#							measured spreads (x,y,z) and N represent the number.
-#							of performed time steps. 
-#		--no-potential   	The last column is interpreted as the exact solution
-#		--help           	Print this help statement
+#		INPUT_FILE        The file containing the data for plotting stored
+#		                  as N x k matrix where k indicates the number of 
+#		                  measured spreads (x,y,z) and N represent the number.
+#		                  of performed time steps. 
+#		--no-potential    The last column is interpreted as the exact solution
+#		--help            Print this help statement
 
 # General imports
 import numpy as np
