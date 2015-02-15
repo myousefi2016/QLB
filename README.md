@@ -15,7 +15,9 @@ To build the project on Linux make sure the following libraries are installed:
 
 All those libraries should be present in the repositories of your distribution. `libGLEW` can be built directly within this project with `make libGLEW`. 
 
-To compile the project use: `make`
+To compile the project change in to the folder with the Makefile and type:
+
+`make`
 
 ### Max OS X
 
