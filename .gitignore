@@ -9,8 +9,6 @@
 
 # Ignored directories
 objects/
-bin/Windows/32-bit/Debug
-bin/Windows/64-bit/Debug
 bin/Linux
 QLBwin/build
 QLBwin/moc
