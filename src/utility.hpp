@@ -27,10 +27,10 @@
 // Compiler Hints
 #ifdef _WIN32
  #define FORCE_INLINE
- #define NO_RETURN		__declspec(noreturn)
+ #define NO_RETURN     __declspec(noreturn)
 #else
- #define FORCE_INLINE	__attribute__((always_inline)) 
- #define NO_RETURN		__attribute__((noreturn))
+ #define FORCE_INLINE  __attribute__((always_inline)) 
+ #define NO_RETURN     __attribute__((noreturn))
 #endif
 
 // Compile time warnings #pragma message WARN("message")

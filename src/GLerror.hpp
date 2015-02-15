@@ -3,7 +3,7 @@
  *	(c) 2015 Fabian Thüring, ETH Zürich
  *
  *	Providing OpenGL utility functions to handle runtime errors.
- *	This file will also includes the OpenGL and GLUT headers.
+ *	This file will also include the OpenGL and GLUT headers.
  */
 
 #ifndef GL_ERROR_HPP

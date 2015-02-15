@@ -130,8 +130,8 @@ void init_GL(int argc, char* argv[])
 	glShadeModel(GL_SMOOTH);
 
 	// Set view matrix for the first time
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
@@ -162,8 +162,8 @@ void callback_display()
 	}
 		
 	// Reset color's and clear bits	
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// Compute FPS & update the title
 	char title[100]; 
@@ -171,8 +171,8 @@ void callback_display()
 	glutSetWindowTitle(title);
 
 	// Set view matrix
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
@@ -206,8 +206,8 @@ void callback_reshape(int width, int height)
 	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 10000.0);
 
 	// Set view matrix
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);

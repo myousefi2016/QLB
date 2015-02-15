@@ -74,15 +74,15 @@ public:
 	
 	/** 
 	 *	Constructor 
-	 *	@param	L 		Grid size i.e grid will be L x L
-	 *	@param 	dx		Spatial discretization
-	 *	@param	mass	Mass of the particles
-	 *	@param 	dt		Temporal discretization
-	 *	@param 	V_indx	Index of the potential function V
+	 *	@param	L       Grid size i.e grid will be L x L
+	 *	@param 	dx      Spatial discretization
+	 *	@param	mass    Mass of the particles
+	 *	@param 	dt      Temporal discretization
+	 *	@param 	V_indx Index of the potential function V
 	 *	                0: harmonic potential
 	 *	                1: no potential
 	 *	@param 	plot_	Boolean vector to indicate which quantities are written 
-	 *  				to a output file when calling 'write_content_to_file'
+	 *	                to a output file when calling 'write_content_to_file'
 	 *	                [ 0] :  all
 	 *	                [ 1] :  spread
 	 *	                [ 2] :  spinor1
@@ -94,7 +94,7 @@ public:
 	 *	                [ 8] :  currentY
 	 *	                [ 9] :  veloX
 	 *	                [10] :  veloY
-	 *	@param 	verb	Run in verbose mode (optional : default false)
+	 *	@param 	verb    Run in verbose mode (optional : default false)
 	 *	@file 	QLB.cpp
 	 */
 	QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx,
@@ -157,7 +157,7 @@ public:
 	void Qhat_Y(int i, int j, cmat_t& Q) const;
 
 	/**
-	 *	Caluclate the macroscopic variables
+	 *	Calculate the macroscopic variables
 	 *	@file 	QLBcpu.cpp 
 	 */
 	void calculate_macroscopic_vars();	
@@ -195,7 +195,7 @@ public:
 	/** 
 	 *	Prepare the arrays and VBO's for rendering by copying the content of
 	 *	desired simulation arrays (indicated by current_scene_) to the render
-	 *  arrays (array_vertex_) and calculating the normals (array_normal_).
+	 *	arrays (array_vertex_) and calculating the normals (array_normal_).
 	 *	@file	QLBgraphics.cpp
 	 */	
 	void prepare_arrays();

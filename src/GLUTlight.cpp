@@ -36,22 +36,22 @@ void Light::init(GLfloat x, GLfloat y, GLfloat z)
 	light_position_[2] = z;
 
 	glEnable(GL_LIGHT0);
-    glEnable(GL_NORMALIZE);
-    glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_LIGHTING); 
- 
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  &light_ambient_[0]);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  &light_diffuse_[0]);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, &light_specular_[0]);
-    glLightfv(GL_LIGHT0, GL_POSITION, &light_position_[0]); 
- 
-    glMaterialfv(GL_FRONT, GL_AMBIENT,   &mat_ambient_[0]);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE,   &mat_diffuse_[0]);
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  &mat_specular_[0]);
-    glMaterialfv(GL_FRONT, GL_SHININESS, &high_shininess_[0]);
-    
-    glDisable(GL_NORMALIZE);
+	glEnable(GL_LIGHTING); 
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  &light_ambient_[0]);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  &light_diffuse_[0]);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, &light_specular_[0]);
+	glLightfv(GL_LIGHT0, GL_POSITION, &light_position_[0]); 
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT,   &mat_ambient_[0]);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE,   &mat_diffuse_[0]);
+	glMaterialfv(GL_FRONT, GL_SPECULAR,  &mat_specular_[0]);
+	glMaterialfv(GL_FRONT, GL_SHININESS, &high_shininess_[0]);
+
+	glDisable(GL_NORMALIZE);
 }
 
 void Light::enable(GLfloat x, GLfloat y, GLfloat z)
@@ -62,7 +62,7 @@ void Light::enable(GLfloat x, GLfloat y, GLfloat z)
 void Light::disable() const
 {
 	glDisable(GL_LIGHT0);
-    glDisable(GL_NORMALIZE);
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING); 
+	glDisable(GL_NORMALIZE);
+	glDisable(GL_COLOR_MATERIAL);
+	glDisable(GL_LIGHTING); 
 }

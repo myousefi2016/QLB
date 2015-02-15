@@ -50,7 +50,7 @@ public:
 	}
 
 	/**
-	 * Constructor - default
+	 *	Constructor - default
 	 */
 	VBO()
 		: id_(0), target_(0), usage_(0), is_valid_(false)

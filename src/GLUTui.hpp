@@ -23,11 +23,11 @@
 #include "GLUTlight.hpp"
 
 // Defines
-#define MOUSE_LEFT		0x0000
-#define MOUSE_MIDDLE	0x0001
-#define MOUSE_RIGHT		0x0002
-#define WHEEL_UP		0x0003
-#define WHEEL_DOWN		0x0004
+#define MOUSE_LEFT    0x0000
+#define MOUSE_MIDDLE  0x0001
+#define MOUSE_RIGHT   0x0002
+#define WHEEL_UP      0x0003
+#define WHEEL_DOWN    0x0004
 
 #define FPS_UPDATE_FRQ	500 // ms
 
@@ -64,7 +64,7 @@ public:
 	 *	Register keyboard actions and parses them 
 	 *	@param 	key		integer value of the ASCII character of the pressed key
 	 *	@param	x		current mouse position (x axis)
-	 *  @param 	y		current mouse position (y axis)
+	 *	@param 	y		current mouse position (y axis)
 	 */
 	void keyboard(int key, int x, int y);
 
@@ -73,7 +73,7 @@ public:
 	 *	@param 	button	which button triggered the function
 	 *	@param	state	which action was performed (GLUT_UP or GLUT_DOWN)
 	 *	@param	x		current mouse position (x axis)
-	 *  @param 	y		current mouse position (y axis)
+	 *	@param 	y		current mouse position (y axis)
 	 */
 	void mouse(int button, int state, int x, int y);
 
@@ -81,7 +81,7 @@ public:
 	 *	Adjust the camera variables according to current mouse position 
 	 *	and the old one
 	 *	@param	x		current mouse position (x axis)
-	 *  @param 	y		current mouse position (y axis)
+	 *	@param 	y		current mouse position (y axis)
 	 */
 	void mouse_motion(int x, int y);
 

@@ -120,9 +120,9 @@ void UserInterface::eye_position(GLdouble& x, GLdouble& y, GLdouble& z) const
 void UserInterface::mouse(int button, int state, int x, int y)
 {
 	if(state == GLUT_DOWN)
-        mouse_button_ = button;
-    else if(state == GLUT_UP)
-        mouse_button_ = 0;
+		mouse_button_ = button;
+	else if(state == GLUT_UP)
+		mouse_button_ = 0;
 
 	// Handle mouse wheel
 	if(button == WHEEL_UP)
