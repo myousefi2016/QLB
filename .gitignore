@@ -9,9 +9,8 @@
 
 # Ignored directories
 objects/
-bin/Linux
-QLBwin/build
-QLBwin/moc
+QLBwin/build/
+QLBwin/moc/
 
 # Executables
 *.out
