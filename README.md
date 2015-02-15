@@ -1,6 +1,6 @@
 # Quantum Lattice Boltzmann
 
-Dirac Solver using the Quantum Lattice Boltzmann scheme and 3D visualisation.
+Dirac Solver using the Quantum Lattice Boltzmann scheme and 3D visualisation with OpenGL.
 
 # Building
 
