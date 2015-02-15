@@ -9,8 +9,8 @@
 
 # Ignored directories
 objects/
-QLBwin/build/
-QLBwin/moc/
+vc12/build/
+vc12/moc/
 
 # Executables
 *.out
