@@ -29,7 +29,7 @@ or building without CUDA support
 To build the project on Mac OS X make sure the following library is installed:
 - [libGLEW][libGLEW] 
 
-You can build [libGLEW][libGLEW] directly within this project with `make libGLEW`. Any other dependencies should already be installed. In addition, if you plan to build against CUDA make sure you have installed the [CUDA SDK][cudasdk].
+You can build [libGLEW][libGLEW] directly within this project with `make libGLEW`. In addition, if you plan to build against CUDA make sure you have installed the [CUDA SDK][cudasdk].
 
 To compile the project change in to the folder with the Makefile `QLB/` and type:
 
