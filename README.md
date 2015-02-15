@@ -41,7 +41,7 @@ or building without CUDA support
 
 ### Windows
 
-There are precompiled binaries in `bin/Windows/32-bit` and `bin/Windows/64-bit` respectively.
+There are precompiled binaries in `bin/Windows/32-bit` and in `bin/Windows/64-bit` respectively.
 To build the project from source you can use the Visual Studio 2012 project with the solution `QLBwinVS2012`.
 To build against CUDA you need the VisualStudio extension for CUDA shipped with the [CUDA SDK][cudasdk].
 All libraries and headers needed during the compilation are residing in `inc/Windows/` and `lib/Windows/`.
