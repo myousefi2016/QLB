@@ -1,3 +1,3 @@
 # Ignore Debug builds
-bin/Windows/32-bit/Debug
-bin/Windows/64-bit/Debug
+Windows/32-bit/Debug
+Windows/64-bit/Debug
