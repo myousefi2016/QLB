@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{0dee106f-88ae-47bd-96c6-8f0291d1bc99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GLUT">
+      <UniqueIdentifier>{30eda5df-8242-4f92-975c-508ec8970ae0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="QLB">
+      <UniqueIdentifier>{451242a1-f5a4-4b59-82ed-b236b739ac82}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\GLUTmain.hpp">
+      <Filter>GLUT</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLUTui.hpp">
+      <Filter>GLUT</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\QLB.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CmdArgParser.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cuassert.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\error.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Shader.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utility.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\matrix.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLerror.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\VBO.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GLUTlight.hpp">
+      <Filter>GLUT</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Shader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLUTui.cpp">
+      <Filter>GLUT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLUTmain.cpp">
+      <Filter>GLUT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\QLB.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\QLBcpu.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\QLBgraphics.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\QLBdummyCube.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLUTlight.cpp">
+      <Filter>GLUT</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\src\QLBcuda.cu">
+      <Filter>QLB</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

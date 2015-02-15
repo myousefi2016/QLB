@@ -4,7 +4,7 @@
 *.o
 *.obj
 
-# Backfiles
+# Backup files
 *~
 
 # Ignored directories
