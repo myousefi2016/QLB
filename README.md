@@ -13,11 +13,9 @@ To build the project on Linux make sure the following libraries are installed:
 - [libGLEW] [libGLEW]
 - [libglut] [libglut]
 
-All other libraries should be present in the repositories of your distribution. libGLEW can be built directly within this project with `make libGLEW`. 
+All those libraries should be present in the repositories of your distribution. `libGLEW` can be built directly within this project with `make libGLEW`. 
 
-To compile the project:
-`cd QLB`
-`make`
+To compile the project use: `make`
 
 ### Max OS X
 
