@@ -14,7 +14,7 @@ To build the project on Linux make sure the following libraries are installed:
 - [libGLEW][libGLEW]
 - [libglut][libglut]
 
-All other libraries should be present in the repositories of your distribution. Alternatively [libGLEW][libGLEW] can be built directly within this project with `make libGLEW`. In addition, if you plan to build against CUDA make sure you have installed the [CUDA SDK][cudasdk] properly.
+All other libraries should be present in the repositories of your distribution. Alternatively [libGLEW][libGLEW] can be built directly within this project with `make libGLEW`. In addition, if you plan to build against CUDA make sure you have installed the [CUDA SDK][cudasdk].
 
 To compile the project change in to the folder with the Makefile `QLB/` and type:
 
@@ -24,7 +24,7 @@ or building without CUDA support
 
 `make NO_CUDA=true`
 
-### Max OS X
+### Mac OS X
 
 To build the project on Mac OS X make sure the following library is installed:
 - [libGLEW][libGLEW] 
