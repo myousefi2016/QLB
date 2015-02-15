@@ -4,14 +4,9 @@
 *.o
 *.obj
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Fortran module files
-*.mod
+# Backfiles
+*~
 
 # Executables
-*.exe
 *.out
 *.app
