@@ -34,8 +34,8 @@ QLB::float_t QLB::V_free(int i, int j) const
  *
  *	   =      i*g           0           0       wc*i
  *	            0         i*g      2*wc*i       wc*i
- *      -0.5*wc*i    0.5*wc*i         i*g          0
- *           wc*i           0           0        i*g
+ *	    -0.5*wc*i    0.5*wc*i         i*g          0
+ *	         wc*i           0           0        i*g
  */
 
 void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
@@ -269,8 +269,8 @@ void QLB::evolution_CPU()
 		
 		if(V_indx_ == 0) // no potential
 		{
-			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
-							              (4.0*mass_*mass_*delta0_*delta0_) );
+			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ / 
+			                             (4.0*mass_*mass_*delta0_*delta0_) );
 			std::cout << std::setw(15) << deltax_t;
 		}
 		std::cout << std::endl;
@@ -291,7 +291,7 @@ void QLB::evolution_CPU()
 		if(V_indx_ == 0) // no potential
 		{
 			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
-							              (4.0*mass_*mass_*delta0_*delta0_) );
+			                              (4.0*mass_*mass_*delta0_*delta0_) );
 			fout << std::setw(15) << deltax_t;
 		}
 		fout << std::endl;	
