@@ -236,7 +236,7 @@ public:
  	 *	Write the current content of all specified quantities (entries of 
  	 *	plot array) to the corresponding file. 
  	 *	Note: consecutive calls of this function will override the last content
- 	 *		  of the files
+ 	 *	      of the files
 	 *	@file 	QLB.cpp 
 	 */
 	void write_content_to_file();
