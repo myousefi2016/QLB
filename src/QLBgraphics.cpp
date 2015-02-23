@@ -26,7 +26,7 @@ void QLB::init_GL()
 	 *     z  
 	 *
 	 *  This is why we are storing the y-coordinates form the simulation 
-	 *	in the z array position
+	 *  in the z array position
 	 */  
 	for(unsigned i = 0; i < L_; ++i)
 		for(unsigned j = 0; j < L_; ++j)
