@@ -177,7 +177,7 @@ void QLB::prepare_arrays()
 
 			norm = std::sqrt(array_normal_[x(i,j)]*array_normal_[x(i,j)] + 
 			                 array_normal_[y(i,j)]*array_normal_[y(i,j)] +
-							 array_normal_[z(i,j)]*array_normal_[z(i,j)]);
+			                 array_normal_[z(i,j)]*array_normal_[z(i,j)]);
 			// normalize
 			array_normal_[x(i,j)] /= norm;
 			array_normal_[y(i,j)] /= norm;
@@ -208,7 +208,7 @@ void QLB::render()
 	               array_vertex_[3*array_index_[i]+2]);
 		glNormal3d(array_normal_[3*array_index_[i]],
 		           array_normal_[3*array_index_[i]+1],
-				   array_normal_[3*array_index_[i]+2]);
+		           array_normal_[3*array_index_[i]+2]);
 	}	
 	glEnd();	
 }
