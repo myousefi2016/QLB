@@ -49,10 +49,10 @@ public:
 
 	/** 
 	 *	Constructor 
-	 *	@param 	width		width of the initial window in pixels
-	 *	@param	height 		height of the initial window in pixels
-	 *	@param	title		title of the window
-	 *	@param 	translate_z initial distance in z direction
+	 *	@param 	width        width of the initial window in pixels
+	 *	@param	height       height of the initial window in pixels
+	 *	@param	title        title of the window
+	 *	@param 	translate_z  initial distance in z direction
 	 */
 	UserInterface(int width, int height, const char* title, float translate_z);
 	
@@ -62,7 +62,7 @@ public:
 
 	/**
 	 *	Calculate current 'eye' position
-	 *	@param	x	x-coordinate [out]
+	 *	@param	x   x-coordinate [out]
 	 *	@param	y   y-coordinate [out]
 	 *	@param	z   z-coordinate [out]
 	 */
@@ -70,26 +70,26 @@ public:
 	
 	/** 
 	 *	Register keyboard actions and parses them 
-	 *	@param 	key		integer value of the ASCII character of the pressed key
-	 *	@param	x		current mouse position (x axis)
-	 *	@param 	y		current mouse position (y axis)
+	 *	@param 	key    integer value of the ASCII character of the pressed key
+	 *	@param	x      current mouse position (x axis)
+	 *	@param 	y      current mouse position (y axis)
 	 */
 	void keyboard(int key, int x, int y);
 
 	/** 
 	 *	Register mouse actions and parses them 
-	 *	@param 	button	which button triggered the function
-	 *	@param	state	which action was performed (GLUT_UP or GLUT_DOWN)
-	 *	@param	x		current mouse position (x axis)
-	 *	@param 	y		current mouse position (y axis)
+	 *	@param 	button  which button triggered the function
+	 *	@param	state   which action was performed (GLUT_UP or GLUT_DOWN)
+	 *	@param	x       current mouse position (x axis)
+	 *	@param 	y       current mouse position (y axis)
 	 */
 	void mouse(int button, int state, int x, int y);
 
 	/** 
 	 *	Adjust the camera variables according to current mouse position 
 	 *	and the old one
-	 *	@param	x		current mouse position (x axis)
-	 *	@param 	y		current mouse position (y axis)
+	 *	@param	x      current mouse position (x axis)
+	 *	@param 	y      current mouse position (y axis)
 	 */
 	void mouse_motion(int x, int y);
 	
@@ -107,8 +107,8 @@ public:
 	/**
 	 *	Reset the whole simulation by initializing a new system with the old
 	 *	one and deleting the old system afterwards
-	 *	@param 	 qlb_old	system used to construct the new one
-	 *	@return  qlb_new 	newly constructed system
+	 *	@param 	 qlb_old    system used to construct the new one
+	 *	@return  qlb_new    newly constructed system
 	 */
 	QLB* reset(QLB* qlb_old);
 
