@@ -1,6 +1,6 @@
 /**
  *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *	(c) 2015 Fabian ThÃ¼ring, ETH ZÃ¼rich
  *
  *	Providing a classes to handle GLSL Shaders.
  */
@@ -63,29 +63,29 @@ public:
 
 	/**
 	 *	Load a shader source code (GLSL) from file and compile it
-	 *	@param	filename	file with shader source code
-	 *	@param	shader_type	can be either:
-	 *	                    GL_COMPUTE_SHADER 
-	 *	                    GL_VERTEX_SHADER 
-	 *	                    GL_TESS_CONTROL_SHADER 
-	 *	                    GL_TESS_EVALUATION_SHADER 
-	 *	                    GL_GEOMETRY_SHADER 
-	 *	                    GL_FRAGMENT_SHADER
-	 *	@param	debug		print the shader source to std::cout (optional)
+	 *	@param	filename      file with shader source code
+	 *	@param	shader_type   can be either:
+	 *	                      GL_COMPUTE_SHADER 
+	 *	                      GL_VERTEX_SHADER 
+	 *	                      GL_TESS_CONTROL_SHADER 
+	 *	                      GL_TESS_EVALUATION_SHADER 
+	 *	                      GL_GEOMETRY_SHADER 
+	 *	                      GL_FRAGMENT_SHADER
+	 *	@param	debug	print the shader source to std::cout (optional)
 	 */
 	void load_from_file(const char* filename, GLenum shader_type, bool debug = false);
 
 	/**
 	 *	Load a shader source code (GLSL) from a string and compile it
-	 *	@param	src			string with shader source code (const char*)
-	 *	@param	shader_type	can be either:
-	 *	                    GL_COMPUTE_SHADER 
-	 *	                    GL_VERTEX_SHADER 
-	 *	                    GL_TESS_CONTROL_SHADER 
-	 *	                    GL_TESS_EVALUATION_SHADER 
-	 *	                    GL_GEOMETRY_SHADER 
-	 *	                    GL_FRAGMENT_SHADER
-	 *	@param	debug		print the shader source to std::cout (optional)
+	 *	@param	src            string with shader source code (const char*)
+	 *	@param	shader_type    can be either:
+	 *	                       GL_COMPUTE_SHADER 
+	 *	                       GL_VERTEX_SHADER 
+	 *	                       GL_TESS_CONTROL_SHADER 
+	 *	                       GL_TESS_EVALUATION_SHADER 
+	 *	                       GL_GEOMETRY_SHADER 
+	 *	                       GL_FRAGMENT_SHADER
+	 *	@param	debug	print the shader source to std::cout (optional)
 	 */
 	void load_from_string(const char* src, GLenum shader_type, bool debug = false);
 
@@ -129,12 +129,12 @@ public:
 	~Shader();
 
 	/**
-	 *	Link a single compiled shader into a program which can then be used with 
-	 *  Shader::use_shader(). If the program was already in-use this call will 
-	 *	destroy the existing program and create a new one.
-	 *  The shader should be compiled with the class ShaderLoader.
+	 * 	Link a single compiled shader into a program which can then be used with 
+	 * 	Shader::use_shader(). If the program was already in-use this call will 
+	 * 	destroy the existing program and create a new one.
+	 * 	The shader should be compiled with the class ShaderLoader.
 	 *	
-	 *	@param	shader		compiled shader
+	 * 	@param    shader   compiled shader
 	 */
 	void add_shader(const ShaderLoader& shader);
 
