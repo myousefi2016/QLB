@@ -8,23 +8,23 @@
 # The compilation relies on the following libraries:
 #   -libGL
 #   -libGLU
-#	-libGLEW
+#   -libGLEW
 #   -libglut
 # All those libraries should be present in the repository of your distribution.
 # The library 'libGLEW' can be built with this Makefile by using the command
 # 'make libGLEW'.
 #
-# === Max OSX ===
+# === Mac OSX ===
 # The compilation relies on 'libGLEW' which is not installed by default. You can
 # build the library with this Makefile by issuing 'make libGLEW' or install it
-# your on your own from http://glew.sourceforge.net/.
+# on your own from http://glew.sourceforge.net/.
 #
 # For further assistance use: 
 #	make help
 
-CXX 	= clang++
-CXX_NV	= g++
-NVCC	= nvcc
+CXX     = clang++
+CXX_NV  = g++
+NVCC    = nvcc
  
 CUDA_PATH = /usr/local/cuda-6.5
 
@@ -41,37 +41,37 @@ ifeq ($(OS), )
 endif
 
 # === Find the CUDA libraries ===
-CUDA_PATH 	?= /usr/local/cuda
-NVCC	  	?= $(CUDA_PATH)/bin/nvcc
-CUDA_LIB   	 = -L$(CUDA_PATH)/lib64/ -lcudart
+CUDA_PATH  ?= /usr/local/cuda
+NVCC       ?= $(CUDA_PATH)/bin/nvcc
+CUDA_LIB    = -L$(CUDA_PATH)/lib64/ -lcudart
 
 # === Sources ===
-EXE			= QLB
-SRC_CU 		= $(wildcard src/*.cu)
-SRC_CPP		= $(wildcard src/*.cpp)
-OBJECTS_CU	= $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
-OBJECTS_CPP	= $(patsubst src/%.cpp,objects/%.o,$(SRC_CPP))
-OBJECTS		= $(OBJECTS_CPP)
+EXE         = QLB
+SRC_CU      = $(wildcard src/*.cu)
+SRC_CPP     = $(wildcard src/*.cpp)
+OBJECTS_CU  = $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
+OBJECTS_CPP = $(patsubst src/%.cpp,objects/%.o,$(SRC_CPP))
+OBJECTS     = $(OBJECTS_CPP)
 
-BIN_PATH	= ./bin/$(OS)
-EXE_BIN		= $(BIN_PATH)/$(EXE)
+BIN_PATH    = ./bin/$(OS)
+EXE_BIN     = $(BIN_PATH)/$(EXE)
 
 # === Compiler Flags ===
-WARNINGS	= -Wall
-DEFINES		=  
-DEBUG		=
-INCLUDE		= -I./inc/$(OS)
-OPT     	= -O2 -march=native
-CXXSTD		= 
+WARNINGS    = -Wall
+DEFINES     =  
+DEBUG       =
+INCLUDE     = -I./inc/$(OS)
+OPT         = -O2 -march=native
+CXXSTD      =
 CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD)
-CXXFLAGS	= $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES)
-LDFLAGS	    = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
+CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES)
+LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
 # === Build adjustments ===
 
 # Adjust to build on Mac OSX
 ifeq ($(OS)),Darwin)
- LDFLAGS   = -framework GLUT -framework OpenGL -lGLEW -lpthread
+ LDFLAGS   = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
  WARNINGS += -Wno-deprecated-declarations -Wno-deprecated-register
 endif
 

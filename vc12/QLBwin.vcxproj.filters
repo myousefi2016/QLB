@@ -48,6 +48,9 @@
     <ClInclude Include="..\src\GLUTlight.hpp">
       <Filter>GLUT</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\GLUTtextbox.hpp">
+      <Filter>GLUT</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -75,6 +78,9 @@
       <Filter>QLB</Filter>
     </ClCompile>
     <ClCompile Include="..\src\GLUTlight.cpp">
+      <Filter>GLUT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GLUTtextbox.cpp">
       <Filter>GLUT</Filter>
     </ClCompile>
   </ItemGroup>

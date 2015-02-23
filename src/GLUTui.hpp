@@ -11,23 +11,31 @@
 
 #define _USE_MATH_DEFINES
 
-// System incldues
+// System includes
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <list>
 
 // Local includes
 #include "GLerror.hpp"
 #include "error.hpp"
 #include "QLB.hpp"
 #include "GLUTlight.hpp"
+#include "GLUTtextbox.hpp"
 
 // Defines
-#define MOUSE_LEFT    0x0000
-#define MOUSE_MIDDLE  0x0001
-#define MOUSE_RIGHT   0x0002
-#define WHEEL_UP      0x0003
-#define WHEEL_DOWN    0x0004
+#define MOUSE_LEFT       0x0000
+#define MOUSE_MIDDLE     0x0001
+#define MOUSE_RIGHT      0x0002
+#define WHEEL_UP         0x0003
+#define WHEEL_DOWN       0x0004
+
+#define BOX_HELP_DETAIL  0x0000
+#define BOX_HELP_ASK     0x0001
+#define BOX_FPS          0x0002
+#define BOX_USE_STATS    0x0003
+#define BOX_SIM_STATS    0x0004
 
 #define FPS_UPDATE_FRQ	500 // ms
 
@@ -53,14 +61,14 @@ public:
 	// === Methods ===
 
 	/**
-	 *	Caluclate current 'eye' position
+	 *	Calculate current 'eye' position
 	 *	@param	x	x-coordinate [out]
 	 *	@param	y   y-coordinate [out]
 	 *	@param	z   z-coordinate [out]
 	 */
 	void eye_position(GLdouble& x, GLdouble& y, GLdouble& z) const;
 	
-		/** 
+	/** 
 	 *	Register keyboard actions and parses them 
 	 *	@param 	key		integer value of the ASCII character of the pressed key
 	 *	@param	x		current mouse position (x axis)
@@ -84,6 +92,11 @@ public:
 	 *	@param 	y		current mouse position (y axis)
 	 */
 	void mouse_motion(int x, int y);
+	
+	/** 
+	 *	Draw all drawable content (i.e all text boxes)
+	 */
+	void draw() const;
 
 	/**
 	 *	Calculate frame's per second (FPS) using glut's built-in timer
@@ -93,7 +106,7 @@ public:
 
 	/**
 	 *	Reset the whole simulation by initializing a new system with the old
-	 *	one and deleting the old system aferwards
+	 *	one and deleting the old system afterwards
 	 *	@param 	 qlb_old	system used to construct the new one
 	 *	@return  qlb_new 	newly constructed system
 	 */
@@ -154,7 +167,8 @@ private:
 	int time_;
 	float fps_;
 	
-	// === Font ===
+	// === TextBox ===
+	std::vector<TextBox> text_boxes_;
 	
 	// === Set parameters ===
 	bool param_has_changed_;

@@ -121,7 +121,7 @@ void QLB::evolution()
  *	@param 	k 		offset in the matrix (k-th vector element) 
  *	@param	out		stream to which the matrix will be written to
  */
-template< class mat_t, class stream_t > 
+template< class mat_t, class stream_t >
 static void print_mat(const mat_t& m, const std::size_t N, const std::size_t M, 
                       const std::size_t d, const std::size_t k, stream_t& out)
 {
@@ -137,17 +137,29 @@ static void print_mat(const mat_t& m, const std::size_t N, const std::size_t M,
 	out << std::endl;
 }
 
+
 /**
- *	Similar as print_mat but with diffrent evaluation of the elements
- *	@param 	eval	1: std::real( m(i,j) )
+ *	Like print_mat but with special evaluation (this function does only work if
+ *	the underlining type of mat_t is std::complex<T>)
+  *	@param	m		object which provides an operator[] e.g cmat_t
+ *	@param	N		size (dimension)
+ *	@param 	M		size (dimension)
+ *	@param 	d 		size (dimension)
+ *	@param 	k 		offset in the matrix (k-th vector element) 
+ *	@param	out		stream to which the matrix will be written to
+ *	@param 	eval	special evaluation of the elements
+ *	                0: m(i,j) 
+ *	                1: std::real( m(i,j) )
  *	                2: std::imag( m(i,j) )
  *	                3: std::norm( m(i,j) )
  */
+
 template< class mat_t, class stream_t >
 static void print_mat_eval(const mat_t& m, const std::size_t N, const std::size_t M, 
                            const std::size_t d, const std::size_t k, stream_t& out,
                            const int eval)
 {
+	const int eval_flag = eval; 
 	out << std::fixed;
 	out << std::setprecision(5);
 	out << std::left << std::endl;
@@ -155,11 +167,13 @@ static void print_mat_eval(const mat_t& m, const std::size_t N, const std::size_
 	{
 		for(std::size_t j = 0; j < M; ++j)
 		{
-			if(eval == 1)
+			if(eval_flag == 0) 
+				out << std::setw(20) << m[d*(N*i + j) + k];
+			else if(eval_flag == 1)
 				out << std::setw(20) << std::real(m[d*(N*i + j) + k]);
-			else if(eval == 2)
+			else if(eval_flag == 2)
 				out << std::setw(20) << std::imag(m[d*(N*i + j) + k]);
-			else
+			else if(eval_flag == 3)
 				out << std::setw(20) << std::norm(m[d*(N*i + j) + k]);
 		}
 		out << std::endl;
@@ -169,82 +183,100 @@ static void print_mat_eval(const mat_t& m, const std::size_t N, const std::size_
 
 void QLB::print_matrix(const cmat_t& m) const
 {
-	print_mat<cmat_t, std::ostream>(m, m.N(), m.N(), 1, 0, std::cout);
+	print_mat(m, m.N(), m.N(), 1, 0, std::cout);
 }
 
 void QLB::print_matrix(const fmat_t& m) const
 {
-	print_mat<fmat_t, std::ostream>(m, m.N(), m.N(), 1, 0, std::cout);
+	print_mat(m, m.N(), m.N(), 1, 0, std::cout);
 }
 
 void QLB::print_matrix(const c4mat_t& m, std::size_t k) const
 {
-	print_mat<c4mat_t, std::ostream>(m, m.N(), m.N(), 4, k, std::cout);
+	print_mat(m, m.N(), m.N(), 4, k, std::cout);
+}
+
+/**
+ *	Inform which file is written to
+ *	@param	file	filename
+ */
+template< typename msg_t >
+static inline void verbose_write_to_file(msg_t filename)
+{
+	std::cout << "Writing to ... " << filename << std::endl;
 }
 
 void QLB::write_content_to_file()
 {
-
 	if(plot_[2] || plot_[0]) // spinor1
 	{ 
 		fout.open("spinor1.dat");
-		print_mat<c4mat_t, std::ofstream>(spinor_, L_, L_, 4, 0, fout);
+		if(verbose_) verbose_write_to_file("spinor1.dat");
+		print_mat(spinor_, L_, L_, 4, 0, fout);
 		fout.close();	
 	}
 	
 	if(plot_[3] || plot_[0]) // spinor2
 	{ 
 		fout.open("spinor2.dat");
-		print_mat<c4mat_t, std::ofstream>(spinor_, L_, L_, 4, 1, fout);
+		if(verbose_) verbose_write_to_file("spinor2.dat");
+		print_mat(spinor_, L_, L_, 4, 1, fout);
 		fout.close();	
 	}
 
 	if(plot_[4] || plot_[0]) // spinor3
 	{ 
 		fout.open("spinor3.dat");
-		print_mat<c4mat_t, std::ofstream>(spinor_, L_, L_, 4, 2, fout);
+		if(verbose_) verbose_write_to_file("spinor3.dat");
+		print_mat(spinor_, L_, L_, 4, 2, fout);
 		fout.close();	
 	}
 
 	if(plot_[5] || plot_[0]) // spinor4
 	{ 
 		fout.open("spinor4.dat");
-		print_mat<c4mat_t, std::ofstream>(spinor_, L_, L_, 4, 3, fout);
+		if(verbose_) verbose_write_to_file("spinor4.dat");
+		print_mat(spinor_, L_, L_, 4, 3, fout);
 		fout.close();	
 	}
 
 	if(plot_[6] || plot_[0]) // density
 	{ 
 		fout.open("density.dat");
-		print_mat_eval<cmat_t, std::ofstream>(rho_, L_, L_, 1, 0, fout, 3);
+		if(verbose_) verbose_write_to_file("density.dat");
+		print_mat_eval(rho_, L_, L_, 1, 0, fout, 3);
 		fout.close();
 	}
 
 	if(plot_[7] || plot_[0]) // currentX
 	{ 
 		fout.open("currentX.dat");
-		print_mat_eval<cmat_t, std::ofstream>(currentX_, L_, L_, 1, 0, fout, 1);
+		if(verbose_) verbose_write_to_file("currentX.dat");
+		print_mat_eval(currentX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
 	if(plot_[8] || plot_[0]) // currentY
 	{ 
 		fout.open("currentY.dat");
-		print_mat_eval<cmat_t, std::ofstream>(currentY_, L_, L_, 1, 0, fout, 1);
+		if(verbose_) verbose_write_to_file("currentY.dat");
+		print_mat_eval(currentY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
 	if(plot_[9] || plot_[0]) // veloX
 	{ 
 		fout.open("veloX.dat");
-		print_mat_eval<cmat_t, std::ofstream>(veloX_, L_, L_, 1, 0, fout, 1);
+		if(verbose_) verbose_write_to_file("veloX.dat");
+		print_mat_eval(veloX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
 	if(plot_[10] || plot_[0]) // veloY
 	{ 
 		fout.open("veloY.dat");
-		print_mat_eval<cmat_t, std::ofstream>(veloY_, L_, L_, 1, 0, fout, 1);
+		if(verbose_) verbose_write_to_file("veloY.dat");
+		print_mat_eval(veloY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 }

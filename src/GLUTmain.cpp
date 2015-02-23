@@ -122,11 +122,11 @@ void init_GL(int argc, char* argv[])
 	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 10000.0);
 
 	// Enables
-	//glEnable(GL_CULL_FACE); 
-	//glCullFace(GL_FRONT); 
+//	glEnable(GL_CULL_FACE); 
+//	glCullFace(GL_FRONT); 
 	glEnable(GL_DEPTH_TEST);
 	
-	//glShadeModel(GL_FLAT);
+//	glShadeModel(GL_FLAT);
 	glShadeModel(GL_SMOOTH);
 
 	// Set view matrix for the first time
@@ -181,6 +181,9 @@ void callback_display()
 	if(!UI->paused())
 		QLB_system->evolution();
 	QLB_system->render();
+
+	// Draw text boxes
+	UI->draw();
 
 	glutSwapBuffers();
 	glutPostRedisplay();

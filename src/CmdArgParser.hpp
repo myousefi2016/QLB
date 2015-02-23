@@ -232,21 +232,22 @@ public:
 			CmdArgString gui = find_string("--gui");
 			gui_ = 0;
 			if(gui.is_present() && compare(gui.str(),"glut"))
-				gui_ = 2;
-			else if(gui.is_present() && compare(gui.str(),"qt"))
 				gui_ = 1;
 			else if(gui.is_present() && compare(gui.str(),"none"))
 				gui_ = 0;
 			else if(gui.is_present())
 				throw CmdArgException("'S' in '--gui=S' must be one of "
-				                      "[glut|qt|none]");
+				                      "[glut|none]");
 				
 			// --V=[harmonic|free]
 			CmdArgString V = find_string("--V");
 			V_ = 0;
-			if(V.is_present() && compare(V.str(),"harmonic"))
+			if(V.is_present() && compare(V.str(),"free"))
+			{	
 				V_ = 0;
-			else if(V.is_present() && compare(V.str(),"free"))
+				std::cout << "free" << std::endl;
+			}
+			else if(V.is_present() && compare(V.str(),"harmonic"))
 				V_ = 1;
 			else if(V.is_present())
 				throw CmdArgException("'S' in '--V=S' must be one of "
@@ -480,7 +481,7 @@ private:
 		print_help_line("--version","Display version information");
 		print_help_line("--verbose","Enable verbose mode");
 		std::string expl_gui[2] = {"Select the window system to run the simulation,"
-		                           " where S","is one of [glut|qt|none]"}; 
+		                           " where S","is one of [glut|none]"}; 
 		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
 		print_help_line("--V=S","Set the potential to S, where S is one of "
@@ -533,10 +534,11 @@ private:
 		bool match = false;
 		std::size_t delimiter_pos = str.find(",");
 		std::string command;
+		std::string str_backup = str;
 		
 		if(delimiter_pos == (str.size()-1))
-			throw CmdArgException("command-line argument '--plot=S' ends with "
-			                      "delimiter ','");
+			throw CmdArgException("command-line argument '--plot="+str_backup+
+			                      "' ends with delimiter ','");
 		do
 		{
 			match = false;
@@ -558,7 +560,8 @@ private:
 
 			if(!match)
 				throw CmdArgException("'"+command+"'"+" in command-line "
-				                      "argument '--plot=S' is not known");
+				                      "argument '--plot="+str_backup+
+				                      "' is not known");
 			// Remove command from str
 			str = str.substr(delimiter_pos+1, str.size());
 			delimiter_pos = str.find(",");
@@ -650,8 +653,8 @@ private:
 	}
 
 private:
-	std::vector<std::string> argv_;
-	std::vector<std::string> args_looked_for_;
+	svec_t argv_;
+	svec_t args_looked_for_;
 	
 	std::string program_;
 	

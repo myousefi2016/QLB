@@ -2,7 +2,7 @@
  *	Quantum Lattice Boltzmann 
  *	(c) 2015 Fabian Thüring, ETH Zurich
  *
- *	This implemenation is just for debugging purposes
+ *	This implementation is just for debugging purposes
  */
  
 #include "QLB.hpp"

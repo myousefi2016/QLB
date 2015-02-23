@@ -22,15 +22,15 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		mouse_old_x_(0),
 		mouse_old_y_(0),
 		mouse_button_(0),
-		// === Retart/Pause variables ===
+		// === Restart/Pause variables ===
 		paused_(false),
 		restart_(false),
 		// === FPS ===
 		frame_count_(0),
 		time_(0),
 		fps_(0.0f),
-		// === Font ===
-		
+		// === TextBox ===
+		text_boxes_(2),		
 		// === Set parameters ===
 		param_has_changed_(false),
 		change_scaling_(0),
@@ -38,7 +38,35 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		current_render_(QLB::SOLID),
 		// === Light ===
 		light_()
-{}
+{
+
+	// BOX_HELP_DETAIL
+	TextBox::svec_t text(10);
+	text[0] = "Esc    - Exit program      ";
+	text[1] = "space  - Pause/unpause     ";
+	text[2] = "+/-    - Change scaling    ";
+	text[3] = "R      - Restart           ";
+	text[4] = "W      - Activate Wireframe";
+	text[5] = "1    - Draw spinor 1 "; 
+	text[6] = "2    - Draw spinor 2 ";
+	text[7] = "3    - Draw spinor 3 ";
+	text[8] = "4    - Draw spinor 4 ";
+	text[9] = "V    - Draw potential";
+	
+	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 2, 
+	                                  BOX_HELP_DETAIL, true, true, true);
+	text_boxes_[BOX_HELP_DETAIL].add_text(text.begin(), text.end());
+	text_boxes_[BOX_HELP_DETAIL].deactivate();
+
+	// BOX_HELP_ASK
+	text.resize(1);	
+	text[0] = "Press H for detailed help";
+
+	text_boxes_[BOX_HELP_ASK].init(-0.99f, -0.99f, 0.5f, 0.06f, 1, 1, 
+	                               BOX_HELP_ASK, false, false, false);
+	text_boxes_[BOX_HELP_ASK].add_text(text.begin(), text.end());
+
+}
 
 UserInterface::~UserInterface()
 {}
@@ -93,6 +121,18 @@ void UserInterface::keyboard(int key, int x, int y)
 				current_render_ = QLB::WIRE;
 			else
 				current_render_ = QLB::SOLID;
+			break;
+		case 104:   // h
+			if(text_boxes_[BOX_HELP_ASK].is_active())
+			{
+				text_boxes_[BOX_HELP_ASK].deactivate();
+				text_boxes_[BOX_HELP_DETAIL].activate();
+			}
+			else
+			{
+				text_boxes_[BOX_HELP_ASK].activate();
+				text_boxes_[BOX_HELP_DETAIL].deactivate();
+			}
 			break;
 	}
 }
@@ -154,6 +194,12 @@ void UserInterface::mouse_motion(int x, int y)
 	
     mouse_old_x_ = x;
     mouse_old_y_ = y;
+}
+
+void UserInterface::draw() const
+{
+	for(std::size_t i = 0; i < text_boxes_.size(); ++i)
+		if(text_boxes_[i].is_active()) text_boxes_[i].draw(width_, height_);
 }
 
 float UserInterface::compute_fps()

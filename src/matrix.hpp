@@ -5,12 +5,13 @@
  *	Wrapper class for N dimensional square matrices (N x N) aswell as 
  *	N-dimensional square matrices with 4-dimensional vector as elements. 
  *	The matrix is stored in ROW MAJOR order, which means the LAST index is 
- *	varying the most.
+ *	varying the most. By default the memory is aligned on 64 byte which can
+ *	be disable with the macro MATRIX_NO_ALIGN.
  *	 
  *	The implementation will depend on the macro's MATRIX_USE_STL and 
  *	MATRIX_USE_CARRAY. If MATRIX_USE_CARRAY is defined plain c-arrays are used 
  *	as a container, otherwise std::vector is used i.e MATRIX_USE_STL is defined 
- *	by default. 
+ *	by default.
  *
  *	[EXAMPLE]
  *	Creating a simple 2x2 matrix
@@ -46,17 +47,195 @@
 
 #if defined(_MSC_VER) && !defined(__clang__)
  #define MATRIX_FORCE_INLINE
- #define MATRIX_FORCE_ALIGNED_64  	__declspec(align(64))
+ #ifndef MATRIX_NO_ALIGN
+  #define MATRIX_FORCE_ALIGNED	__declspec(align(64))
+ #else
+  #define MATRIX_FORCE_ALIGNED
+ #endif
 #else
- #define MATRIX_FORCE_INLINE		__attribute__((always_inline)) 
- #define MATRIX_FORCE_ALIGNED_64	__attribute__((aligned(64)))
+ #define MATRIX_FORCE_INLINE	__attribute__((always_inline)) 
+ #ifndef MATRIX_NO_ALIGN
+  #define MATRIX_FORCE_ALIGNED	__attribute__((aligned(64)))
+ #else
+  #define MATRIX_FORCE_ALIGNED
+ #endif
 #endif
 
-// VEC2D_USE_STL is default
+#if __cplusplus >= 201103L 
+ #define NOEXCEPT noexcept
+#else
+ #define NOEXCEPT
+#endif
+
+// MATRIX_USE_STL and MATRIX_ALIGN is default
 #ifndef MATRIX_USE_CARRAY
  #undef  MATRIX_USE_STL
  #define MATRIX_USE_STL
+ #ifndef MATRIX_NO_ALIGN
+  #define VEC_T(ALIGNMENT) std::vector<T, aligned_allocator<T, (ALIGNMENT) > >
+ #else
+  #define VEC_T(ALIGNMENT) std::vector<T>
+ #endif
 #endif
+
+/*****************************
+ *     Aligned Allocator     *
+ *****************************/
+template< typename T, unsigned int alignment >
+class aligned_allocator
+{
+public:
+	// === typedefs ===
+    typedef T*              pointer;
+    typedef T const*        const_pointer;
+    typedef T&              reference;
+    typedef T const&        const_reference;
+    typedef T               value_type;
+    typedef std::size_t     size_type;
+    typedef std::ptrdiff_t  difference_type;
+
+	template< typename U >
+    struct rebind 
+    {
+        typedef aligned_allocator< U, alignment > other;
+    };
+
+	/**
+	 *	Constructor - default
+	 */
+    aligned_allocator() NOEXCEPT 
+    {}
+
+	/**
+	 *	Constructor - copy
+	 *	@param 	a 	aligned_allocator
+	 */
+    aligned_allocator(aligned_allocator const& a) NOEXCEPT 
+    {}
+
+
+	/**
+	 *	Constructor - copy
+	 *	@param 	a 	aligned_allocator
+	 */
+	template< typename U >
+    aligned_allocator(aligned_allocator<U, alignment> const& a) NOEXCEPT 
+    {}
+
+	/**
+	 *	Allocate aligned memory
+	 *	@param 	size 	allocate size bytes
+	 *	@return pointer to address of the memory location
+	 */
+    pointer allocate(size_type size) 
+    {
+        pointer p;
+
+#ifdef _WIN32
+        p = reinterpret_cast<pointer>(_aligned_malloc(size*sizeof(T), alignment));
+        if(p == NULL)
+            throw std::bad_alloc();
+#else // UNIX
+        if(posix_memalign(reinterpret_cast<void**>(&p), alignment, size*sizeof(T)))
+            throw std::bad_alloc();
+#endif
+        return p;
+    }
+
+	/**
+	 *	Deallocate aligned memory
+	 *	@param  p		address of the beginning of the memory location
+	 *	@param 	size 	deallocate size bytes
+	 */
+    void deallocate(pointer p, size_type n) NOEXCEPT
+    {
+#ifdef _WIN32
+		_aligned_free(p);
+#else
+        std::free(p);
+#endif 
+    }
+
+	/**
+	 *	Returns the maximum theoretically possible value of n, for which the 
+	 *	call to std::allocator<T>::allocate(n,0) could succeed.
+	 *	@return the maximum supported allocation size
+	 */
+    size_type max_size() const NOEXCEPT
+    {
+        std::allocator<T> a;
+        return a.max_size();
+    }
+
+	/**
+	 *	Constructs an object of type T in allocated uninitialized storage 
+	 *	pointed to by p, using placement-new
+	 *	@param 	p		pointer to allocated uninitialized storage
+	 *	@param 	t		the value to use as the copy constructor argument
+	 *	@param 	args...	the constructor arguments to use
+	 */
+#if __cplusplus >= 201103L 
+    template <typename U, class... Args>
+    void construct(U* p, Args&&... args) 
+    {
+        new ((void*)p) U(std::forward<Args>(args)...);
+    }
+#else
+    void construct(pointer p, const_reference t) 
+    {
+        new((void *)p) T(t);
+    }
+#endif
+
+	/**
+	 *	Returns the actual address of x
+	 *	@param	x	the object to acquire address of
+	 */
+	pointer address(reference x ) const
+	{
+		return &x;
+	}
+
+	const_pointer address(const_reference x ) const
+	{
+		return &x;
+	}
+
+	/**
+	 *	Destructs an object in allocated storage 
+	 *	@param 	p	pointer to the object that is going to be destroyed
+	 */
+    template< typename U >
+    void destroy(U* p) 
+    {
+        p->~U();
+    }
+
+	// === Operator ===
+    bool operator==(aligned_allocator const& a2) const NOEXCEPT 
+    {
+        return true;
+    }
+
+    bool operator!=(aligned_allocator const& a2) const NOEXCEPT 
+    {
+        return false;
+    }
+
+    template <typename U, unsigned int U_alignment>
+    bool operator==(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
+    {
+        return false;
+    }
+
+    template <typename U, unsigned int U_alignment>
+    bool operator!=(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
+    {
+        return true;
+    }
+
+}; 
+
 
 /*****************************
  *      Matrix (N x N)       *
@@ -64,8 +243,8 @@
 #if defined( MATRIX_USE_STL )
 #include <vector>
 
-template < class value_t >
-class matND : private std::vector<value_t>
+template < typename T >
+class matND : private VEC_T(64)
 {
 public:
 
@@ -76,8 +255,8 @@ public:
 	 *	@param	N		one dimension of the matrix (N x N)
 	 *	@param	val		initial value (default : 0)
 	 */
-	matND(std::size_t N, value_t val = value_t(0))
-		: std::vector<value_t>(N*N,val), N_(N)
+	matND(std::size_t N, T val = T(0))
+		: VEC_T(64)(N*N,val), N_(N)
 	{}
 
 	/**
@@ -86,8 +265,8 @@ public:
 	 *	@param	begin	pointer to the begin of an array of size N*N
 	 *	@param	end		pointer to the end (past the end)
 	 */
-	matND(std::size_t N, const value_t* begin, const value_t* end)
-		: std::vector<value_t>(begin, end), N_(N)
+	matND(std::size_t N, const T* begin, const T* end)
+		: VEC_T(64)(begin, end), N_(N)
 	{}
 
 	/**
@@ -95,9 +274,9 @@ public:
 	 *	@param	v		matND used for copy constructing
 	 */
 	matND(const matND& v)
-		: std::vector<value_t>(v.N()*v.N()), N_(v.N())
+		: std::vector<T>(v.N()*v.N()), N_(v.N())
 	{
-		std::copy(v.begin(), v.end(), std::vector<value_t>::begin());
+		std::copy(v.begin(), v.end(), VEC_T(64)::begin());
 	}
 	
 	// === Access ===
@@ -107,9 +286,9 @@ public:
 	 *	@param	i		index in array [0, N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator[](std::size_t i) const
+	inline T const& operator[](std::size_t i) const
 	{
-		return std::vector<value_t>::operator[](i);
+		return VEC_T(64)::operator[](i);
 	}
 
 	/**
@@ -117,9 +296,9 @@ public:
 	 *	@param	i		index in array [0, N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t& operator[](std::size_t i) 
+	inline T& operator[](std::size_t i) 
 	{
-		return std::vector<value_t>::operator[](i);
+		return VEC_T(64)::operator[](i);
 	}
 	
 	/**
@@ -128,9 +307,9 @@ public:
 	 *	@param	j		column index in [0, N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator()(std::size_t i, std::size_t j) const
+	inline T const& operator()(std::size_t i, std::size_t j) const
 	{
-		return std::vector<value_t>::operator[](i*N_ + j);
+		return VEC_T(64)::operator[](i*N_ + j);
 	}
 
 	/**
@@ -139,9 +318,9 @@ public:
 	 *	@param	j		column index in [0, N)
 	 */
 	MATRIX_FORCE_INLINE
-	inline value_t& operator()(std::size_t i, std::size_t j)
+	inline T& operator()(std::size_t i, std::size_t j)
 	{
-		return std::vector<value_t>::operator[](i*N_ + j);
+		return VEC_T(64)::operator[](i*N_ + j);
 	}
 		
 	// === Data access ===
@@ -167,17 +346,17 @@ public:
 	/**
 	 *	Pointer to the first element (const pointer)
 	 */
-	inline const value_t* data() const 
+	inline const T* data() const 
 	{
-		return &std::vector<value_t>::operator[](0); 
+		return &VEC_T(64)::operator[](0); 
 	}
 
 	/**
 	 *	Pointer to the first element (pointer)
 	 */
-	inline value_t* data() 
+	inline T* data() 
 	{ 
-		return &std::vector<value_t>::operator[](0); 
+		return &VEC_T(64)::operator[](0); 
 	} 
 	
 private:
@@ -186,7 +365,7 @@ private:
 
 #else
 
-template < class value_t >
+template < class T >
 class matND
 {
 public:
@@ -198,8 +377,8 @@ public:
 	 *	@param	N		one dimension of the matrix (N x N)
 	 *	@param	val		initial value (default : 0)
 	 */
-	matND(std::size_t N, value_t val = value_t(0))
-		: value_(new value_t[N*N]), N_(N)
+	matND(std::size_t N, T val = T(0))
+		: value_(new T[N*N]), N_(N)
 	{
 		std::fill(value_, value_+N*N, val);
 	}
@@ -210,18 +389,10 @@ public:
 	 *	@param	begin	pointer to the begin of an array of size N*N
 	 *	@param	end		pointer to the end (past the end)
 	 */
-	matND(std::size_t N, const value_t* begin, const value_t* end)
-		: value_(new value_t[N*N]), N_(N)
+	matND(std::size_t N, const T* begin, const T* end)
+		: value_(new T[N*N]), N_(N)
 	{
-		// Visual Studio has a diffrent version of std::copy (from xutility)
-		// we want to avoid using that
-#ifdef _MSC_VER
-		const std::size_t NN_const = N_*N_;
-		for(std::size_t i = 0; i < NN_const; ++i)
-			value_[i] = *(begin+i);
-#else
 		std::copy(begin, end, value_);
-#endif
 	}
 	
 	/**
@@ -229,15 +400,9 @@ public:
 	 *	@param	v		matND used for copy constructing
 	 */
 	matND(const matND& v)
-		: value_(new value_t[v.N()*v.N()]), N_(v.N())
+		: value_(new T[v.N()*v.N()]), N_(v.N())
 	{
-#ifdef _MSC_VER
-		const std::size_t NN_const = N_*N_;
-		for(std::size_t i = 0; i < NN_const; ++i)
-			value_[i] = v[i];
-#else
 		std::copy(v.data(), v.data()+v.N()*v.N(), value_);
-#endif
 	}
 	
 	// === Destructor ===
@@ -252,7 +417,7 @@ public:
 	 *	@param	j		column index in [0, N)
 	 */
 	MATRIX_FORCE_INLINE
-	inline value_t const& operator()(std::size_t i, std::size_t j) const
+	inline T const& operator()(std::size_t i, std::size_t j) const
 	{
 		return value_[i*N_ + j];
 	}
@@ -263,7 +428,7 @@ public:
 	 *	@param	j		column index in [0, N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t& operator()(std::size_t i, std::size_t j)
+	inline T& operator()(std::size_t i, std::size_t j)
 	{
 		return value_[i*N_ + j];
 	}
@@ -273,7 +438,7 @@ public:
 	 *	@param	i		index in array [0, N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator[](std::size_t i) const
+	inline T const& operator[](std::size_t i) const
 	{
 		return value_[i];
 	}
@@ -283,7 +448,7 @@ public:
 	 *	@param	i		index in array [0, N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t& operator[](std::size_t i) 
+	inline T& operator[](std::size_t i) 
 	{
 		return value_[i];
 	}
@@ -293,7 +458,7 @@ public:
 	/**
 	 *	Pointer to the first element (const pointer)
 	 */
-	inline const value_t* data() const 
+	inline const T* data() const 
 	{ 
 		return value_; 
 	}
@@ -301,7 +466,7 @@ public:
 	/**
 	 *	Pointer to the first element (pointer)
 	 */
-	inline value_t* data() 
+	inline T* data() 
 	{ 
 		return value_; 
 	} 
@@ -325,7 +490,7 @@ public:
 	}
 
 private:
-	MATRIX_FORCE_ALIGNED_64 value_t* value_;
+	MATRIX_FORCE_ALIGNED T* value_;
 	std::size_t N_;
 };
 
@@ -337,8 +502,8 @@ private:
  *****************************/
 #if defined( MATRIX_USE_STL )
 
-template < class value_t >
-class matN4D : private std::vector<value_t>
+template < class T >
+class matN4D : private VEC_T(64)
 {
 public:
 
@@ -349,8 +514,8 @@ public:
 	 *	@param	N		one dimension of the matrix (N x N x 4)
 	 *	@param	val		initial value (default : 0)
 	 */
-	matN4D(std::size_t N, value_t val = value_t(0))
-		: std::vector<value_t>(N*N*4,val), N_(N)
+	matN4D(std::size_t N, T val = T(0))
+		: VEC_T(64)(N*N*4,val), N_(N)
 	{}
 
 	/**
@@ -359,8 +524,8 @@ public:
 	 *	@param	begin	pointer to the begin of an array of size 4*N*N
 	 *	@param	end		pointer to the end (past the end)
 	 */
-	matN4D(std::size_t N, const value_t* begin, const value_t* end)
-		: std::vector<value_t>(begin, end), N_(N)
+	matN4D(std::size_t N, const T* begin, const T* end)
+		: VEC_T(64)(begin, end), N_(N)
 	{}
 	
 	// === Access ===
@@ -372,9 +537,9 @@ public:
 	 *	@param  k		vector index [0,3]
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator()(std::size_t i, std::size_t j, std::size_t k) const
+	inline T const& operator()(std::size_t i, std::size_t j, std::size_t k) const
 	{
-		return std::vector<value_t>::operator[](4*(N_*i + j) + k);
+		return VEC_T(64)::operator[](4*(N_*i + j) + k);
 	}
 
 	/**
@@ -384,9 +549,9 @@ public:
 	 *	@param  k		vector index [0,3]
 	 */
 	MATRIX_FORCE_INLINE
-	inline value_t& operator()(std::size_t i, std::size_t j, std::size_t k)
+	inline T& operator()(std::size_t i, std::size_t j, std::size_t k)
 	{
-		return std::vector<value_t>::operator[](4*(N_*i + j) + k);
+		return VEC_T(64)::operator[](4*(N_*i + j) + k);
 	}
 	
 	/**
@@ -394,9 +559,9 @@ public:
 	 *	@param	i		index in array [0, 4*N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator[](std::size_t i) const
+	inline T const& operator[](std::size_t i) const
 	{
-		return std::vector<value_t>::operator[](i);
+		return VEC_T(64)::operator[](i);
 	}
 
 	/**
@@ -404,9 +569,9 @@ public:
 	 *	@param	i		index in array [0, 4*N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t& operator[](std::size_t i) 
+	inline T& operator[](std::size_t i) 
 	{
-		return std::vector<value_t>::operator[](i);
+		return VEC_T(64)::operator[](i);
 	}
 	
 		
@@ -433,17 +598,17 @@ public:
 	/**
 	 *	Pointer to the first element (const pointer)
 	 */
-	inline const value_t* data() const 
+	inline const T* data() const 
 	{
-		return &std::vector<value_t>::operator[](0); 
+		return &VEC_T(64)::operator[](0); 
 	}
 
 	/**
 	 *	Pointer to the first element (pointer)
 	 */
-	inline value_t* data() 
+	inline T* data() 
 	{ 
-		return &std::vector<value_t>::operator[](0); 
+		return &VEC_T(64)::operator[](0); 
 	} 
 
 private:
@@ -452,7 +617,7 @@ private:
 
 #else
 
-template < class value_t >
+template < class T >
 class matN4D
 {
 public:
@@ -464,8 +629,8 @@ public:
 	 *	@param	N		one dimension of the matrix (N x N x 4)
 	 *	@param	val		initial value (default : 0)
 	 */
-	matN4D(std::size_t N, value_t val = value_t(0))
-		: value_(new value_t[N*N*4]), N_(N)
+	matN4D(std::size_t N, T val = T(0))
+		: value_(new T[N*N*4]), N_(N)
 	{
 		std::fill(value_, value_+N*N*4, val);
 	}
@@ -476,8 +641,8 @@ public:
 	 *	@param	begin	pointer to the begin of an array of size 4*N*N
 	 *	@param	end		pointer to the end (past the end)
 	 */
-	matN4D(std::size_t N, const value_t* begin, const value_t* end)
-		: value_(new value_t[N*N*4]), N_(N)
+	matN4D(std::size_t N, const T* begin, const T* end)
+		: value_(new T[N*N*4]), N_(N)
 	{
 		// Visual Studio has a diffrent version of std::copy (from xutility)
 		// we want to avoid using that
@@ -503,7 +668,7 @@ public:
 	 *	@param  k		vector index [0,3]
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator()(std::size_t i, std::size_t j, std::size_t k) const
+	inline T const& operator()(std::size_t i, std::size_t j, std::size_t k) const
 	{
 		return value_[4*(N_*i + j) + k];
 	}
@@ -515,7 +680,7 @@ public:
 	 *	@param  k		vector index [0,3]
 	 */
 	MATRIX_FORCE_INLINE
-	inline value_t& operator()(std::size_t i, std::size_t j, std::size_t k)
+	inline T& operator()(std::size_t i, std::size_t j, std::size_t k)
 	{
 		return value_[4*(N_*i + j) + k];
 	}
@@ -525,7 +690,7 @@ public:
 	 *	@param	i		index in array [0, 4*N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t const& operator[](std::size_t i) const
+	inline T const& operator[](std::size_t i) const
 	{
 		return value_[i];
 	}
@@ -535,7 +700,7 @@ public:
 	 *	@param	i		index in array [0, 4*N*N)
 	 */
 	MATRIX_FORCE_INLINE 
-	inline value_t& operator[](std::size_t i) 
+	inline T& operator[](std::size_t i) 
 	{
 		return value_[i];
 	}
@@ -563,7 +728,7 @@ public:
 	/**
 	 *	Pointer to the first element (const pointer)
 	 */
-	inline const value_t* data() const 
+	inline const T* data() const 
 	{ 
 		return value_; 
 	}
@@ -571,16 +736,21 @@ public:
 	/**
 	 *	Pointer to the first element (pointer)
 	 */
-	inline value_t* data() 
+	inline T* data() 
 	{ 
 		return value_; 
 	} 
 
 private:
-	MATRIX_FORCE_ALIGNED_64 value_t* value_;
+	MATRIX_FORCE_ALIGNED T* value_;
 	std::size_t N_;
 };
 
 #endif /* MATRIX_USE_STL */
+
+
+#undef MATRIX_FORCE_INLINE 
+#undef MATRIX_FORCE_ALIGNED
+#undef NOEXCEPT
 
 #endif /* matrix.hpp */

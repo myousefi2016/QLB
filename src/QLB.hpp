@@ -3,7 +3,8 @@
  *	(c) 2015 Fabian Thüring, ETH Zurich
  *
  *	Dirac Solver with Quantum Lattice Boltzmann scheme.
- *	This file contains the class definition of QLB.
+ *	This file contains the class definition of QLB and all other
+ *	definitions used in QLB*.cpp files.
  *
  *	@References
  *	Isotropy of three-dimensional quantum lattice Boltzmann schemes, 
@@ -44,13 +45,13 @@ public:
 #endif
 
 	// === typedefs ===
-	typedef std::complex<float_t> complex_t;
-	typedef std::vector<float_t> fvec_t;
-	typedef std::vector<int> ivec_t;
-	typedef std::vector<bool> bvec_t;
-	typedef matND<complex_t> cmat_t;
-	typedef matND<float_t> fmat_t;
-	typedef matN4D<complex_t> c4mat_t;
+	typedef std::complex<float_t>                                    complex_t;
+	typedef std::vector<float_t, aligned_allocator<float_t, 64> >    fvec_t;
+	typedef std::vector<int, aligned_allocator<int, 64> >            ivec_t;
+	typedef std::vector<bool>                                        bvec_t;
+	typedef matND<complex_t>                                         cmat_t;
+	typedef matND<float_t>                                           fmat_t;
+	typedef matN4D<complex_t>                                        c4mat_t;
 	
 	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3, potential = 4 };
 	enum render_t { SOLID = 0x0005, WIRE = 0x0003 };
@@ -78,11 +79,11 @@ public:
 	 *	@param 	dx      Spatial discretization
 	 *	@param	mass    Mass of the particles
 	 *	@param 	dt      Temporal discretization
-	 *	@param 	V_indx Index of the potential function V
-	 *	                0: harmonic potential
-	 *	                1: no potential
+	 *	@param 	V_indx  Index of the potential function V
+	 *	                0: no potential
+	 *	                1: harmonic potential
 	 *	@param 	plot_	Boolean vector to indicate which quantities are written 
-	 *	                to a output file when calling 'write_content_to_file'
+	 *	                to a output file when calling 'QLB::write_content_to_file()'
 	 *	                [ 0] :  all
 	 *	                [ 1] :  spread
 	 *	                [ 2] :  spinor1
@@ -106,7 +107,7 @@ public:
 	 */
 	~QLB();
 	
-	// === Initialisation ===
+	// === Initialization ===
 	
 	/** 
 	 *	Allocates GPU memory needed during simulation
@@ -129,7 +130,7 @@ public:
 	// === Initial condition ===
 	
 	/** 
-	 *	Inital condition in which the positive energy, spin-up component is 
+	 *	Initial condition in which the positive energy, spin-up component is 
 	 *	a spherically symmetric Gaussian wave packet with spread delta0.
 	 * 	spinor0 = C * exp( -(x^2 + y^2) / (4 * delta0^2) )
 	 *	@file 	QLB.cpp	
@@ -231,7 +232,6 @@ public:
 	 */
 	void print_matrix(const c4mat_t& m, std::size_t k) const;
 	
-
 	/** 
  	 *	Write the current content of all specified quantities (entries of 
  	 *	plot array) to the corresponding file. 
@@ -241,11 +241,10 @@ public:
 	 */
 	void write_content_to_file();
 	
-	
 	/** 
 	 *	Adjust the scaling of the rendered scene
-	 *	@param 	change_scaling	-1: decrese by factor of 2.0
-	 * 	                         1: increse by factor of 2.0
+	 *	@param 	change_scaling	-1: decrease by factor of 2.0
+	 * 	                         1: increase by factor of 2.0
 	 */
 	inline void change_scaling(int change_scaling) 
 	{ 

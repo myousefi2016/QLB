@@ -55,7 +55,6 @@ void ShaderLoader::load_from_file(const char* filename, GLenum shader_type, bool
 	is_valid_ = true;
 	try
 	{
-		// Setup streams
 		std::stringstream sout; 
 		std::ifstream fin(filename, std::ios::in);
 		
@@ -94,7 +93,7 @@ void ShaderLoader::load_from_file(const char* filename, GLenum shader_type, bool
 	}
 	catch(std::exception &e)
 	{
-		// An error occured (we issue a warning and continue)
+		// An error occurred (we issue a warning and continue)
 		is_valid_ = false;
 		WARNING(e.what());
 	}
@@ -129,7 +128,7 @@ void ShaderLoader::load_from_string(const char* src, GLenum shader_type, bool de
 	}
 	catch(std::exception &e)
 	{
-		// An error occured (we issue a warning and continue)
+		// An error occurred (we issue a warning and continue)
 		is_valid_ = false;
 		WARNING(e.what());
 	}
@@ -176,10 +175,8 @@ void Shader::add_shader(const ShaderLoader& shader)
 		glLinkProgram(program_);
 		glCheckLastError();
 	
-		// Check if linking was successful
 		check_linking(program_);
-
-		// Detach the shader
+		
 		glDetachShader(program_, shader.shader());
 	}
 	catch(std::exception &e)
@@ -217,10 +214,8 @@ void Shader::add_shaders(const ShaderLoader& shader_vertex,
 		glLinkProgram(program_);
 		glCheckLastError();
 	
-		// Check if linking was successful
 		check_linking(program_);
 
-		// Detach the shaders
 		glDetachShader(program_, shader_vertex.shader());
 		glDetachShader(program_, shader_fragment.shader());
 	}

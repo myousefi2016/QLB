@@ -25,6 +25,7 @@
     <ClInclude Include="..\src\GLerror.hpp" />
     <ClInclude Include="..\src\GLUTlight.hpp" />
     <ClInclude Include="..\src\GLUTmain.hpp" />
+    <ClInclude Include="..\src\GLUTtextbox.hpp" />
     <ClInclude Include="..\src\GLUTui.hpp" />
     <ClInclude Include="..\src\matrix.hpp" />
     <ClInclude Include="..\src\QLB.hpp" />
@@ -35,6 +36,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\GLUTlight.cpp" />
     <ClCompile Include="..\src\GLUTmain.cpp" />
+    <ClCompile Include="..\src\GLUTtextbox.cpp" />
     <ClCompile Include="..\src\GLUTui.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\QLB.cpp" />

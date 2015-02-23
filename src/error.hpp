@@ -25,9 +25,9 @@
 #endif 
 
 #ifdef _WIN32
- #define NO_RETURN		__declspec(noreturn)
+ #define NO_RETURN	__declspec(noreturn)
 #else
- #define NO_RETURN		__attribute__((noreturn))
+ #define NO_RETURN	__attribute__((noreturn))
 #endif
 
 #define COLOR_RED       0
@@ -50,7 +50,7 @@ public:
 	 *	@param colour	0: red
 	 *	                1: green
 	 *	                2: magenta
-	 *					3: strong white
+	 *	                3: strong white
 	 */
 	virtual void set_color(int color) = 0;
 	
@@ -113,10 +113,10 @@ public:
 	{
 		is_terminal_ = isatty(STDOUT_FILENO);
 		
-		color_table_.push_back("\x1b[1;31m"); 	// red
-		color_table_.push_back("\x1b[1;32m"); 	// green
-		color_table_.push_back("\x1b[1;35m"); 	// magenta
-		color_table_.push_back("\x1b[1m"); 		// strong white
+		color_table_.push_back("\x1b[1;31m"); // red
+		color_table_.push_back("\x1b[1;32m"); // green
+		color_table_.push_back("\x1b[1;35m"); // magenta
+		color_table_.push_back("\x1b[1m");    // strong white
 	}
 	
 	~ConsoleColor() 

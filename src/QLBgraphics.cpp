@@ -102,7 +102,7 @@ void QLB::init_GL()
 
 void QLB::prepare_arrays()
 {
-	// Copy to vertex array
+	// Copy data to vertex array
 	switch( current_scene_ )
 	{
 		case spinor0:
@@ -146,6 +146,7 @@ void QLB::prepare_arrays()
 	 *     |                                   |
 	 *   (i,j) ------> (ik,j)                  x ------> a
 	 */
+
 	float_t a1, a2, a3, b1, b2, b3, norm;
 	float_t signa = 1.0, signb = 1.0;
 	int ik, jk;

@@ -8,7 +8,7 @@ void main (void)
    vec3 R = normalize(-reflect(L,N));  
  
    // calculate Ambient Term:  
-   vec4 Iamb = gl_FrontLightProduct[0].ambient;    
+   vec4 Iamb = gl_FrontLightProduct[0].ambient;  
 
    // calculate Diffuse Term:  
    vec4 Idiff = gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);

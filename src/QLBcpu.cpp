@@ -28,7 +28,7 @@ QLB::float_t QLB::V_free(int i, int j) const
 // === Simulation ===
 
 /**
- *	The RHS of the eqauation is (rotated collision matrices):
+ *	The RHS of the equation is (rotated collision matrices):
  *
  *	X * ( i*g*I + i*wc*Beta ) * Xinv
  *
@@ -42,9 +42,9 @@ void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
 {
 	float_t V_ij;
 	if(V_indx_ == 0)
-		V_ij = V_harmonic(i,j);
+		V_ij = V_free(i,j);
 	else
-		V_ij = V_free(i,j); 
+		V_ij = V_harmonic(i,j); 
 
 	// Precompute frequently used values
 	const float_t m = 0.5 * mass_* dt_;
@@ -83,9 +83,9 @@ void QLB::Qhat_Y(int i, int j, QLB::cmat_t& Q) const
 	// Precompute frequently used values
 	float_t V_ij;
 	if(V_indx_ == 0)
-		V_ij = V_harmonic(i,j);
+		V_ij = V_free(i,j);
 	else
-		V_ij = V_free(i,j); 
+		V_ij = V_harmonic(i,j); 
 
 	const float_t m = 0.5 * mass_* dt_;
 	const float_t g = 0.5 * V_ij * dt_;
@@ -267,7 +267,7 @@ void QLB::evolution_CPU()
 		std::cout << std::setw(15) << deltax_;
 		std::cout << std::setw(15) << deltay_;
 		
-		if(V_indx_ == 1) // no potential
+		if(V_indx_ == 0) // no potential
 		{
 			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
 							              (4.0*mass_*mass_*delta0_*delta0_) );
@@ -276,10 +276,10 @@ void QLB::evolution_CPU()
 		std::cout << std::endl;
 	}
 	
-	// Wirte to spread.dat (if requested)
+	// Write to spread.dat (if requested)
 	if(plot_[1] || plot_[0])
 	{	
-		if(t_*dt_ == 0) // Delete the old content
+		if(t_*dt_ == 0) // Delete the old content of the file
 			fout.open("spread.dat");
 		else
 			fout.open("spread.dat", std::ios::app);
@@ -288,7 +288,7 @@ void QLB::evolution_CPU()
 		fout << std::setw(15) << deltax_;
 		fout << std::setw(15) << deltay_;
 		
-		if(V_indx_ == 1) // no potential
+		if(V_indx_ == 0) // no potential
 		{
 			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
 							              (4.0*mass_*mass_*delta0_*delta0_) );
