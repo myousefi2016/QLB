@@ -228,8 +228,7 @@ QLB* UserInterface::reset(QLB* qlb_old)
 	                       qlb_old->mass(), 
 	                       qlb_old->dt(), 
 	                       qlb_old->V(),
-	                       qlb_old->plot(),
-	                       qlb_old->verbose());
+	                       qlb_old->opt());
 	delete qlb_old;
 	new_qlb->init_GL();	
 	

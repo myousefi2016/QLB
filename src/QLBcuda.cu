@@ -23,7 +23,7 @@ void QLB::free_device_arrays()
 void QLB::init_device()
 {
 	// Print CUDA informations if requested
-	if(verbose_)
+	if(opt_.verbose())
 	{
 		std::cout << " === CUDA Info === " << std::endl;
 		cudaDeviceProp deviceProp; cudaGetDeviceProperties(&deviceProp, 0);

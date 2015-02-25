@@ -33,7 +33,7 @@
  #define NO_RETURN     __attribute__((noreturn))
 #endif
 
-// Compile time warnings #pragma message WARN("message")
+// Compile-time warnings #pragma message WARN("message")
 #if _MSC_VER
  #define STRINGIFICATION_IMPL(x) #x
  #define STRINGIFICATION(x) STRINGIFICATION_IMPL(x)
@@ -41,6 +41,25 @@
  #define WARN(exp) (FILE_LINE_LINK "WARNING: " exp)
 #else
  #define WARN(exp) ("WARNING: " exp)
+#endif
+
+// Branch prediction
+#if defined(__GNUC__) && __GNUC__ >= 4
+ #define LIKELY(x)   (__builtin_expect((x), 1))
+ #define UNLIKELY(x) (__builtin_expect((x), 0))
+#else
+ #define LIKELY(x)   (x)
+ #define UNLIKELY(x) (x)
+#endif
+
+// Windows workaround
+#ifdef SPRINTF
+#undef SPRINTF
+#endif
+#ifdef _MSC_VER
+ #define SPRINTF(buf, ...) sprintf_s((buf), __VA_ARGS__)
+#else
+ #define SPRINTF(buf, ...) std::sprintf((buf), __VA_ARGS__)
 #endif
 
 /****************************

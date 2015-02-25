@@ -10,8 +10,7 @@
 
 // === CONSTRUCTOR === 
 
-QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, 
-         const bvec_t& plot, bool verb)
+QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt)
 	:	
 		// === Simulation variables ===
 		L_(L),
@@ -42,26 +41,17 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx,
 		array_vertex_(3*L*L),
 		array_normal_(3*L*L), 
 		// === IO ===
-		verbose_(verb),
-		plot_(plot)
+		opt_(opt)
 {
 	// Set initial condition
 	initial_condition_gaussian();
 	calculate_macroscopic_vars();
-
+	
 	// Copy arrays to device
 #ifndef QLB_NO_CUDA
 	allocate_device_arrays();
 	init_device();
 #endif
-	
-	std::cout << "Total Memory " << getTotalSystemMemory() << std::endl;
-
-	if(verbose_) 
-	{
-		std::cout << " === QLB ===" << std::endl;
-		std::cout << std::left << std::setprecision(6);
-	}
 }
 
 // === DESTRUCTOR ====
@@ -111,6 +101,29 @@ void QLB::evolution()
 
 
 // === PRINTING ===
+
+void QLB::print_spread()
+{
+	calculate_spread();
+	
+	// Schrödinger solution
+	float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ / 
+		                         (4.0*mass_*mass_*delta0_*delta0_) );
+
+	std::cout << std::left << std::setprecision(6);
+
+	std::cout << std::setw(15) << "time";
+	std::cout << std::setw(15) << "deltaX";
+	std::cout << std::setw(15) << "deltaY";
+	if(V_indx_ == 0) std::cout << std::setw(15) << "Schrödinger";
+	std::cout << std::endl;
+
+	std::cout << std::setw(15) << t_*dt_;
+	std::cout << std::setw(15) << deltax_;
+	std::cout << std::setw(15) << deltay_;
+	if(V_indx_ == 0) std::cout << std::setw(15) << deltax_t;	
+	std::cout << std::endl;
+}
 
 /**
  *	Generic matrix print function (use with wrapper functions)
@@ -208,74 +221,87 @@ static inline void verbose_write_to_file(msg_t filename)
 
 void QLB::write_content_to_file()
 {
-	if(plot_[2] || plot_[0]) // spinor1
+	calculate_macroscopic_vars();
+
+	// We have to mask and shift to get the bit
+	
+	// spinor1
+	if((opt_.plot() & QLBopt::spinor1) >> 2 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor1.dat");
-		if(verbose_) verbose_write_to_file("spinor1.dat");
+		if(opt_.verbose()) verbose_write_to_file("spinor1.dat");
 		print_mat(spinor_, L_, L_, 4, 0, fout);
 		fout.close();	
 	}
 	
-	if(plot_[3] || plot_[0]) // spinor2
+	// spinor2
+	if((opt_.plot() & QLBopt::spinor2) >> 3 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor2.dat");
-		if(verbose_) verbose_write_to_file("spinor2.dat");
+		if(opt_.verbose()) verbose_write_to_file("spinor2.dat");
 		print_mat(spinor_, L_, L_, 4, 1, fout);
 		fout.close();	
 	}
 
-	if(plot_[4] || plot_[0]) // spinor3
+	// spinor3
+	if((opt_.plot() & QLBopt::spinor3) >> 4 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor3.dat");
-		if(verbose_) verbose_write_to_file("spinor3.dat");
+		if(opt_.verbose()) verbose_write_to_file("spinor3.dat");
 		print_mat(spinor_, L_, L_, 4, 2, fout);
 		fout.close();	
 	}
 
-	if(plot_[5] || plot_[0]) // spinor4
+	// spinor4
+	if((opt_.plot() & QLBopt::spinor4) >> 5 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor4.dat");
-		if(verbose_) verbose_write_to_file("spinor4.dat");
+		if(opt_.verbose()) verbose_write_to_file("spinor4.dat");
 		print_mat(spinor_, L_, L_, 4, 3, fout);
 		fout.close();	
 	}
 
-	if(plot_[6] || plot_[0]) // density
+	// density
+	if((opt_.plot() & QLBopt::density) >> 6 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("density.dat");
-		if(verbose_) verbose_write_to_file("density.dat");
+		if(opt_.verbose()) verbose_write_to_file("density.dat");
 		print_mat_eval(rho_, L_, L_, 1, 0, fout, 3);
 		fout.close();
 	}
 
-	if(plot_[7] || plot_[0]) // currentX
+	// currentX
+	if((opt_.plot() & QLBopt::currentX) >> 7 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("currentX.dat");
-		if(verbose_) verbose_write_to_file("currentX.dat");
+		if(opt_.verbose()) verbose_write_to_file("currentX.dat");
 		print_mat_eval(currentX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
-	if(plot_[8] || plot_[0]) // currentY
+	// currentY
+	if((opt_.plot() & QLBopt::currentY) >> 8 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("currentY.dat");
-		if(verbose_) verbose_write_to_file("currentY.dat");
+		if(opt_.verbose()) verbose_write_to_file("currentY.dat");
 		print_mat_eval(currentY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
-	if(plot_[9] || plot_[0]) // veloX
+	// veloX
+	if((opt_.plot() & QLBopt::veloX) >> 9 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("veloX.dat");
-		if(verbose_) verbose_write_to_file("veloX.dat");
+		if(opt_.verbose()) verbose_write_to_file("veloX.dat");
 		print_mat_eval(veloX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 
-	if(plot_[10] || plot_[0]) // veloY
+	// veloY
+	if((opt_.plot() & QLBopt::veloY) >> 10 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("veloY.dat");
-		if(verbose_) verbose_write_to_file("veloY.dat");
+		if(opt_.verbose()) verbose_write_to_file("veloY.dat");
 		print_mat_eval(veloY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}

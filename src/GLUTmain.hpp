@@ -2,7 +2,7 @@
  *	Quantum Lattice Boltzmann 
  *	(c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Run the simulation using GLUT for window management. 
+ *	Visualize the simulation using GLUT for window management. 
  */
 
 #ifndef GLUT_MAIN_HPP
@@ -19,15 +19,6 @@
 #include "utility.hpp"
 #include "CmdArgParser.hpp"
 #include "GLUTui.hpp"
-
-#ifdef SPRINTF
-#undef SPRINTF
-#endif
-#ifdef _MSC_VER
- #define SPRINTF(buf, ...) sprintf_s((buf), __VA_ARGS__)
-#else
- #define SPRINTF(buf, ...) std::sprintf((buf), __VA_ARGS__)
-#endif
 
 void QLB_run_glut(int argc, char* argv[]);
 void init_GL(int argc, char* argv[]);

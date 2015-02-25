@@ -130,9 +130,9 @@ void QLB::prepare_arrays()
 				for(unsigned j = 0; j < L_; ++j)
 				{
 					if(V_indx_ == 0)
-						array_vertex_[y(i,j)] = scaling_*std::abs(V_harmonic(i,j));
-					else
 						array_vertex_[y(i,j)] = std::abs(V_free(i,j)); 
+					else
+						array_vertex_[y(i,j)] = scaling_*std::abs(V_harmonic(i,j));
 				}
 			break;
 	}

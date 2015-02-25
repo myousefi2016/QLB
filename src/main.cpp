@@ -5,6 +5,8 @@
  *	Setup the simulation and call the appropriate functions for launching
  *	- QLB_run_no_gui (to run without a GUI) pass 'gui=none' (default)
  *	- QLB_run_glut   (to run with GLUT) pass '--gui=glut'
+ *
+ *	For further assistance try '--help'
  */
  
 // System includes 
@@ -47,13 +49,14 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	const QLB::float_t dx = cmd.dx() ? cmd.dx_value() : 1.5625;
 	const QLB::float_t mass = cmd.mass() ? cmd.mass_value() : 0.1;
 	const QLB::float_t dt = cmd.dt() ? cmd.dt_value() : 1.5625;
-
 	unsigned tmax = cmd.tmax() ? cmd.tmax_value() : 100;
 	
-	QLB  QLB_system(L, dx, mass, dt, cmd.V(), cmd.plot(), cmd.verbose());
+	QLBopt opt(cmd.plot(), cmd.verbose(), cmd.stats());
+	
+	// Setup the system
+	QLB  QLB_system(L, dx, mass, dt, cmd.V(), opt);
 	
 	Timer t;
-	
 	t.start();
 	
 	// Run simulation
@@ -61,10 +64,12 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 		QLB_system.evolution();
 
 	double tsim = t.stop();
-	std::cout << "Simulation time : " << tsim << std::endl;
 	
 	// Write values to file
+	QLB_system.print_spread();
 	QLB_system.write_content_to_file();	
+	
+	std::cout << "Simulation time : " << tsim << std::endl;
 }
 
 

@@ -30,6 +30,7 @@
 #include "VBO.hpp"
 #include "Shader.hpp"
 #include "matrix.hpp"
+#include "QLBopt.hpp"
 
 /********************************
  *  Quantum Lattice Boltzmann   *
@@ -48,7 +49,6 @@ public:
 	typedef std::complex<float_t>                                    complex_t;
 	typedef std::vector<float_t, aligned_allocator<float_t, 64> >    fvec_t;
 	typedef std::vector<int, aligned_allocator<int, 64> >            ivec_t;
-	typedef std::vector<bool>                                        bvec_t;
 	typedef matND<complex_t>                                         cmat_t;
 	typedef matND<float_t>                                           fmat_t;
 	typedef matN4D<complex_t>                                        c4mat_t;
@@ -82,24 +82,11 @@ public:
 	 *	@param 	V_indx  Index of the potential function V
 	 *	                0: no potential
 	 *	                1: harmonic potential
-	 *	@param 	plot_	Boolean vector to indicate which quantities are written 
-	 *	                to a output file when calling 'QLB::write_content_to_file()'
-	 *	                [ 0] :  all
-	 *	                [ 1] :  spread
-	 *	                [ 2] :  spinor1
-	 *	                [ 3] :  spinor2
-	 *	                [ 4] :  spinor3
-	 *	                [ 5] :  spinor4
-	 *	                [ 6] :  density
-	 *	                [ 7] :  currentX
-	 *	                [ 8] :  currentY
-	 *	                [ 9] :  veloX
-	 *	                [10] :  veloY
-	 *	@param 	verb    Run in verbose mode (optional : default false)
+	 *	@param  opt     Class defining options concerning plotting etc. 
+	 *	                (see at QLBopt (QLBopt.hpp) for further information)
 	 *	@file 	QLB.cpp
 	 */
-	QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx,
-	    const bvec_t& plot, bool verb = false);
+	QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt);
 	
 	/** 
 	 *	Destructor
@@ -158,10 +145,23 @@ public:
 	void Qhat_Y(int i, int j, cmat_t& Q) const;
 
 	/**
-	 *	Calculate the macroscopic variables
+	 *	Calculate the macroscopic variables (density, current, velocities)
 	 *	@file 	QLBcpu.cpp 
 	 */
 	void calculate_macroscopic_vars();	
+	
+	/**
+	 *	Calculate the spreads (deltaX and deltaY)
+	 *	@file 	QLBcpu.cpp 
+	 */
+	void calculate_spread();
+
+	/**
+	 *	Print the current spreads in the format:
+	 *	time  -  deltaX  -  deltaY  -  [exact solution if V=free]
+	 *	@file 	QLB.cpp 
+	 */	
+	void print_spread();
 
 	// === Potential ===
 	
@@ -259,13 +259,12 @@ public:
 	inline float_t t() const { return t_; }
 	inline float_t dt() const { return dt_; }
 	inline int V() const { return V_indx_; }
-	inline bool verbose() const { return verbose_; }
-	inline bvec_t plot() const { return plot_; }
 	inline float_t deltax() const { return deltax_; }
 	inline float_t deltay() const { return deltay_; }
 	inline float_t scaling() const { return scaling_;}
 	inline scene_t current_scene() const { return current_scene_; }
 	inline render_t current_render() const { return current_render_; }
+	inline QLBopt opt() const { return opt_; }
 	
 	// === Setter ===
 	inline void set_current_scene(scene_t cs)   { current_scene_ = cs; }
@@ -315,9 +314,8 @@ private:
 	Shader shader_;
 	
 	// === IO ===
+	QLBopt opt_;
 	std::ofstream fout;
-	bool verbose_;
-	bvec_t plot_;
 };
 
 #endif /* QLB.hpp */

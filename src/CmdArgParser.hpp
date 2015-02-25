@@ -165,7 +165,6 @@ class CmdArgParser
 public:
 	typedef std::vector<std::string>::iterator iterator_t;
 	typedef std::vector<std::string> svec_t;
-	typedef std::vector<bool> bvec_t;
 
 	/**
 	 *	Parse all arguments in argv
@@ -187,6 +186,9 @@ public:
 		
 			// --verbose
 			verbose_ = find("--verbose").is_present();
+		
+			// --stats
+			stats_ = find("--stats").is_present();
 		
 			// --L=X
 			CmdArgNumeric<int> L = find_numeric<int>("--L");
@@ -228,7 +230,7 @@ public:
 				                      " '--tmax=X'");
 			tmax_value_ = tmax.value();
 			
-			// --gui=[glut|qt|none]
+			// --gui=[glut|none]
 			CmdArgString gui = find_string("--gui");
 			gui_ = 0;
 			if(gui.is_present() && compare(gui.str(),"glut"))
@@ -243,10 +245,7 @@ public:
 			CmdArgString V = find_string("--V");
 			V_ = 0;
 			if(V.is_present() && compare(V.str(),"free"))
-			{	
 				V_ = 0;
-				std::cout << "free" << std::endl;
-			}
 			else if(V.is_present() && compare(V.str(),"harmonic"))
 				V_ = 1;
 			else if(V.is_present())
@@ -256,7 +255,7 @@ public:
 			// --plot=[all,spread,spinor1,spinor2,spinor3,spinor4,density,
 			//         currentX,currentY,veloX,veloY]
 			CmdArgString plot = find_string("--plot");
-			plot_.resize(11,false);
+			plot_ = 0;
 			if(plot.is_present())
 				set_plot_args(plot.str());
 											
@@ -296,9 +295,10 @@ public:
 	inline float mass_value() const { return mass_value_; }
 	inline bool tmax() const { return tmax_; }
 	inline unsigned tmax_value() const { return tmax_value_; }
-	inline int V() const { return V_; } // V = [0:harmonic, 1:free]
-	inline int gui() const { return gui_; } // gui = [0:glut, 1:qt, 2:none]
-	inline bvec_t plot() const { return plot_; }
+	inline int V() const { return V_; }     //   V = [0:harmonic, 1:free]
+	inline int gui() const { return gui_; } // gui = [0:glut, 2:none]
+	inline unsigned int plot() const { return plot_; }
+	inline bool stats() const { return stats_; }
 
 private:
 
@@ -480,13 +480,13 @@ private:
 		print_help_line("--help","Display this information");
 		print_help_line("--version","Display version information");
 		print_help_line("--verbose","Enable verbose mode");
-		std::string expl_gui[2] = {"Select the window system to run the simulation,"
-		                           " where S","is one of [glut|none]"}; 
+		std::string expl_gui[2] = {"Visualize the output by selecting the window system",
+		                           "to run the simulation, where S is one of [glut|none]"}; 
 		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
 		print_help_line("--V=S","Set the potential to S, where S is one of "
 		                "[harmonic|free]");
-		print_help_line("--tmax=X","Run the simulation in the interval [0,X]" );
+		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
 		print_help_line("--L=X","Set the grid size to X where X > 1");
 		print_help_line("--dx=X","Set spatial discretization to X where X > 0");
 		print_help_line("--dt=X","Set temporal discretization to X where X > 0");
@@ -497,6 +497,8 @@ private:
 		                           "[all, spread, spinor1, spinor2, spinor3, spinor4,"
 		                           " density,"," currentX, currentY, veloX, veloY]"};
 		print_help_line("--plot=S",svec_t(expl_plot, expl_plot+4));
+		print_help_line("--stats","Time each run of the simulation and display stats");
+		
 		exit(EXIT_SUCCESS);
 	}
 
@@ -519,18 +521,20 @@ private:
 
 
 	/**
-	 *	Prepare the boolean array to indicate which files need to be plotted by
-	 *	searching 'str' for known arguments: 
+	 *	Set the bits to indicate which files need to be plotted by searching 
+	 *	'str' for known arguments: 
 	 *	[all,spread,spinor1,spinor2,spinor3,spinor4,density,currentX,currentY,
 	 *	 veloX,veloY]
 	 *	@param 		str		string of commands (non empty)
 	 */
 	void set_plot_args(std::string str)
 	{
-		const std::size_t nknown_args = plot_.size();
+
 		const std::string known_args[11] = {"all","spread","spinor1","spinor2",
 		                                    "spinor3","spinor4","density",
 		                                    "currentX","currentY","veloX","veloY"};
+		const std::size_t nknown_args = 11;
+		
 		bool match = false;
 		std::size_t delimiter_pos = str.find(",");
 		std::string command;
@@ -555,7 +559,7 @@ private:
 				if(command.compare(known_args[i]) == 0)
 				{
 					match = true;
-					plot_[i] = true;
+					plot_ |= 1 << i;
 				}
 
 			if(!match)
@@ -673,7 +677,8 @@ private:
 	unsigned tmax_value_;
 	int gui_;
 	int V_;
-	bvec_t plot_;
+	unsigned int plot_;
+	bool stats_;
 	
 	// === IO ===
 	std::size_t width_cmd;

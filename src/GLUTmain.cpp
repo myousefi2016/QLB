@@ -2,7 +2,7 @@
  *	Quantum Lattice Boltzmann 
  *	(c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Run the simulation using GLUT for window management. 
+ *	Visualize the simulation using GLUT for window management. 
  */
 
 #include "GLUTmain.hpp"
@@ -24,7 +24,9 @@ void QLB_run_glut(int argc, char* argv[])
 	const QLB::float_t mass = cmd->mass() ? cmd->mass_value() : 0.1;
 	const QLB::float_t dt   = cmd->dt()   ? cmd->dt_value() : 1.5625;
 	
-	QLB_system = new QLB(L, dx, mass, dt, cmd->V(), cmd->plot(), cmd->verbose());
+	QLBopt opt(cmd->plot(), cmd->verbose(), cmd->stats());
+	
+	QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
 
 	// Setup UserInterface engine
 	int width = 800, height = 800;

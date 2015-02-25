@@ -257,28 +257,12 @@ void QLB::evolution_CPU()
 					spinor_(i,j,mk) += Yinv(mk,nk)*spinorrot_(i,j,nk);
 		}
 	}
-
-	calculate_macroscopic_vars();
-
-	// Wirte to STDOUT (if requested)
-	if(verbose_)
-	{
-		std::cout << std::setw(15) << t_*dt_;
-		std::cout << std::setw(15) << deltax_;
-		std::cout << std::setw(15) << deltay_;
-		
-		if(V_indx_ == 0) // no potential
-		{
-			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ / 
-			                             (4.0*mass_*mass_*delta0_*delta0_) );
-			std::cout << std::setw(15) << deltax_t;
-		}
-		std::cout << std::endl;
-	}
 	
 	// Write to spread.dat (if requested)
-	if(plot_[1] || plot_[0])
-	{	
+	if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
+	{
+		calculate_spread();
+		
 		if(t_*dt_ == 0) // Delete the old content of the file
 			fout.open("spread.dat");
 		else
@@ -299,7 +283,7 @@ void QLB::evolution_CPU()
 	}
 }
 
-void QLB::calculate_macroscopic_vars()
+void QLB::calculate_spread()
 {
 	float_t deltax_nom = 0.0, deltax_den = 0.0;
 	float_t deltay_nom = 0.0, deltay_den = 0.0;
@@ -308,7 +292,6 @@ void QLB::calculate_macroscopic_vars()
 	const float_t dV = dx_*dx_;
 	
 	for(unsigned i = 0; i < L_; ++i)
-	{
 		for(unsigned j = 0; j < L_; ++j)
 		{
 			x = dx_*(i-0.5*(L_-1));
@@ -321,7 +304,20 @@ void QLB::calculate_macroscopic_vars()
 			// Delta Y
 			deltay_nom += y*y*std::norm(spinor_(i,j,0))*dV;
 			deltay_den += std::norm(spinor_(i,j,0))*dV;
+		}
 
+	// Update global variables
+	deltax_ = std::sqrt(deltax_nom/deltax_den);
+	deltay_ = std::sqrt(deltay_nom/deltay_den);
+}
+
+
+void QLB::calculate_macroscopic_vars()
+{
+	for(unsigned i = 0; i < L_; ++i)
+	{
+		for(unsigned j = 0; j < L_; ++j)
+		{
 			currentX_(i,j) = 0;
 			currentY_(i,j) = 0;
 
@@ -344,8 +340,4 @@ void QLB::calculate_macroscopic_vars()
 			veloY_(i,j) = currentY_(i,j)/rho_(i,j);
 		}
     }
-
-	// Update global variables
-	deltax_ = std::sqrt(deltax_nom/deltax_den);
-	deltay_ = std::sqrt(deltay_nom/deltay_den);
 }
