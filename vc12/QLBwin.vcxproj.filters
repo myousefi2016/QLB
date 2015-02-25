@@ -51,6 +51,9 @@
     <ClInclude Include="..\src\GLUTtextbox.hpp">
       <Filter>GLUT</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\QLBopt.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -72,9 +75,6 @@
       <Filter>QLB</Filter>
     </ClCompile>
     <ClCompile Include="..\src\QLBgraphics.cpp">
-      <Filter>QLB</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\QLBdummyCube.cpp">
       <Filter>QLB</Filter>
     </ClCompile>
     <ClCompile Include="..\src\GLUTlight.cpp">

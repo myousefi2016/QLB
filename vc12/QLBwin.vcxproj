@@ -29,6 +29,7 @@
     <ClInclude Include="..\src\GLUTui.hpp" />
     <ClInclude Include="..\src\matrix.hpp" />
     <ClInclude Include="..\src\QLB.hpp" />
+    <ClInclude Include="..\src\QLBopt.hpp" />
     <ClInclude Include="..\src\Shader.hpp" />
     <ClInclude Include="..\src\utility.hpp" />
     <ClInclude Include="..\src\VBO.hpp" />
@@ -41,7 +42,6 @@
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\QLB.cpp" />
     <ClCompile Include="..\src\QLBcpu.cpp" />
-    <ClCompile Include="..\src\QLBdummyCube.cpp" />
     <ClCompile Include="..\src\QLBgraphics.cpp" />
     <ClCompile Include="..\src\Shader.cpp" />
   </ItemGroup>
