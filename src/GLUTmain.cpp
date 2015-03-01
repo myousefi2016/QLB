@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Visualize the simulation using GLUT for window management. 
+ *  Visualize the simulation using GLUT for window management. 
  */
 
 #include "GLUTmain.hpp"

@@ -1,12 +1,12 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Error handling code for fatal_error's and warning's with support
- *	for coloring of terminal messages (Windows/UNIX).
+ *  Error handling code for fatal_error's and warning's with support
+ *  for coloring of terminal messages (Windows/UNIX).
  *	
- *	The functions should be called with FATAL_ERROR("message") and 
- *	WARNING("message").
+ *  The functions should be called with FATAL_ERROR("message") and 
+ *  WARNING("message").
  */
 
 #ifndef ERROR_HPP

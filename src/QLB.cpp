@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Implementations of the quantum lattice Boltzmann methods which are shared
- *	by the CPU and GPU implementation.
+ *  Implementations of the quantum lattice Boltzmann methods which are shared
+ *  by the CPU and GPU implementation.
  */
  
 #include "QLB.hpp"

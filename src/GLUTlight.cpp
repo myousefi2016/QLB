@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Class to handle lightning
+ *  Class to handle lightning
  */
 
 #include "GLUTlight.hpp"

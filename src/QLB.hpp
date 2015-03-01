@@ -1,14 +1,14 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Dirac Solver with Quantum Lattice Boltzmann scheme.
- *	This file contains the class definition of QLB and all other
- *	definitions used in QLB*.cpp files.
+ *  Dirac Solver with Quantum Lattice Boltzmann scheme.
+ *  This file contains the class definition of QLB and all other
+ *  definitions used in QLB*.cpp files.
  *
- *	@References
- *	Isotropy of three-dimensional quantum lattice Boltzmann schemes, 
- *	P.J. Dellar, D. Lapitski, S. Palpacelli, S. Succi, 2011
+ *  @References
+ *  Isotropy of three-dimensional quantum lattice Boltzmann schemes, 
+ *  P.J. Dellar, D. Lapitski, S. Palpacelli, S. Succi, 2011
  */
 
 #ifndef QLB_HPP

@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Warpper class for Vertex Buffer Objects (VBO)
+ *  Warpper class for Vertex Buffer Objects (VBO)
  */
 
 #ifndef VBO_HPP

@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Providing OpenGL utility functions to handle runtime errors.
- *	This file will also include the OpenGL and GLUT headers.
+ *  Providing OpenGL utility functions to handle runtime errors.
+ *  This file will also include the OpenGL and GLUT headers.
  */
 
 #ifndef GL_ERROR_HPP

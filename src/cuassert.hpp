@@ -1,14 +1,13 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Function to handle CUDA runtime errors.
- *	The function follows the same API as the standard cassert.
+ *  Function to handle CUDA runtime errors.
+ *  The function follows the same API as the standard cassert.
  *	
- * [EXAMPLE] 
+ *  [EXAMPLE] 
  *
- *	cuassert( cudaMalloc((void**)&device_array, 1024) );
- *
+ *  cuassert( cudaMalloc((void**)&device_array, 1024) );
  */
 
 #ifndef CUASSERT_HPP

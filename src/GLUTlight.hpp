@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Class to handle Light and shading, this class is part of
- *	the class UserInterface from GLUTui.hpp
+ *  Class to handle Light and shading, this class is part of
+ *  the class UserInterface from GLUTui.hpp
  */
 
 #ifndef GLUT_LIGHT_HPP

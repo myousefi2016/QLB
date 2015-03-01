@@ -1,12 +1,12 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Setup the simulation and call the appropriate functions for launching
- *	- QLB_run_no_gui (to run without a GUI) pass 'gui=none' (default)
- *	- QLB_run_glut   (to run with GLUT) pass '--gui=glut'
+ *  Setup the simulation and call the appropriate functions for launching
+ *  - QLB_run_no_gui (to run without a GUI) pass 'gui=none' (default)
+ *  - QLB_run_glut   (to run with GLUT) pass '--gui=glut'
  *
- *	For further assistance try '--help'
+ *  For further assistance try '--help'
  */
  
 // System includes 
@@ -64,7 +64,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	Timer t;
 	t.start();
 	
-	// Run simulation
+	// Run simulation in [0, dt*tmax]
 	while(tmax--)
 		QLB_system.evolution();
 

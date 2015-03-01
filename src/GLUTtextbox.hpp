@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Class to draw strings and text boxes in OpenGL, this class is used in
- *	UserInterface from GLUTui.hpp
+ *  Class to draw strings and text boxes in OpenGL, this class is used in
+ *  UserInterface from GLUTui.hpp
  */
 
 #ifndef GLUT_TEXTBOX_HPP
@@ -43,7 +43,7 @@ public:
 	 *	@param  has_border      boolean whether a border is drawn
 	 *	@param 	has_background  boolean whether a background is drawn
 	 *	@param  width_aligned   boolean whether the box is width aligned to the window
-	 *	@param  height_aligned   boolean whether the box is width aligned to the window  
+	 *	@param  height_aligned  boolean whether the box is width aligned to the window  
 	 */
 	TextBox(float x, float y, float w, float h, std::size_t nrow, std::size_t ncol, 
 	        int id, bool has_border, bool has_background, 

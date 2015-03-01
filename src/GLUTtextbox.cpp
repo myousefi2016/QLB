@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Class to draw strings and text boxes in OpenGL, this class is part of
- *	the class UserInterface from GLUTui.hpp
+ *  Class to draw strings and text boxes in OpenGL, this class is part of
+ *  the class UserInterface from GLUTui.hpp
  */
 
 #include "GLUTtextbox.hpp"

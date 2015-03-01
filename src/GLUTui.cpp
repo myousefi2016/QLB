@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	Implements a class to handle various user interactions.
+ *  Implements a class to handle various user interactions.
  */
  
 #include "GLUTui.hpp"

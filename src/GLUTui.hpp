@@ -1,9 +1,9 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	User Interface for the GLUT implementation to handle various user
- *	interaction.
+ *  User Interface for the GLUT implementation to handle various user
+ *  interaction.
  */
  
 #ifndef GLUT_UI_HPP

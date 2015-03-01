@@ -1,13 +1,13 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Query for different performance counters like CPU/GPU usage, memory usage 
- *	etc. The implementation is highly OS dependent although the interface
- *	is not.
+ *  Query for different performance counters like CPU/GPU usage, memory usage 
+ *  etc. The implementation is highly OS dependent although the interface
+ *  is not.
  *
- *	Credit for GPU usage counter:
- *	Open Hardware Monitor (http://code.google.com/p/open-hardware-monitor) 
+ *  Credit for GPU usage counter:
+ *  Open Hardware Monitor (http://code.google.com/p/open-hardware-monitor) 
  */
 
 #include "PerformanceCounter.hpp"

@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Providing a classes to handle GLSL Shaders.
+ *  Providing a classes to handle GLSL Shaders.
  */
 
 #ifndef SHADER_LOADER

@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	This file contains all the OpenGL context and handles rendering
+ *  This file contains all the OpenGL context and handles rendering
  */
  
 #include "QLB.hpp"
@@ -294,8 +294,8 @@ void QLB::prepare_arrays()
 				array_normal_[z(i,j)] = a1*b2 - a2*b1;
 
 				norm = std::sqrt(array_normal_[x(i,j)]*array_normal_[x(i,j)] + 
-					             array_normal_[y(i,j)]*array_normal_[y(i,j)] +
-					             array_normal_[z(i,j)]*array_normal_[z(i,j)]);
+				                 array_normal_[y(i,j)]*array_normal_[y(i,j)] +
+				                 array_normal_[z(i,j)]*array_normal_[z(i,j)]);
 				// normalize
 				array_normal_[x(i,j)] /= norm;
 				array_normal_[y(i,j)] /= norm;

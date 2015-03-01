@@ -1,8 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Several useful utility functions and classes (Timer)
+ *  Several useful utility functions and classes (Timer)
  */
 
 #ifndef UTILITY_HPP

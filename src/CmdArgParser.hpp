@@ -1,19 +1,19 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	This file contains the class "CmdArgParser" and it's friends which are 
- *	used to parse command-line input passed to the function main(...).
+ *  This file contains the class "CmdArgParser" and it's friends which are 
+ *  used to parse command-line input passed to the function main(...).
  *
- *	[EXAMPLE]
- *	The execution of the main program could look as follows:
- *	
- *	./main --foo
+ *  [EXAMPLE]
+ *  The execution of the main program could look as follows:
  * 
- *	The class CmdArgParser will then look for "--foo" and set the internal
- *	variables affiliated with this argument accordingly. The class supports 
- *	three types of arguments "--foo", "--foo=X" where X is some numerical 
- *	constant and "--foo=S" where S is a string. 
+ *  ./main --foo
+ * 
+ *  The class CmdArgParser will then look for "--foo" and set the internal
+ *  variables affiliated with this argument accordingly. The class supports 
+ *  three types of arguments "--foo", "--foo=X" where X is some numerical 
+ *  constant and "--foo=S" where S is a string. 
  */
 
 #ifndef CMD_ARG_PARSER_HPP
@@ -73,7 +73,7 @@ class CmdArg
 public:
 	/** 
 	 *	Represent a single command-line argument which is of the form "--command"
-	 *  @param is_present    boolean whether the command-line argument was passed.
+	 *	@param is_present    boolean whether the command-line argument was passed.
 	 */
 	CmdArg(bool is_present) : is_present_(is_present) {}
 
@@ -92,7 +92,7 @@ class CmdArgNumeric : public CmdArg
 public:
 	/** 
 	 *	Represent a single command-line argument which is of the form "--command=X"
-	 *  @param is_present    boolean whether the command-line argument 
+	 *	@param is_present    boolean whether the command-line argument 
 	 *	                     was passed.						
 	 *	@param value         value of the numerical constant (if present).
 	 */

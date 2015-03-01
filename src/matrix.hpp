@@ -1,41 +1,41 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Wrapper class for N dimensional square matrices (N x N) aswell as 
- *	N-dimensional square matrices with 4-dimensional vector as elements. 
- *	The matrix is stored in ROW MAJOR order, which means the LAST index is 
- *	varying the most. By default the memory is aligned on 64 byte which can
- *	be disable with the macro MATRIX_NO_ALIGN.
+ *  Wrapper class for N dimensional square matrices (N x N) aswell as 
+ *  N-dimensional square matrices with 4-dimensional vector as elements. 
+ *  The matrix is stored in ROW MAJOR order, which means the LAST index is 
+ *  varying the most. By default the memory is aligned on 64 byte which can
+ *  be disable with the macro MATRIX_NO_ALIGN.
  *	 
- *	The implementation will depend on the macro's MATRIX_USE_STL and 
- *	MATRIX_USE_CARRAY. If MATRIX_USE_CARRAY is defined plain c-arrays are used 
- *	as a container, otherwise std::vector is used i.e MATRIX_USE_STL is defined 
- *	by default.
+ *  The implementation will depend on the macro's MATRIX_USE_STL and 
+ *  MATRIX_USE_CARRAY. If MATRIX_USE_CARRAY is defined plain c-arrays are used 
+ *  as a container, otherwise std::vector is used i.e MATRIX_USE_STL is defined 
+ *  by default.
  *
- *	[EXAMPLE]
- *	Creating a simple 2x2 matrix
+ *  [EXAMPLE]
+ *  Creating a simple 2x2 matrix
+ *  
+ *  	a	b
+ *  	c	d
+ *
+ *  Initialization :
+ *
+ *  matND<double> matrix(2);	
  *	
- *		a	b
- *		c	d
+ *  to use default initialization (i.e fill everything with 0.0)
  *
- *	Initialization :
+ *  matND<double> matrix(2,0.0)
  *
- *	matND<double> matrix(2);	
- *	
- *	to use default initialization (i.e fill everything with 0.0)
+ *  To access the elements e.g get the value of c :
  *
- *	matND<double> matrix(2,0.0)
+ *  double c = matrix(1,0);
  *
- *	To access the elements e.g get the value of c :
+ *  or
  *
- *	double c = matrix(1,0);
+ *  double c = matrix[2];
  *
- *	or
- *
- *	double c = matrix[2];
- *
- *	which are both equivalent.
+ *  which are both equivalent.
  */
 
 #ifndef MATRIX_HPP

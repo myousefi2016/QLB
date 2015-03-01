@@ -1,10 +1,10 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	This file contains the CPU implementations of the QLB scheme
+ *  This file contains the CPU implementations of the QLB scheme
  *	
- *	Based on the implementation of M. J. Miller (ETH Zurich)
+ *  Based on the implementation of M. J. Miller (ETH Zurich)
  */
 
 #include "QLB.hpp"

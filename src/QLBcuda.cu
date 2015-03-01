@@ -1,9 +1,8 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zurich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *	[DESCRIPTION]
- *	This file contains all the CUDA kernels and device functions
+ *  This file contains all the CUDA kernels and device functions
  */
 
 #include "QLB.hpp"

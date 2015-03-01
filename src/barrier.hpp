@@ -1,10 +1,10 @@
 /**
- *	Quantum Lattice Boltzmann 
- *	(c) 2015 Fabian Thüring, ETH Zürich
+ *  Quantum Lattice Boltzmann 
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Implementation of a barrier class which is used to synchronize C++11-threads.
- *	The barrier will either spin waiting (SpinBarrier) or use a condition variable
- *	to wait (CondBarrier)
+ *  Implementation of a barrier class which is used to synchronize C++11-threads.
+ *  The barrier will either spin waiting (SpinBarrier) or use a condition variable
+ *  to wait (CondBarrier)
  */
  
 #ifndef BARRIER_HPP
