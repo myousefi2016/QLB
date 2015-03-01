@@ -3,8 +3,8 @@
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich
 #
-# This script reproduces the figures from the paper [1] by passing the 
-# appropriate command-line arguments to the program QLB.
+# This script reproduces the figures (although in 2D) from the paper [1] 
+# by passing the appropriate command-line arguments to the program QLB.
 #
 # [1] Isotropy of three-dimensional quantum lattice Boltzmann schemes, 
 #     P.J. Dellar, D. Lapitski, S. Palpacelli, S. Succi, 2011
@@ -19,7 +19,10 @@ print_help()
 	echo "   --help      Print this help statement"
 	echo "   --exe=PATH  Set the path of the QLB executable (e.g --exe=./QLB)"
 	echo "   --tmax=X    Set the parameter '--tmax' of QLB to 'X'"
+	echo "   --L=X       Set the parameter '--L' of QLB to 'X' (multiple possible"
+	echo "               delimit with ',' e.g --L=128,256,512)"
 	echo "   --plot      Plot the output with python (executes plot/plot_spread.py)"
+	echo "   --save      Save the plot as a pdf"
 	exit 1
 }
 
@@ -33,8 +36,10 @@ QLB_exe=./QLB
 
 print_fig_1=false
 print_fig_4=false
-tmax_arg="--tmax=257"
+tmax_arg="--tmax=256"
+L_list="128"
 plot_arg=""
+plot_files=""
 python_flags=""
 
 # Handle command-line arguments
@@ -50,8 +55,10 @@ for param in $*
 		"--fig-4")  print_fig_4=true ;;
 		"--help")   print_help ;;
 		"--plot")   plot_arg="--plot=spread" ;;
+		"--save")   python_flags="$python_flags --save" ;;
 		"--exe="*)  QLB_exe="${param##*=}" ;;
 		"--tmax="*) tmax_arg="$param" ;;
+		"--L="*)    L_list="${param##*=}" ;;
 		*) 	print_help ;; 
 	esac
 done
@@ -62,17 +69,34 @@ if [ "$?" != "0" ]; then
 	exit_after_error "$0 : error : executable '$QLB_exe' is not valid"
 fi
 
-# Run the simulation
+# Set the appropriate command-line arguments
 if [ "$print_fig_1" = "true" ]; then
-	$QLB_exe --L=128 --dx=0.78125 --dt=0.78125 --mass=0.35 --V=free --verbose \
-	--gui=none $tmax_arg $plot_arg
+	QLB_args="--dx=0.78125 --dt=0.78125 --mass=0.35 --V=free --verbose \
+              --gui=none $tmax_arg $plot_arg"
 elif [ "$print_fig_4" = "true" ]; then
-	$QLB_exe --L=128 --dx=1.5625 --dt=1.5625 --mass=0.1 --V=harmonic --verbose \
-	--gui=none $tmax_arg $plot_arg
+	QLB_args="--dx=1.5625 --dt=1.5625 --mass=0.1 --V=harmonic --verbose \
+	          --gui=none $tmax_arg $plot_arg"
 else
 	exit_after_error "$0 : error : no figure specified try '$0 --help'"
 fi
 
-if [ "$plot_arg" != "" ]; then 
-	python plot/plot_spread.py spread.dat $python_flags
+# Run the simulation (for each L)
+for L in $(echo $L_list | tr "," "\n")
+do
+	$QLB_exe --L=$L $QLB_args
+	if [ "$plot_arg" != "" ]; then
+		mv spread.dat "spread$L.dat"
+		plot_files="$plot_files,spread$L.dat"
+	fi
+done
+
+# Check for runtime errors in QLB
+if [ "$?" != "0" ]; then
+	exit 1
+fi
+
+# Plotting
+if [ "$plot_arg" != "" ]; then
+	python_flags="--file=${plot_files#?} $python_flags --L=$L_list"
+	python plot/plot_spread.py $python_flags
 fi

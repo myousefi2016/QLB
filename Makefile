@@ -58,13 +58,14 @@ EXE_BIN     = $(BIN_PATH)/$(EXE)
 
 # === Compiler Flags ===
 WARNINGS    = -Wall
-DEFINES     =  
-DEBUG       =
+DEFINES     = 
+DEBUG       = 
+PROFILING   = 
 INCLUDE     = -I./inc/$(OS)
 OPT         = -O2 -march=native
 CXXSTD      =
 CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD)
-CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES)
+CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES) $(PROFILING)
 LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
 # === Build adjustments ===
@@ -134,7 +135,7 @@ libGLEW :
 # === Cleaning ===
 .PHONY: clean
 clean:
-	rm -f $(EXE) objects/*.o *.dat $(EXE_BIN) $(BIN_PATH)/*.dat
+	rm -f $(EXE) objects/*.o *.dat $(EXE_BIN) $(BIN_PATH)/*.dat analysis.txt gmon.out
 	
 .PHONY: cleanall
 cleanall : clean

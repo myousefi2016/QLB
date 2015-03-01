@@ -11,9 +11,6 @@
 //Local includes
 #include "GLerror.hpp"
 
-/****************************
- *      VBO base class      *
- ****************************/
 class VBO
 {
 public:

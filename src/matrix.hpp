@@ -44,6 +44,9 @@
 // System includes
 #include <cstddef>
 #include <algorithm>
+#ifdef _WIN32
+ #include <malloc.h>
+#endif
 
 #if defined(_MSC_VER) && !defined(__clang__)
  #define MATRIX_FORCE_INLINE
@@ -61,7 +64,7 @@
  #endif
 #endif
 
-#if __cplusplus >= 201103L 
+#if __cplusplus >= 201103L
  #define NOEXCEPT noexcept
 #else
  #define NOEXCEPT

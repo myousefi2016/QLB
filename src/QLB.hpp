@@ -32,6 +32,12 @@
 #include "matrix.hpp"
 #include "QLBopt.hpp"
 
+#ifndef QLB_SINGLE_PRECISION
+ #define QLB_FLOAT_T GL_DOUBLE
+#else
+ #define QLB_FLOAT_T GL_FLOAT
+#endif
+
 /********************************
  *  Quantum Lattice Boltzmann   *
  ********************************/
@@ -46,15 +52,15 @@ public:
 #endif
 
 	// === typedefs ===
-	typedef std::complex<float_t>                                    complex_t;
-	typedef std::vector<float_t, aligned_allocator<float_t, 64> >    fvec_t;
-	typedef std::vector<int, aligned_allocator<int, 64> >            ivec_t;
-	typedef matND<complex_t>                                         cmat_t;
-	typedef matND<float_t>                                           fmat_t;
-	typedef matN4D<complex_t>                                        c4mat_t;
+	typedef std::complex<float_t>                                   complex_t;
+	typedef std::vector<float_t, aligned_allocator<float_t, 64> >   fvec_t;
+	typedef std::vector<unsigned, aligned_allocator<int, 64> >      uvec_t;
+	typedef matND<complex_t>                                        cmat_t;
+	typedef matND<float_t>                                          fmat_t;
+	typedef matN4D<complex_t>                                       c4mat_t;
 	
 	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3, potential = 4 };
-	enum render_t { SOLID = 0x0005, WIRE = 0x0003 };
+	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };
 
 	// === Constants ===
 	static const complex_t img;
@@ -272,7 +278,7 @@ public:
 
 private:
 	// === Simulation variables ===
-	unsigned L_;
+	const unsigned L_;
 	float_t dx_;
 	float_t mass_;
 	
@@ -305,12 +311,18 @@ private:
 	scene_t  current_scene_;
 	render_t current_render_;
 	float_t scaling_;
+	bool normal_per_face_;
 	
-	ivec_t  array_index_; 
+	uvec_t  array_index_solid_;
+	uvec_t  array_index_wire_;  
 	fvec_t  array_vertex_;
 	fvec_t  array_normal_;
 	
 	VBO vbo_vertex;
+	VBO vbo_normal;
+	VBO vbo_index_solid;
+	VBO vbo_index_wire;
+	
 	Shader shader_;
 	
 	// === IO ===

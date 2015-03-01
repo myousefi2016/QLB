@@ -18,6 +18,7 @@
 #include "error.hpp"
 #include "utility.hpp"
 #include "CmdArgParser.hpp"
+#include "PerformanceCounter.hpp"
 #include "GLUTui.hpp"
 
 void QLB_run_glut(int argc, char* argv[]);

@@ -151,6 +151,8 @@ void QLB::evolution_CPU()
 			spinoraux_(i,j,3) = spinorrot_(i,j,3);
 		}
 	}
+	
+	// === Barrier ===
 
 	// collide & stream with Q 
 	for(int i = 0; i < L; ++i)
@@ -177,6 +179,8 @@ void QLB::evolution_CPU()
 
 		}
 	}
+	
+	// === Barrier ===
 
 	// Rotate back with Xinv
 	for(int i = 0; i < L; ++i)

@@ -10,16 +10,16 @@
 
 TextBox::TextBox(float x, float y, float w, float h, std::size_t nrow, 
                  std::size_t ncol, int id, bool has_border, bool has_background,
-                 bool is_aligned)
+	             bool width_aligned, bool height_aligned)
 	:   x_(x), y_(y), w_(w), h_(h), text_(nrow*ncol), nrow_(nrow), ncol_(ncol), 
 	    id_(id), has_border_(has_border), has_background_(has_background),
-	    is_aligned_(is_aligned), is_active_(true)
+	    width_aligned_(width_aligned), height_aligned_(height_aligned), is_active_(true)
 {}
 
 
 void TextBox::init(float x, float y, float w, float h, std::size_t nrow, 
                    std::size_t ncol, int id, bool has_border, bool has_background,
-                   bool is_aligned)
+                   bool width_aligned, bool height_aligned)
 {
 	x_ = x;
 	y_ = y;
@@ -35,7 +35,9 @@ void TextBox::init(float x, float y, float w, float h, std::size_t nrow,
 	id_ = id;
 	has_border_ = has_border; 
 	has_background_ = has_background;
-	is_aligned_ = is_aligned;
+	width_aligned_ = width_aligned;
+	height_aligned_ = height_aligned;
+	
 	is_active_ = true;
 }
 
@@ -79,7 +81,7 @@ void TextBox::draw(int width, int height) const
 	}
 	
 	
-	const float x_offset = is_aligned_ ? (2.0f-w_)/4.0f : 0.0f;
+	const float x_offset = width_aligned_ ? (2.0f-w_)/4.0f : 0.0f;
 
 	// === Border ===
 	if(has_border_)
@@ -125,9 +127,9 @@ void TextBox::draw(int width, int height) const
 	const float line_width_offset  = 0.02f + x_offset;
 	const float line_height_offset = 0.01f + h_ - 1.5f*line_height;;
 	
-	/*	We are drawing column based. The following example show's how
-	 *	a 2x1 matrix would be drawn (i.e 2 rows and 1 column). c1 and c2 are
-	 *	the cursor position where we have to start drawing (set by glRasterPos2f)
+	/* We are drawing column based. The following example show's how
+	 * a 2x1 matrix would be drawn (i.e 2 rows and 1 column). c1 and c2 are
+	 * the cursor position where we have to start drawing (set by glRasterPos2f)
 	 *     
 	 *                       ^
 	 *                       | 3
@@ -158,7 +160,7 @@ void TextBox::draw(int width, int height) const
 				glutBitmapCharacter(GLUT_BITMAP_8_BY_13, int(text_[j*nrow_+i][c]));
 		}
 		num_char_in_row  = text_[j*ncol_+nrow_-1].size();
-		line_width = (num_char_in_row + TB_WHITESPACES)*font_width; 
+		line_width = (num_char_in_row + (j+1)*TB_WHITESPACES)*font_width; 
 	}
 	
 	glPopMatrix();

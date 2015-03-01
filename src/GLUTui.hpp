@@ -15,7 +15,6 @@
 #include <string>
 #include <sstream>
 #include <cmath>
-#include <list>
 
 // Local includes
 #include "GLerror.hpp"
@@ -33,9 +32,7 @@
 
 #define BOX_HELP_DETAIL  0x0000
 #define BOX_HELP_ASK     0x0001
-#define BOX_FPS          0x0002
-#define BOX_USE_STATS    0x0003
-#define BOX_SIM_STATS    0x0004
+#define BOX_PERFORMANCE  0x0002
 
 #define FPS_UPDATE_FRQ	500 // ms
 

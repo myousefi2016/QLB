@@ -18,8 +18,13 @@
 #include "QLB.hpp"
 #include "error.hpp"
 #include "utility.hpp"
+#include "PerformanceCounter.hpp"
 #include "CmdArgParser.hpp"
 #include "GLUTmain.hpp"
+
+#if defined(_MSC_VER) || __cplusplus >= 201103L
+ #include "barrier.hpp"
+#endif
 
 // local functions
 static void QLB_run_no_gui(const CmdArgParser& cmd);

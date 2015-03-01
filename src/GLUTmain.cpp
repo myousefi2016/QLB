@@ -8,15 +8,18 @@
 #include "GLUTmain.hpp"
 
 // Local class pointers (needed to access classes during glut callback functions)
-QLB* QLB_system		= NULL;
-UserInterface* UI	= NULL;
-CmdArgParser* cmd	= NULL;
+QLB* QLB_system		   = NULL;
+UserInterface* UI	   = NULL;
+CmdArgParser* cmd	   = NULL;
+PerformanceCounter* pc = NULL;
+
 
 // GLUT main function
 void QLB_run_glut(int argc, char* argv[])
 {
 	// Reparse command-line arguments
 	cmd = new CmdArgParser(argc, argv);
+	pc = new PerformanceCounter();
 
 	// Setup QLB 
 	const unsigned L = cmd->L() ? cmd->L_value() : 128;
@@ -171,6 +174,10 @@ void callback_display()
 	char title[100]; 
 	SPRINTF(title,"%s [%3.1f FPS]", UI->title(), UI->compute_fps());
 	glutSetWindowTitle(title);
+
+	// Update cpu/gpu usage
+	if(cmd->stats())
+		std::cout << pc->gpu_usage() << "\t" << pc->cpu_usage() << std::endl;
 
 	// Set view matrix
 	glMatrixMode(GL_MODELVIEW);

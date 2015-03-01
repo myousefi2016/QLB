@@ -2,7 +2,7 @@
  *	Quantum Lattice Boltzmann 
  *	(c) 2015 Fabian Thüring, ETH Zürich
  *
- *	Several useful utility functions and classes (OS independent).
+ *	Several useful utility functions and classes (Timer)
  */
 
 #ifndef UTILITY_HPP
@@ -218,27 +218,4 @@ private:
 };
 #endif
 
-/****************************
- *     GetSystemMemory      *
- ****************************/
-static inline std::size_t getTotalSystemMemory()
-{
-#if defined(_WIN32) && (defined(__CYGWIN__) || defined(__CYGWIN32__))
-	MEMORYSTATUS status;
-	status.dwLength = sizeof(status);
-	GlobalMemoryStatus(&status);
-	return std::size_t(status.dwTotalPhys);
-#elif defined(_WIN32) // Windows
-	MEMORYSTATUSEX status;
-	status.dwLength = sizeof(status);
-	GlobalMemoryStatusEx(&status);
-	return std::size_t(status.ullTotalPhys);
-#elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE) // Linux & OSX
-	std::size_t pages = sysconf(_SC_PHYS_PAGES);
-	std::size_t page_size = sysconf(_SC_PAGE_SIZE);
-	return pages * page_size;
-#else // Other Unix systems are not supported
-	return 0;
-#endif
-}
 #endif /* utility.hpp */

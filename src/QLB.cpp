@@ -37,7 +37,9 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		current_scene_(spinor0),
 		current_render_(SOLID),
 		scaling_(L/2.0),
-		array_index_(2*L*(L-1)),
+		normal_per_face_(false),
+		array_index_solid_(6*(L-1)*(L-1)),
+		array_index_wire_(2*L*(L-1)),
 		array_vertex_(3*L*L),
 		array_normal_(3*L*L), 
 		// === IO ===

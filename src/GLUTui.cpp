@@ -29,8 +29,6 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		frame_count_(0),
 		time_(0),
 		fps_(0.0f),
-		// === TextBox ===
-		text_boxes_(2),		
 		// === Set parameters ===
 		param_has_changed_(false),
 		change_scaling_(0),
@@ -40,8 +38,10 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		light_()
 {
 
+	text_boxes_.resize(3);		
+
 	// BOX_HELP_DETAIL
-	TextBox::svec_t text(10);
+	TextBox::svec_t text(15);
 	text[0] = "Esc    - Exit program      ";
 	text[1] = "space  - Pause/unpause     ";
 	text[2] = "+/-    - Change scaling    ";
@@ -52,9 +52,14 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[7] = "3    - Draw spinor 3 ";
 	text[8] = "4    - Draw spinor 4 ";
 	text[9] = "V    - Draw potential";
+	text[10] = "P    - Show Performance"; 
+	text[11] = "                       ";
+	text[12] = "                       ";
+	text[13] = "                       ";
+	text[14] = "                       ";
 	
-	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 2, 
-	                                  BOX_HELP_DETAIL, true, true, true);
+	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 3, 
+	                                  BOX_HELP_DETAIL, true, true, true, false);
 	text_boxes_[BOX_HELP_DETAIL].add_text(text.begin(), text.end());
 	text_boxes_[BOX_HELP_DETAIL].deactivate();
 
@@ -63,9 +68,22 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[0] = "Press H for detailed help";
 
 	text_boxes_[BOX_HELP_ASK].init(-0.99f, -0.99f, 0.5f, 0.06f, 1, 1, 
-	                               BOX_HELP_ASK, false, false, false);
+	                               BOX_HELP_ASK, false, false, false, false);
 	text_boxes_[BOX_HELP_ASK].add_text(text.begin(), text.end());
+	
+	
+	// BOX_PERFORMANCE
+	text.resize(4);	
+	text[0] = "FPS           59    ";
+	text[1] = "CPU memory    1.0 GB";
+	text[2] = "GPU memory    2.0 GB";
+	text[3] = "GPU usage     59 %  ";
 
+	text_boxes_[BOX_PERFORMANCE].init(-0.97f, 0.78f, 0.5f, 0.19f, 4, 1, 
+	                                  BOX_PERFORMANCE, true, true, false, false);
+	text_boxes_[BOX_PERFORMANCE].add_text(text.begin(), text.end());
+	text_boxes_[BOX_PERFORMANCE].deactivate();
+	
 }
 
 UserInterface::~UserInterface()
@@ -166,7 +184,7 @@ void UserInterface::mouse(int button, int state, int x, int y)
 
 	// Handle mouse wheel
 	if(button == WHEEL_UP)
-		translate_z_ +=  0.01f*std::abs(translate_z_);
+		translate_z_ +=  0.015f*std::abs(translate_z_);
 	else if(button == WHEEL_DOWN)
 		translate_z_ -=  0.01f*std::abs(translate_z_);
 

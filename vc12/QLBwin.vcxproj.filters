@@ -54,6 +54,12 @@
     <ClInclude Include="..\src\QLBopt.hpp">
       <Filter>QLB</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\PerformanceCounter.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\barrier.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -82,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="..\src\GLUTtextbox.cpp">
       <Filter>GLUT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\PerformanceCounter.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
