@@ -6,7 +6,7 @@
  *  etc. The implementation is highly OS dependent although the interface
  *  is not.
  *
- *  Credit for GPU usage counter:
+ *  Credit for GPU usage counter on Windows:
  *  Open Hardware Monitor (http://code.google.com/p/open-hardware-monitor) 
  */
 
@@ -37,14 +37,13 @@ NvAPI_GPU_GetUsages_t       NvAPI_GPU_GetUsages      = NULL;
 // === CPU ===
 struct CPUstats
 {
-	ULARGE_INTEGER lastCPU, lastSysCPU, lastUserCPU;
-	HANDLE process;
+	ULARGE_INTEGER  ul_sys_idle_old, ul_sys_kernel_old, ul_sys_user_old;
 };
 
-CPUstats* CPU;
+static CPUstats* CPU;
  
 PerformanceCounter::PerformanceCounter()
-:	max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
 {
 	// maximum memory
 	MEMORYSTATUSEX memInfo;
@@ -52,28 +51,28 @@ PerformanceCounter::PerformanceCounter()
 	if( GlobalMemoryStatusEx(&memInfo) == 0)
 		WARNING("GlobalMemoryStatusEx failed")
 	else
-		max_memory_ =  std::size_t(memInfo.ullTotalPhys);
+		cpu_max_memory_ =  std::size_t(memInfo.ullTotalPhys);
 	
 	// === CPU ===
 	CPU = new CPUstats;
-	SYSTEM_INFO sysInfo;
-	FILETIME ftime, fsys, fuser;
 
-	// Unfortunately there is no way I now of to detect the physical
-	// processors we just assume HyperThreading and divide the cores by 2
- 	GetSystemInfo(&sysInfo);
-	num_processor_ = sysInfo.dwNumberOfProcessors;
-#ifdef PC_HAS_HT
-	num_processor_ /= 2;
-#endif
-	
-	GetSystemTimeAsFileTime(&ftime);
-	memcpy(&CPU->lastCPU, &ftime, sizeof(FILETIME));
-	
-	CPU->process = GetCurrentProcess();
-	GetProcessTimes(CPU->process, &ftime, &ftime, &fsys, &fuser);
-	memcpy(&CPU->lastSysCPU, &fsys, sizeof(FILETIME));
-	memcpy(&CPU->lastUserCPU, &fuser, sizeof(FILETIME));
+	FILETIME ft_sys_idle;
+	FILETIME ft_sys_kernel;
+	FILETIME ft_sys_user;
+
+	ULARGE_INTEGER  ul_sys_idle;
+	ULARGE_INTEGER  ul_sys_kernel;
+	ULARGE_INTEGER  ul_sys_user;
+
+	GetSystemTimes(&ft_sys_idle, &ft_sys_kernel, &ft_sys_user);
+
+	CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME));
+	CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME));
+	CopyMemory(&ul_sys_user  , &ft_sys_user  , sizeof(FILETIME));
+
+	CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
+    CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
+    CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
 	
 	// === GPU ===
 	try
@@ -122,12 +121,17 @@ PerformanceCounter::~PerformanceCounter()
 	delete CPU;
 }
 
-std::size_t PerformanceCounter::max_memory() const
+std::size_t PerformanceCounter::cpu_max_memory() const
 {
-	return max_memory_;
+	return cpu_max_memory_;
 }
 
-std::size_t PerformanceCounter::used_memory()
+std::size_t PerformanceCounter::gpu_max_memory() const
+{
+	return gpu_max_memory_;
+}
+
+std::size_t PerformanceCounter::cpu_memory()
 {
 	PROCESS_MEMORY_COUNTERS_EX pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, 
@@ -135,38 +139,55 @@ std::size_t PerformanceCounter::used_memory()
 	return std::size_t(pmc.WorkingSetSize);
 }
 
+std::size_t PerformanceCounter::gpu_memory()
+{
+#ifndef QLB_NO_CUDA
+	std::size_t free;
+	std::size_t total;
+	cudaMemGetInfo( &free, &total );
+	return (total - free);
+#else
+	return 0;
+#endif
+}
+
 double PerformanceCounter::cpu_usage()
 {
- 	FILETIME ftime, fsys, fuser;
-	ULARGE_INTEGER now, sys, user;
-	double percent = 0;
+	// We query the filetime and calculate the usage
+    FILETIME ft_sys_idle;
+    FILETIME ft_sys_kernel;
+    FILETIME ft_sys_user;
 
-	GetSystemTimeAsFileTime(&ftime);
-	memcpy(&now, &ftime, sizeof(FILETIME));
+    ULARGE_INTEGER ul_sys_idle;
+    ULARGE_INTEGER ul_sys_kernel;
+    ULARGE_INTEGER ul_sys_user;
 
-	GetProcessTimes(CPU->process, &ftime, &ftime, &fsys, &fuser);
-	memcpy(&sys, &fsys, sizeof(FILETIME));
-	memcpy(&user, &fuser, sizeof(FILETIME));
-	
-	percent =   double((sys.QuadPart  - CPU->lastSysCPU.QuadPart) +
-		               (user.QuadPart - CPU->lastUserCPU.QuadPart));
+    GetSystemTimes(&ft_sys_idle, &ft_sys_kernel, &ft_sys_user);
+	ULONGLONG usage = 0;
 
-	// Make sure we do not divide by 0 if we have no contention
-	double den = double(now.QuadPart - CPU->lastCPU.QuadPart);
-	percent = den != 0.0 ? percent/den : 0.0;
+    CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME));
+    CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME));
+    CopyMemory(&ul_sys_user  , &ft_sys_user  , sizeof(FILETIME));
+
+    usage  = ( ( ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
+		           (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) )
+			     - (ul_sys_idle.QuadPart   - CPU->ul_sys_idle_old.QuadPart) ) * (100) ) /
+             ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
+			   (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) );
+
+    CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
+    CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
+    CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
 	
-	percent /= num_processor_;
-	CPU->lastCPU = now;
-	CPU->lastUserCPU = user;
-	CPU->lastSysCPU = sys;
-	
-	return (double) percent * 100;
+	return double(usage);
 }
 
 double PerformanceCounter::gpu_usage()
 {	
 	if(GPU_query_failed_)
+	{
 		return 0;
+	}
 	else 
 	{
 		(*NvAPI_GPU_GetUsages)(gpuHandles[0], gpuUsages);
@@ -176,10 +197,48 @@ double PerformanceCounter::gpu_usage()
  
 #elif defined(__linux__) /* Linux */
 
-PerformanceCounter::PerformanceCounter()
-:	max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+static int parse_line(char* line)
 {
+    int i = std::strlen(line);
+    while(*line < '0' || *line > '9') 
+    	line++;
+    line[i-3] = '\0';
+    i = std::atoi(line);
+    return i;
+}
+    
+struct CPUstats
+{
+	unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
+};
+
+static CPUstats* CPU; 
+
+PerformanceCounter::PerformanceCounter()
+:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+{
+
+	// === CPU ===
 	
+	CPU = new CPUstats;
+	try
+	{
+		std::FILE* file = fopen("/proc/stat", "r");
+		
+		if(!file) throw 1;
+		
+		if(!std::fscanf(file, "cpu %Ld %Ld %Ld %Ld", &CPU->lastTotalUser, 
+		            &CPU->lastTotalUserLow, &CPU->lastTotalSys, &CPU->lastTotalIdle))
+			throw 1;
+		fclose(file);
+	}
+	catch(...)
+	{}
+
+ 	// === GPU ===
+	
+	// Saddly the support for GeForce cards has been dropped in the Nvidia GDK
+	GPU_query_failed_ = true;
 }
 
 PerformanceCounter::~PerformanceCounter()
@@ -187,19 +246,95 @@ PerformanceCounter::~PerformanceCounter()
 	
 }
 
-std::size_t PerformanceCounter::max_memory() const
+std::size_t PerformanceCounter::cpu_max_memory() const
 {
-	return max_memory_;
+	return cpu_max_memory_;
 }
 
-std::size_t PerformanceCounter::used_memory()
+std::size_t PerformanceCounter::gpu_max_memory() const
 {
+	return gpu_max_memory_;
+}
+
+std::size_t PerformanceCounter::cpu_memory()
+{
+	std::size_t result = 0;
+	
+	try
+	{
+		std::FILE* file = std::fopen("/proc/self/status", "r");
+		char line[128];
+		
+		if(!file) throw 1;
+
+		while (std::fgets(line, 128, file) != NULL)
+		{
+		    if (std::strncmp(line, "VmRSS:", 6) == 0){
+		        result = parse_line(line);
+		        break;
+		    }
+		}
+		
+		fclose(file);
+	}
+	catch(...)
+	{}
+	
+	return result*1000;
+}
+
+std::size_t PerformanceCounter::gpu_memory()
+{
+#ifndef QLB_NO_CUDA
+	std::size_t free;
+	std::size_t total;
+	cudaMemGetInfo( &free, &total );
+	return (total - free);
+#else
 	return 0;
+#endif
 }
 
 double PerformanceCounter::cpu_usage()
 {
-	return 0;
+    double usage = 0.0;
+	try
+	{
+		std::FILE* file;
+		unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
+
+		file = std::fopen("/proc/stat", "r");
+		if(!file) throw 1;
+		
+		if(!std::fscanf(file, "cpu %Ld %Ld %Ld %Ld", &totalUser, &totalUserLow,
+		                &totalSys, &totalIdle))
+		   throw 1;
+		std::fclose(file);
+
+		if (totalUser < CPU->lastTotalUser || totalUserLow < CPU->lastTotalUserLow ||
+		    totalSys < CPU->lastTotalSys || totalIdle < CPU->lastTotalIdle)
+		{
+		    usage = -1.0;
+		}
+		else
+		{
+		    total = (totalUser    - CPU->lastTotalUser)    + 
+		            (totalUserLow - CPU->lastTotalUserLow) +
+		            (totalSys     - CPU->lastTotalSys);
+		    usage  = total;
+		    total += (totalIdle - CPU->lastTotalIdle);
+		    usage /= total;
+		    usage *= 100;
+		}
+		CPU->lastTotalUser = totalUser;
+		CPU->lastTotalUserLow = totalUserLow;
+		CPU->lastTotalSys = totalSys;
+		CPU->lastTotalIdle = totalIdle;
+	}
+	catch(...)
+	{}
+	
+	return usage;
 }
 
 double PerformanceCounter::gpu_usage()
@@ -210,7 +345,7 @@ double PerformanceCounter::gpu_usage()
 #else /* UNIX */
 
 PerformanceCounter::PerformanceCounter()
-:	max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
 {
 	
 }
@@ -220,14 +355,31 @@ PerformanceCounter::~PerformanceCounter()
 	
 }
 
-std::size_t PerformanceCounter::max_memory() const
+std::size_t PerformanceCounter::cpu_max_memory() const
 {
-	return max_memory_;
+	return cpu_max_memory_;
 }
 
-std::size_t PerformanceCounter::used_memory()
+std::size_t PerformanceCounter::gpu_max_memory() const
+{
+	return gpu_max_memory_;
+}
+
+std::size_t PerformanceCounter::cpu_memory()
 {
 	return 0;
+}
+
+std::size_t PerformanceCounter::gpu_memory()
+{
+#ifndef QLB_NO_CUDA
+	std::size_t free;
+	std::size_t total;
+	cudaMemGetInfo( &free, &total );
+	return (total - free);
+#else
+	return 0;
+#endif
 }
 
 double PerformanceCounter::cpu_usage()

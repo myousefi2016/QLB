@@ -22,6 +22,7 @@
 #include "QLB.hpp"
 #include "GLUTlight.hpp"
 #include "GLUTtextbox.hpp"
+#include "PerformanceCounter.hpp"
 
 // Defines
 #define MOUSE_LEFT       0x0000
@@ -96,10 +97,10 @@ public:
 	void draw() const;
 
 	/**
-	 *	Calculate frame's per second (FPS) using glut's built-in timer
-	 *	@return	 current FPS
+	 *	Update all PerformanceCounter and calculate frame's per second (FPS)
+	 *  using glut's built-in timer
 	 */
-	float compute_fps();
+	void update_performance_counter();
 
 	/**
 	 *	Reset the whole simulation by initializing a new system with the old
@@ -159,7 +160,8 @@ private:
 	bool paused_;
 	bool restart_;
 
-	// === FPS ===
+	// === PerformaceCounter ===
+	PerformanceCounter pc_;
 	int frame_count_;
 	int time_;
 	float fps_;

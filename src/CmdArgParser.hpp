@@ -507,7 +507,7 @@ private:
 	 */
 	NO_RETURN void print_version() const
 	{
-		std::cout << "QLB version 1.0" << std::endl;
+		std::cout << "QLB  - version 1.0" << std::endl;
 		std::cout << "Built on " << __TIMESTAMP__ << " for " << ARCH << std::endl;
 		std::cout << "Compiled with " << COMPILER << VERSION << std::endl;
 		std::cout << "Compute model : CPU";

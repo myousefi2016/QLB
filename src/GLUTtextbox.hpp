@@ -39,23 +39,23 @@ public:
  	 *	@param  h               height of the box [0,2]
 	 *	@param	nrow            number of rows
 	 *	@param  ncol            number of columns
-	 *	@param  id              unique identifier
 	 *	@param  has_border      boolean whether a border is drawn
 	 *	@param 	has_background  boolean whether a background is drawn
 	 *	@param  width_aligned   boolean whether the box is width aligned to the window
-	 *	@param  height_aligned  boolean whether the box is width aligned to the window  
+	 *	@param  width_relative  boolean whether the box is width is independant
+	 *                          of the current window size (paramter w is ignored)
 	 */
 	TextBox(float x, float y, float w, float h, std::size_t nrow, std::size_t ncol, 
-	        int id, bool has_border, bool has_background, 
-	        bool width_aligned, bool height_aligned);
+	        bool has_border, bool has_background, bool width_aligned, 
+	        bool width_relative, float width_relative_scal);
 	        
 	/**
 	 *	Initialize all variables (this is mainly used to avoid invocation of 
 	 *	assignment operator when using TextBox in a container)
 	 */
 	void init(float x, float y, float w, float h, std::size_t nrow, 
-	          std::size_t ncol, int id, bool has_border, bool has_background,
-	          bool width_aligned, bool height_aligned);
+	          std::size_t ncol, bool has_border, bool has_background,
+	          bool width_aligned, bool width_relative, float width_relative_scal);
 	
 	/**
 	 *	Add text to the string array
@@ -80,7 +80,6 @@ public:
 
 	// === Getter ===
 	bool is_active() const { return is_active_; }
-	int id() const { return id_; }
 	
 	// === Setter ===
 	void activate()   { is_active_ = true;  }
@@ -93,11 +92,11 @@ private:
 	svec_t text_;
 	std::size_t nrow_, ncol_;
 	
-	int id_;
 	bool has_border_;
 	bool has_background_;
 	bool width_aligned_;
-	bool height_aligned_;
+	bool width_relative_;
+	float width_relative_scal_;
 	
 	bool is_active_;
 };

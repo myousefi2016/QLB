@@ -25,7 +25,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		// === Restart/Pause variables ===
 		paused_(false),
 		restart_(false),
-		// === FPS ===
+		// === PerformanceCounter ===
 		frame_count_(0),
 		time_(0),
 		fps_(0.0f),
@@ -43,7 +43,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	// BOX_HELP_DETAIL
 	TextBox::svec_t text(15);
 	text[0] = "Esc    - Exit program      ";
-	text[1] = "space  - Pause/unpause     ";
+	text[1] = "Space  - Pause/unpause     ";
 	text[2] = "+/-    - Change scaling    ";
 	text[3] = "R      - Restart           ";
 	text[4] = "W      - Activate Wireframe";
@@ -52,14 +52,14 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[7] = "3    - Draw spinor 3 ";
 	text[8] = "4    - Draw spinor 4 ";
 	text[9] = "V    - Draw potential";
-	text[10] = "P    - Show Performance"; 
+	text[10] = "S    - Show Performance"; 
 	text[11] = "                       ";
 	text[12] = "                       ";
 	text[13] = "                       ";
 	text[14] = "                       ";
 	
 	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 3, 
-	                                  BOX_HELP_DETAIL, true, true, true, false);
+	                                  true, true, true, true, 1.0f);
 	text_boxes_[BOX_HELP_DETAIL].add_text(text.begin(), text.end());
 	text_boxes_[BOX_HELP_DETAIL].deactivate();
 
@@ -68,19 +68,20 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[0] = "Press H for detailed help";
 
 	text_boxes_[BOX_HELP_ASK].init(-0.99f, -0.99f, 0.5f, 0.06f, 1, 1, 
-	                               BOX_HELP_ASK, false, false, false, false);
+	                               false, false, false, false, 1.0f);
 	text_boxes_[BOX_HELP_ASK].add_text(text.begin(), text.end());
 	
 	
 	// BOX_PERFORMANCE
-	text.resize(4);	
+	text.resize(5);	
 	text[0] = "FPS           59    ";
 	text[1] = "CPU memory    1.0 GB";
-	text[2] = "GPU memory    2.0 GB";
-	text[3] = "GPU usage     59 %  ";
+	text[2] = "CPU usage     59 %  ";
+	text[3] = "GPU memory    2.0 GB";
+	text[4] = "GPU usage     59 %  ";
 
-	text_boxes_[BOX_PERFORMANCE].init(-0.97f, 0.78f, 0.5f, 0.19f, 4, 1, 
-	                                  BOX_PERFORMANCE, true, true, false, false);
+	text_boxes_[BOX_PERFORMANCE].init(-0.97f, 0.75f, 0.5f, 0.22f, 5, 1, 
+	                                  true, true, false, true, -0.10f);
 	text_boxes_[BOX_PERFORMANCE].add_text(text.begin(), text.end());
 	text_boxes_[BOX_PERFORMANCE].deactivate();
 	
@@ -152,6 +153,12 @@ void UserInterface::keyboard(int key, int x, int y)
 				text_boxes_[BOX_HELP_DETAIL].deactivate();
 			}
 			break;
+		case 115:   // s
+			if(text_boxes_[BOX_PERFORMANCE].is_active())
+				text_boxes_[BOX_PERFORMANCE].deactivate();
+			else
+				text_boxes_[BOX_PERFORMANCE].activate();
+			break;
 	}
 }
 
@@ -220,7 +227,7 @@ void UserInterface::draw() const
 		if(text_boxes_[i].is_active()) text_boxes_[i].draw(width_, height_);
 }
 
-float UserInterface::compute_fps()
+void UserInterface::update_performance_counter()
 {
 	frame_count_++;
 	
@@ -228,15 +235,39 @@ float UserInterface::compute_fps()
 	int cur_time = glutGet(GLUT_ELAPSED_TIME); 
 	int time_interval = cur_time - time_;
 
-	// Calculate fps after FPS_UPDATE_FRQ (ms) passed
+	// Update all PerformanceCounter variables and calculate fps after 
+	// FPS_UPDATE_FRQ (ms) passed
 	if(time_interval > FPS_UPDATE_FRQ)
 	{
 		fps_  = frame_count_ /(time_interval / 1000.0f);
 		time_ = cur_time;
 		frame_count_ = 0;
-	}
 
-	return fps_;
+		// Update FPS
+		char entry[100]; 
+		SPRINTF(entry, "FPS             %2.0f   ", fps_);
+		text_boxes_[BOX_PERFORMANCE].add_text(0, entry);
+		
+		// Update CPU memory
+		SPRINTF(entry, "CPU memory    %4.0f MB ", pc_.cpu_memory()*1e-6);
+		text_boxes_[BOX_PERFORMANCE].add_text(1, entry);
+		
+		// Update CPU usage
+		SPRINTF(entry, "CPU usage       %2.0f %% ", pc_.cpu_usage());
+		text_boxes_[BOX_PERFORMANCE].add_text(2, entry);
+	
+		// Update GPU memory
+		SPRINTF(entry, "GPU memory    %4.0f MB ", pc_.gpu_memory()*1e-6);
+		text_boxes_[BOX_PERFORMANCE].add_text(3, entry);
+	
+		// Update GPU usage
+#ifndef _WIN32
+		SPRINTF(entry, "GPU usage      %s   ", "N/A");
+#else 
+		SPRINTF(entry, "GPU usage       %2.0f %% ", pc_.gpu_usage());
+#endif
+		text_boxes_[BOX_PERFORMANCE].add_text(4, entry);
+	}	
 }
 
 QLB* UserInterface::reset(QLB* qlb_old)

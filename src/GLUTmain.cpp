@@ -11,15 +11,12 @@
 QLB* QLB_system		   = NULL;
 UserInterface* UI	   = NULL;
 CmdArgParser* cmd	   = NULL;
-PerformanceCounter* pc = NULL;
-
 
 // GLUT main function
 void QLB_run_glut(int argc, char* argv[])
 {
 	// Reparse command-line arguments
 	cmd = new CmdArgParser(argc, argv);
-	pc = new PerformanceCounter();
 
 	// Setup QLB 
 	const unsigned L = cmd->L() ? cmd->L_value() : 128;
@@ -33,7 +30,7 @@ void QLB_run_glut(int argc, char* argv[])
 
 	// Setup UserInterface engine
 	int width = 800, height = 800;
-	UI = new UserInterface(width, height, "QLB - Test", 
+	UI = new UserInterface(width, height, "QLB - v1.0", 
 	                       float(-1.5*QLB_system->L()*QLB_system->dx()));
 
 	// Setup OpenGL & GLUT	
@@ -170,14 +167,8 @@ void callback_display()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	// Compute FPS & update the title
-	char title[100]; 
-	SPRINTF(title,"%s [%3.1f FPS]", UI->title(), UI->compute_fps());
-	glutSetWindowTitle(title);
-
-	// Update cpu/gpu usage
-	if(cmd->stats())
-		std::cout << pc->gpu_usage() << "\t" << pc->cpu_usage() << std::endl;
+	// Update cpu/gpu usage/memory etc..
+	UI->update_performance_counter();
 
 	// Set view matrix
 	glMatrixMode(GL_MODELVIEW);

@@ -9,17 +9,27 @@
 #include "GLUTtextbox.hpp"
 
 TextBox::TextBox(float x, float y, float w, float h, std::size_t nrow, 
-                 std::size_t ncol, int id, bool has_border, bool has_background,
-	             bool width_aligned, bool height_aligned)
-	:   x_(x), y_(y), w_(w), h_(h), text_(nrow*ncol), nrow_(nrow), ncol_(ncol), 
-	    id_(id), has_border_(has_border), has_background_(has_background),
-	    width_aligned_(width_aligned), height_aligned_(height_aligned), is_active_(true)
+                 std::size_t ncol, bool has_border, bool has_background,
+	             bool width_aligned, bool width_relative, float width_relative_scal)
+	:   x_(x), 
+	    y_(y), 
+	    w_(w), 
+	    h_(h), 
+	    text_(nrow*ncol),
+	    nrow_(nrow), 
+	    ncol_(ncol), 
+	    has_border_(has_border), 
+	    has_background_(has_background),
+	    width_aligned_(width_aligned), 
+	    width_relative_(width_relative),
+	    width_relative_scal_(width_relative_scal), 
+	    is_active_(true)
 {}
 
 
 void TextBox::init(float x, float y, float w, float h, std::size_t nrow, 
-                   std::size_t ncol, int id, bool has_border, bool has_background,
-                   bool width_aligned, bool height_aligned)
+                   std::size_t ncol, bool has_border, bool has_background,
+                   bool width_aligned, bool width_relative, float width_relative_scal)
 {
 	x_ = x;
 	y_ = y;
@@ -32,11 +42,11 @@ void TextBox::init(float x, float y, float w, float h, std::size_t nrow,
 	nrow_ = nrow;
 	ncol_ = ncol;
 	
-	id_ = id;
 	has_border_ = has_border; 
 	has_background_ = has_background;
 	width_aligned_ = width_aligned;
-	height_aligned_ = height_aligned;
+	width_relative_ = width_relative;
+	width_relative_scal_ = width_relative_scal;
 	
 	is_active_ = true;
 }
@@ -66,22 +76,43 @@ void TextBox::draw(int width, int height) const
 	// Disable some stuff
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_LIGHTING );
-//	glDisable( GL_CULL_FACE );
-		
+	
+	// If have draw relative window size we first determine how long our text is
+	float w_ = 0.0f;	
+	if(width_relative_)
+	{
+		// Loop over columns
+		std::size_t num_char_in_col = 0;
+		for(std::size_t j = 0; j < ncol_; ++j)
+		{
+			num_char_in_col  = text_[j*ncol_+nrow_-1].size();
+			w_ += (num_char_in_col + TB_WHITESPACES) * 
+			            (TB_FONT_PIXEL_WIDTH  / float(width) ); 
+		}
+		w_ += width_relative_scal_ * TB_WHITESPACES * 
+		      TB_FONT_PIXEL_WIDTH  / float(width);
+	}
+	
+	const float x_offset = width_aligned_  ? (2.0f-w_)/2.0f : 0.0f;
+
 	glTranslatef(x_, y_, 0.0f);
 	
 	// === Background ===
+	/*
+	 *    (0,h) -------(w,h)
+	 *      |            |
+	 *    (0,0) ------ (w,0)
+	 */
 	if(has_background_)
 	{
 		glColor3f(0.f, 0.f, 0.f);
 		glBegin(GL_QUADS);
-		glVertex2f(0.0f, 0.0f); glVertex2f(w_, 0.0f);
-		glVertex2f(w_, h_);	    glVertex2f(0.0f, h_);
+		glVertex2f(x_offset      , 0.f);  
+		glVertex2f(x_offset + w_ , 0.f);
+		glVertex2f(x_offset + w_ , h_);   
+		glVertex2f(x_offset      , h_);
 		glEnd();
 	}
-	
-	
-	const float x_offset = width_aligned_ ? (2.0f-w_)/4.0f : 0.0f;
 
 	// === Border ===
 	if(has_border_)
@@ -93,13 +124,13 @@ void TextBox::draw(int width, int height) const
 		glVertex2f(x_offset      , 0.f); 
 		glVertex2f(x_offset      , h_);
 
-		glColor3f(0.9f, 0.9f, 0.9f);
-		glVertex2f(x_offset + 0.f , h_); 
+		glColor3f(.9f, .9f, .9f);
+		glVertex2f(x_offset       , h_); 
 		glVertex2f(x_offset + w_  , h_);
 		glVertex2f(x_offset + w_  , h_); 
 		glVertex2f(x_offset + w_  , 0.f);
 
-		glColor3f( 0.75f, 0.75f, 0.75f);
+		glColor3f(.75f, .75f, .75f);
 		glVertex2f(x_offset + 0.001f      , 0.001f); 
 		glVertex2f(x_offset + w_ - 0.001f , 0.001f );
 		glVertex2f(x_offset + 0.001f      , 0.001f); 
@@ -124,7 +155,7 @@ void TextBox::draw(int width, int height) const
 	
 	float line_width  = 0.0f;
 	float line_height = h_ / float(nrow_+1);
-	const float line_width_offset  = 0.02f + x_offset;
+	const float line_width_offset  = 2*font_width + x_offset;
 	const float line_height_offset = 0.01f + h_ - 1.5f*line_height;;
 	
 	/* We are drawing column based. The following example show's how

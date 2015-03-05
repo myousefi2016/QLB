@@ -26,7 +26,7 @@ CXX     = clang++
 CXX_NV  = g++
 NVCC    = nvcc
  
-CUDA_PATH = /usr/local/cuda-6.5
+CUDA_DIR = /usr/local/cuda-6.5
 
 # CUDA is not supported yet
 NO_CUDA ?= false
@@ -41,9 +41,9 @@ ifeq ($(OS), )
 endif
 
 # === Find the CUDA libraries ===
-CUDA_PATH  ?= /usr/local/cuda
-NVCC       ?= $(CUDA_PATH)/bin/nvcc
-CUDA_LIB    = -L$(CUDA_PATH)/lib64/ -lcudart
+CUDA_DIR   ?= /usr/local/cuda
+NVCC       ?= $(CUDA_DIR)/bin/nvcc
+CUDA_LIB    = -L$(CUDA_DIR)/lib64/ -lcudart
 
 # === Sources ===
 EXE         = QLB
@@ -59,7 +59,7 @@ EXE_BIN     = $(BIN_PATH)/$(EXE)
 # === Compiler Flags ===
 WARNINGS    = -Wall
 DEFINES     = 
-DEBUG       = 
+DEBUG       =
 PROFILING   = 
 INCLUDE     = -I./inc/$(OS)
 OPT         = -O2 -march=native
@@ -83,10 +83,10 @@ endif
 
 # Adjust the build to use CUDA
 ifdef NO_CUDA
- DEFINES   += -DQLB_NO_CUDA
+ DEFINES    += -DQLB_NO_CUDA
 else
- OBJECTS   += $(OBJECTS_CU)
- LDFLAGS   += $(CUDA_LIB)
+ OBJECTS    += $(OBJECTS_CU)
+ LDFLAGS    += $(CUDA_LIB)
 endif
 
 # Detect multi display environment in Linux
@@ -135,7 +135,8 @@ libGLEW :
 # === Cleaning ===
 .PHONY: clean
 clean:
-	rm -f $(EXE) objects/*.o *.dat $(EXE_BIN) $(BIN_PATH)/*.dat analysis.txt gmon.out
+	rm -f $(EXE) objects/*.o *.dat $(EXE_BIN) $(BIN_PATH)/*.dat 
+	rm -f analysis.txt *.out *.data *.prof
 	
 .PHONY: cleanall
 cleanall : clean

@@ -239,8 +239,8 @@ public:
 	void print_matrix(const c4mat_t& m, std::size_t k) const;
 	
 	/** 
- 	 *	Write the current content of all specified quantities (entries of 
- 	 *	plot array) to the corresponding file. 
+ 	 *	Write the current content of all specified quantities (given by 
+ 	 *	QLBopt's plot_) to the corresponding file(s). 
  	 *	Note: consecutive calls of this function will override the last content
  	 *	      of the files
 	 *	@file 	QLB.cpp 

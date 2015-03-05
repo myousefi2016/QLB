@@ -6,7 +6,7 @@
  *  etc. The implementation is highly OS dependant although the interface
  *  is not.
  *
- *  Credit for GPU usage counter:
+ *  Credit for GPU usage counter on Windows:
  *  Open Hardware Monitor (http://code.google.com/p/open-hardware-monitor) 
  */
  
@@ -20,12 +20,23 @@
 #ifdef _WIN32
  #include <windows.h>
  #include <psapi.h>
-#else 
+#elif defined(__linux__) 
  #include <unistd.h>
-#endif 
+ #include <sys/types.h>
+ #include <sys/sysinfo.h>
+ #include <cstdlib>
+ #include <cstdio>
+ #include <cstring>
+#else
+ #include <unistd.h>
+#endif
 
 #include <cstring>
 #include <exception>
+
+#ifndef QLB_NO_CUDA
+ #include <cuda_runtime.h>
+#endif
 
 // Local includes
 #include "error.hpp"
@@ -38,14 +49,24 @@ public:
 	 ~PerformanceCounter();
  	 
 	/**
-	 *	Get the maximal physical memory (in bytes)
+	 *	Get the maximal physical cpu memory (in bytes)
 	 */
-	std::size_t max_memory() const;
+	std::size_t cpu_max_memory() const;
 	
 	/**
-	 *	Get the physical memory (in bytes)currently used by current process 
+	 *	Get the maximal physical gpu memory (in bytes)
 	 */
-	std::size_t used_memory();
+	std::size_t gpu_max_memory() const;
+	
+	/**
+	 *	Get the physical memory (in bytes) currently used by current process 
+	 */
+	std::size_t cpu_memory();
+	
+	/**
+	 *	Get the physical memory (in bytes) currently used by current process 
+	 */
+	std::size_t gpu_memory();
 	
 	/**
 	 * Get the current CPU usage [0,100] by the current process
@@ -61,7 +82,8 @@ public:
 	inline int num_processor() const { return num_processor_; }
 	
 private:
-	std::size_t max_memory_;
+	std::size_t cpu_max_memory_;
+	std::size_t gpu_max_memory_;
 	int num_processor_;
 	bool GPU_query_failed_;
 };
