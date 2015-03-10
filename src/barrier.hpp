@@ -11,7 +11,7 @@
 #define BARRIER_HPP
 
 #if !defined(_MSC_VER) && __cplusplus <= 199711L
- #error "This file requires C++11 support." 
+#error "This file requires C++11 support." 
 #endif
  
 #include <mutex>
@@ -27,6 +27,8 @@ public:
     {
     	assert(nthread != 0);
     }
+    virtual ~Barrier()
+    {}
     
     /**
      *	Wait until all (count) threads have arrived
@@ -55,6 +57,9 @@ class SpinBarrier : public Barrier
 public:
 	SpinBarrier(int count)
 		:	Barrier(count)
+	{}
+	
+	~SpinBarrier()
 	{}
 
 	void wait() override
@@ -91,6 +96,9 @@ public:
 		:	Barrier(count)
 	{}
 	
+	~CondBarrier()
+	{}
+	
 	void wait() override
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
@@ -109,4 +117,4 @@ private:
 	std::condition_variable cond_;
 };
 
-#endif
+#endif /* barrier.hpp */

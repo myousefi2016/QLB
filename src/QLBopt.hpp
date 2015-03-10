@@ -21,7 +21,11 @@
  *			   unsigned int plot = QLBopt::spinor1 | QLBopt::currentX;
  *  - verbose  enables verbose mode to get some additional information written
  *             to STDOUT during the simulation
- *  - stats    time each run of the simulation and allow usage of 'QLB::stats()'
+ *  - device   Set the device the simulation will run on
+ *             0 :   CPU serial
+ *             1 :   CPU multi threaded
+ *             2 :   GPU (CUDA)
+ *  - nthrads  Number of threads used by the CPU implementation
  */
 
 #ifndef QLB_OPT_HPP
@@ -38,26 +42,35 @@ public:
 	
 	// === Constructor ===
 	QLBopt()
-		:	plot_(0), verbose_(false), stats_(false)
+		:	plot_(0), verbose_(false), device_(0), nthreads_(1)
 	{}
 	
-	QLBopt(unsigned int plot, bool verb, bool stats)
-		:	plot_(plot), verbose_(verb), stats_(stats)
+	QLBopt(unsigned int plot, bool verb, int device, unsigned int nthreads)
+		:	plot_(plot), verbose_(verb), device_(device), nthreads_(nthreads)
 	{}
 	
 	QLBopt(const QLBopt& opt)
-		:	plot_(opt.plot()), verbose_(opt.verbose()), stats_(opt.stats())
+		:	plot_(opt.plot()), verbose_(opt.verbose()), device_(opt.device()),
+		    nthreads_(opt.nthreads())
 	{}
 	
 	// === Getter ===
 	inline unsigned int plot() const { return plot_; }
 	inline bool verbose() const { return verbose_; }
-	inline bool stats() const { return stats_; }
+	inline int device() const { return device_; }
+	inline unsigned int nthreads() const { return nthreads_; }
+
+	// === Setter ===
+	inline void set_plot(unsigned int plot) { plot_ = plot; }
+	inline void set_verbose(bool verbose) { verbose_ = verbose; }
+	inline void set_device(int device) { device_ = device; }
+	inline void set_nthreads(unsigned int nthreads) { nthreads_ = nthreads; }
 
 private:
 	unsigned int plot_;
 	bool verbose_;
-	bool stats_;
+	int device_;
+	unsigned int nthreads_;
 };
 
 #endif /* QLBopt.hpp */

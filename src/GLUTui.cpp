@@ -18,6 +18,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		translate_z_(translate_z),
 		rotate_x_(25.0f),
 		rotate_y_(-40.0f),
+		rotating_(false),
 		// === Mouse variables ===
 		mouse_old_x_(0),
 		mouse_old_y_(0),
@@ -53,7 +54,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[8] = "4    - Draw spinor 4 ";
 	text[9] = "V    - Draw potential";
 	text[10] = "S    - Show Performance"; 
-	text[11] = "                       ";
+	text[11] = "C    - Rotating camera ";
 	text[12] = "                       ";
 	text[13] = "                       ";
 	text[14] = "                       ";
@@ -113,6 +114,9 @@ void UserInterface::keyboard(int key, int x, int y)
 		case 45:    // -
 			param_has_changed_ = true;
 			change_scaling_ = -1;
+			break;
+		case 99:    // c
+			rotating_ = !rotating_;
 			break;
 		case 49:    // 1
 			param_has_changed_ = true;
@@ -184,6 +188,8 @@ void UserInterface::eye_position(GLdouble& x, GLdouble& y, GLdouble& z) const
 
 void UserInterface::mouse(int button, int state, int x, int y)
 {
+	rotating_ = false;
+
 	if(state == GLUT_DOWN)
 		mouse_button_ = button;
 	else if(state == GLUT_UP)
@@ -201,6 +207,8 @@ void UserInterface::mouse(int button, int state, int x, int y)
 
 void UserInterface::mouse_motion(int x, int y)
 {
+	rotating_ = false;
+
 	// Translation of the mouse pointer since GLUT_DOWN
     float dx = float(x - mouse_old_x_);
     float dy = float(y - mouse_old_y_);
@@ -224,7 +232,8 @@ void UserInterface::mouse_motion(int x, int y)
 void UserInterface::draw() const
 {
 	for(std::size_t i = 0; i < text_boxes_.size(); ++i)
-		if(text_boxes_[i].is_active()) text_boxes_[i].draw(width_, height_);
+		if(text_boxes_[i].is_active()) 
+			text_boxes_[i].draw(width_, height_);
 }
 
 void UserInterface::update_performance_counter()
@@ -257,7 +266,11 @@ void UserInterface::update_performance_counter()
 		text_boxes_[BOX_PERFORMANCE].add_text(2, entry);
 	
 		// Update GPU memory
+#ifdef QLB_NO_CUDA
+		SPRINTF(entry, "GPU memory     %s   ", "N/A");
+#else
 		SPRINTF(entry, "GPU memory    %4.0f MB ", pc_.gpu_memory()*1e-6);
+#endif
 		text_boxes_[BOX_PERFORMANCE].add_text(3, entry);
 	
 		// Update GPU usage

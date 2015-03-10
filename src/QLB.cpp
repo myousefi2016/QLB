@@ -22,6 +22,8 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		deltay_(0),
 		delta0_(14.0),
 		V_indx_(V_indx),
+		barrier(opt.nthreads()),
+		flag_(1),
 		// === Arrays CPU ===
 		spinor_(L),
 		spinoraux_(L),
@@ -37,11 +39,10 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		current_scene_(spinor0),
 		current_render_(SOLID),
 		scaling_(L/2.0),
-		normal_per_face_(false),
-		array_index_solid_(6*(L-1)*(L-1)),
-		array_index_wire_(2*L*(L-1)),
-		array_vertex_(3*L*L),
-		array_normal_(3*L*L), 
+		array_index_solid_(6*(L-1)*(L-1), 0),
+		array_index_wire_(2*L*(L-1), 0),
+		array_vertex_(3*L*L, 0),
+		array_normal_(3*L*L, 0), 
 		// === IO ===
 		opt_(opt)
 {
@@ -90,18 +91,6 @@ void QLB::initial_condition_gaussian()
 	}
 }
 
-
-// === SIMULATION ===
-
-void QLB::evolution()
-{
-	evolution_CPU();
-
-	// Update time;
-	t_ += 1.0;
-}
-
-
 // === PRINTING ===
 
 void QLB::print_spread()
@@ -126,6 +115,28 @@ void QLB::print_spread()
 	if(V_indx_ == 0) std::cout << std::setw(15) << deltax_t;	
 	std::cout << std::endl;
 }
+
+void QLB::write_spread()
+{
+	if(t_*dt_ == 0) // Delete the old content of the file
+		fout.open("spread.dat");
+	else
+		fout.open("spread.dat", std::ios::app);
+			
+	fout << std::setw(15) << t_*dt_;
+	fout << std::setw(15) << deltax_;
+	fout << std::setw(15) << deltay_;
+		
+	if(V_indx_ == 0) // no potential
+	{
+		float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
+			                            (4.0*mass_*mass_*delta0_*delta0_) );
+		fout << std::setw(15) << deltax_t;
+	}
+	fout << std::endl;	
+	fout.close();
+}
+
 
 /**
  *	Generic matrix print function (use with wrapper functions)

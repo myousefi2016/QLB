@@ -21,10 +21,7 @@
 #include "PerformanceCounter.hpp"
 #include "CmdArgParser.hpp"
 #include "GLUTmain.hpp"
-
-#if defined(_MSC_VER) || __cplusplus >= 201103L
- #include "barrier.hpp"
-#endif
+#include "barrier.hpp"
 
 // local functions
 static void QLB_run_no_gui(const CmdArgParser& cmd);
@@ -56,18 +53,48 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	const QLB::float_t dt = cmd.dt() ? cmd.dt_value() : 1.5625;
 	unsigned tmax = cmd.tmax() ? cmd.tmax_value() : 100;
 	
-	QLBopt opt(cmd.plot(), cmd.verbose(), cmd.stats());
-	
+	// Setup threadpool 
+	std::vector<std::thread> threadpool(cmd.nthreads_value());
+
+	// Set QLB options
+	QLBopt opt;
+	opt.set_plot(cmd.plot()); 
+	opt.set_verbose(cmd.verbose());
+	opt.set_device(cmd.device());
+	opt.set_nthreads(cmd.nthreads_value());
+
 	// Setup the system
-	QLB  QLB_system(L, dx, mass, dt, cmd.V(), opt);
+	QLB QLB_system(L, dx, mass, dt, cmd.V(), opt);
 	
 	Timer t;
 	t.start();
 	
 	// Run simulation in [0, dt*tmax]
-	while(tmax--)
-		QLB_system.evolution();
-
+	switch(opt.device())
+	{
+		case 0: // CPU serial
+		{
+			while(tmax--)
+				QLB_system.evolution_CPU_serial();
+			break;
+		}
+		case 1: // CPU multi threaded
+		{
+			while(tmax--)
+			{
+				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
+					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
+					                               &QLB_system, 
+												   int(tid) ); 
+				for(std::thread& t : threadpool)
+					t.join();
+			}
+			break;
+		}
+		case 2: // GPU CUDA
+			FATAL_ERROR("CUDA version is not yet implemented");
+			break;
+	}
 	double tsim = t.stop();
 	
 	// Write values to file

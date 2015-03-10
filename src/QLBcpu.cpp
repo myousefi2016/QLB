@@ -117,11 +117,12 @@ void QLB::Qhat_Y(int i, int j, QLB::cmat_t& Q) const
 	Q(3,3) =  a;
 }
 
-void QLB::evolution_CPU()
+// === SERIAL ===
+
+void QLB::evolution_CPU_serial()
 {
 	const int L = L_;
 
-	// thread private
 	cmat_t Q(4);
 	int ia, ja;
 	int ik, jk;
@@ -152,8 +153,6 @@ void QLB::evolution_CPU()
 		}
 	}
 	
-	// === Barrier ===
-
 	// collide & stream with Q 
 	for(int i = 0; i < L; ++i)
 	{
@@ -180,8 +179,6 @@ void QLB::evolution_CPU()
 		}
 	}
 	
-	// === Barrier ===
-
 	// Rotate back with Xinv
 	for(int i = 0; i < L; ++i)
 	{
@@ -266,25 +263,11 @@ void QLB::evolution_CPU()
 	if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
 	{
 		calculate_spread();
-		
-		if(t_*dt_ == 0) // Delete the old content of the file
-			fout.open("spread.dat");
-		else
-			fout.open("spread.dat", std::ios::app);
-			
-		fout << std::setw(15) << t_*dt_;
-		fout << std::setw(15) << deltax_;
-		fout << std::setw(15) << deltay_;
-		
-		if(V_indx_ == 0) // no potential
-		{
-			float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
-			                              (4.0*mass_*mass_*delta0_*delta0_) );
-			fout << std::setw(15) << deltax_t;
-		}
-		fout << std::endl;	
-		fout.close();
+		write_spread();
 	}
+	
+	// Update time;
+	t_ += 1.0;
 }
 
 void QLB::calculate_spread()
@@ -344,4 +327,175 @@ void QLB::calculate_macroscopic_vars()
 			veloY_(i,j) = currentY_(i,j)/rho_(i,j);
 		}
     }
+}
+
+// === MULTITHREAD ===
+
+void QLB::evolution_CPU_thread(int tid)
+{
+	const int L_per_thread = L_ / opt_.nthreads();
+	const int lower = tid*L_per_thread;
+	const int upper = (tid + 1) != int(opt_.nthreads()) ? (tid+1)*L_per_thread : L_;
+	const int L = L_;
+	
+	// Reset flag
+	flag_ = 1;
+
+	// thread private
+	cmat_t Q(4);
+	int ia, ja;
+	int ik, jk;
+
+	// Rotate with X
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+
+			for(int mk = 0; mk < 4; ++mk)
+				spinorrot_(i,j,mk) = 0;
+
+			for(int mk = 0; mk < 4; ++mk)
+				for(int nk = 0; nk < 4; ++nk)
+					spinorrot_(i,j,mk) += X(mk,nk) * spinor_(i,j,nk);
+		}
+	}
+
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+			spinoraux_(i,j,0) = spinorrot_(i,j,0);
+			spinoraux_(i,j,1) = spinorrot_(i,j,1);
+			spinoraux_(i,j,2) = spinorrot_(i,j,2);
+			spinoraux_(i,j,3) = spinorrot_(i,j,3);
+		}
+	}
+	
+	// Sync threads
+	barrier.wait();
+
+	// collide & stream with Q 
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+			ia = (i + 1) % L;
+			ik = (i - 1 + L) % L;
+
+			spinorrot_(ia,j,0) = 0;
+			spinorrot_(ia,j,1) = 0;
+			spinorrot_(ik,j,2) = 0;
+			spinorrot_(ik,j,3) = 0;
+
+			Qhat_X(i, j, Q);
+	
+			for(int nk = 0; nk < 4; ++nk)
+			{
+				spinorrot_(ia,j,0) += Q(0,nk) * spinoraux_(i,j,nk);
+				spinorrot_(ia,j,1) += Q(1,nk) * spinoraux_(i,j,nk);
+				spinorrot_(ik,j,2) += Q(2,nk) * spinoraux_(i,j,nk);
+				spinorrot_(ik,j,3) += Q(3,nk) * spinoraux_(i,j,nk);
+			}
+
+		}
+	}
+	
+	// Sync threads
+	barrier.wait();
+
+	// Rotate back with Xinv
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+
+			for(int mk = 0; mk < 4; ++mk)
+				spinor_(i,j,mk) = 0;
+
+			for(int mk = 0; mk < 4; ++mk)
+				for(int nk = 0; nk < 4; ++nk)
+					spinor_(i,j,mk) += Xinv(mk,nk)*spinorrot_(i,j,nk);
+		}
+	}
+
+	// Rotate with Y
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+			for(int mk = 0; mk < 4; ++mk)
+				spinorrot_(i,j,mk) = 0;
+
+			for(int mk=0; mk < 4; ++mk)
+				for(int nk=0; nk < 4; ++nk)
+					spinorrot_(i,j,mk) += Y(mk,nk) * spinor_(i,j,nk);
+		}
+	}
+	
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+			spinoraux_(i,j,0) = spinorrot_(i,j,0);
+			spinoraux_(i,j,1) = spinorrot_(i,j,1);
+			spinoraux_(i,j,2) = spinorrot_(i,j,2);
+			spinoraux_(i,j,3) = spinorrot_(i,j,3);
+		}
+	}
+		
+	// collide & stream with Q
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+
+			ja = (j + 1) % L;
+			jk = (j - 1 + L) % L;
+
+			spinorrot_(i,ja,0) = 0;
+			spinorrot_(i,ja,1) = 0;
+			spinorrot_(i,jk,2) = 0;
+			spinorrot_(i,jk,3) = 0;
+
+			Qhat_Y(i, j, Q);
+
+			for(int nk = 0; nk < 4; ++nk)
+			{
+				spinorrot_(i,ja,0) += Q(0,nk) * spinoraux_(i,j,nk);
+				spinorrot_(i,ja,1) += Q(1,nk) * spinoraux_(i,j,nk);
+				spinorrot_(i,jk,2) += Q(2,nk) * spinoraux_(i,j,nk);
+				spinorrot_(i,jk,3) += Q(3,nk) * spinoraux_(i,j,nk);
+			}
+		}
+	}
+	
+	// Rotate back with Yinv
+	for(int i = lower; i < upper; ++i)
+	{
+		for(int j = 0; j < L; ++j)
+		{
+			for(int mk = 0; mk < 4; ++mk)
+				spinor_(i,j,mk) = 0;
+
+			for(int mk = 0; mk < 4; ++mk)
+				for(int nk = 0; nk < 4; ++nk)
+					spinor_(i,j,mk) += Yinv(mk,nk)*spinorrot_(i,j,nk);
+		}
+	}
+
+	// Sync threads
+	barrier.wait();
+
+	// Update time & calculate spreads (only one thread executes this);
+	if(std::atomic_fetch_sub(&flag_, 1) == 1)
+	{
+		if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
+		{
+			calculate_spread();
+			write_spread();
+		}
+		
+		t_ += 1.0;
+	}
 }

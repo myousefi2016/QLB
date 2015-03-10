@@ -25,8 +25,8 @@ void QLB::init_GL()
 	 *      /
 	 *     z  
 	 *
-	 *  This is why we are storing the y-coordinates form the simulation 
-	 *  in the z array position
+	 * This is why we are storing the y-coordinates form the simulation 
+	 * in the z array position
 	 */
 	   
 	for(unsigned i = 0; i < L_; ++i)
@@ -142,34 +142,39 @@ void QLB::init_GL()
 	GL_is_initialzed_ = true;
 }
 
-void QLB::prepare_arrays()
+void QLB::calculate_vertex(int tid, int nthreads)
 {
-	// Copy data to vertex array
+
+	const int L_per_thread = L_ / nthreads;
+	const int lower = tid*L_per_thread;
+	const int upper = (tid + 1) != nthreads ? (tid+1)*L_per_thread : L_;
+	const int L = L_;
+
 	switch( current_scene_ )
 	{
 		case spinor0:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,0));
 			break;
 		case spinor1:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,1));
 			break;
 		case spinor2:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,2));
 			break;
 		case spinor3:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,3));
 			break;
 		case potential:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
 				{
 					if(V_indx_ == 0)
 						array_vertex_[y(i,j)] = std::abs(V_free(i,j)); 
@@ -178,139 +183,84 @@ void QLB::prepare_arrays()
 				}
 			break;
 	}
+}
+
+
+void QLB::calculate_normal()
+{
+	/* Calculate normal by taking the cross product of ( a x b )
+	 *
+	 *   (i,jk)                                b
+	 *     ^                                   ^
+	 *     |                       <====>      |
+	 *     |                                   |
+	 *   (i,j) ------> (ik,j)                  x ------> a
+	 *
+	 * To accommodate for periodic boundary conditions we set the normal array
+	 * initially to 1 or -1 depending whether we have to flip the normal vector
+	 *
+	 *  normal_array :     -1    ...     -1   1
+	 *                      1    ...      1  -1
+	 *                      :             :   :
+	 *                      :             :   :
+	 *                      1    ...      1  -1
+	 *
+	 * This will allow a branchless exectution
+	 */
+
+	const unsigned L3 = 3*L_*L_;
+	for(unsigned i = 0; i < L3; ++i)
+		array_normal_[i] = 1.0;
 	
-	// Copy to vertex VBO
-	vbo_vertex.bind();
-	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
-	                         &array_vertex_[0]);
-	vbo_vertex.unbind();
-	
-	if( normal_per_face_ )
+	for(unsigned i = 0; i < L_-1; ++i)
 	{
-		/* Calculate normal by taking the cross product of each triangle
-		 * and store it at each vertex position of the triangle.
-		 */
-	 
-	 	float_t v1_x, v1_y, v1_z, v2_x, v2_y, v2_z, n_x, n_y, n_z, norm;
-		unsigned ind_a, ind_b, ind_c;
-	 
-		for(unsigned i = 0; i < array_normal_.size(); ++i)
-			array_normal_[i] = 0.0;
-	
-		const unsigned nvertices = 6*(L_-1)*(L_-1);
-		for(unsigned i = 0; i < nvertices; i+=3)
+		array_normal_[x(i,0)] = -1.0;
+		array_normal_[y(i,0)] = -1.0;
+		array_normal_[z(i,0)] = -1.0;
+	}
+
+	for(unsigned j = 1; j < L_; ++j)
+	{
+		array_normal_[x(L_-1,j)] = -1.0;
+		array_normal_[y(L_-1,j)] = -1.0;
+		array_normal_[z(L_-1,j)] = -1.0;
+	}
+
+	float_t a1, a2, a3, b1, b2, b3, norm;
+	unsigned ik, jk;
+
+	for(unsigned i = 0; i < L_; ++i)
+	{
+		ik = (i + 1) % L_;
+
+		for(unsigned j = 0; j < L_; ++j)
 		{
-			ind_a = 3*array_index_solid_[i];
-			ind_b = 3*array_index_solid_[i+1];
-			ind_c = 3*array_index_solid_[i+2];
-	
-			// v1 = a - b 
-			v1_x = array_vertex_[ind_a    ] - array_vertex_[ind_b    ];
-			v1_y = array_vertex_[ind_a + 1] - array_vertex_[ind_b + 1];
-			v1_z = array_vertex_[ind_a + 2] - array_vertex_[ind_b + 2];
+			jk = (L_ - 1 + j) % L_;
+
+			// a
+			a1 = array_vertex_[x(ik,j)] - array_vertex_[x(i,j)];
+			a2 = array_vertex_[y(ik,j)] - array_vertex_[y(i,j)];
+			a3 = array_vertex_[z(ik,j)] - array_vertex_[z(i,j)];
 		
-			// v2 = c - b
-			v2_x = array_vertex_[ind_c    ] - array_vertex_[ind_b    ];
-			v2_y = array_vertex_[ind_c + 1] - array_vertex_[ind_b + 1];
-			v2_z = array_vertex_[ind_c + 2] - array_vertex_[ind_b + 2];
+			// b
+			b1 = array_vertex_[x(i,jk)] - array_vertex_[x(i,j)];
+			b2 = array_vertex_[y(i,jk)] - array_vertex_[y(i,j)];
+			b3 = array_vertex_[z(i,jk)] - array_vertex_[z(i,j)];
+		
+			// n = a x b
+			array_normal_[x(i,j)] *= ( a2*b3 - a3*b2 );
+			array_normal_[y(i,j)] *= ( a3*b1 - a1*b3 );
+			array_normal_[z(i,j)] *= ( a1*b2 - a2*b1 );
 
-			// n = v1 x v2
-			n_x = v1_y * v2_z - v1_z * v2_y;
-			n_y = v1_z * v2_x - v1_x * v2_z;
-			n_z = v1_x * v2_y - v1_y * v2_x;
-
+			norm = std::sqrt(array_normal_[x(i,j)]*array_normal_[x(i,j)] + 
+			                 array_normal_[y(i,j)]*array_normal_[y(i,j)] +
+			                 array_normal_[z(i,j)]*array_normal_[z(i,j)]);
 			// normalize
-			norm = std::sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
-			n_x /= norm;
-			n_y /= norm;
-			n_z /= norm;
-		
-			// Add the contribution from this triangle to each adjacent vertex.
-			array_normal_[ind_a    ] += n_x;
-			array_normal_[ind_a + 1] += n_y;
-			array_normal_[ind_a + 2] += n_z;
-		
-			array_normal_[ind_b    ] += n_x;
-			array_normal_[ind_b + 1] += n_y;
-			array_normal_[ind_b + 2] += n_z;
-
-			array_normal_[ind_c    ] += n_x;
-			array_normal_[ind_c + 1] += n_y;
-			array_normal_[ind_c + 2] += n_z;
-		}
-	
-		for(unsigned i = 0; i < L_; ++i)
-			for(unsigned j = 0; j < L_; ++j)
-			{
-				n_x  = array_normal_[x(i,j)];
-				n_y  = array_normal_[y(i,j)];
-				n_z  = array_normal_[z(i,j)];
-			
-				norm = std::sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
-			
-				array_normal_[x(i,j)] /= norm;
-				array_normal_[y(i,j)] /= norm;
-				array_normal_[z(i,j)] /= norm;
-			}
-	}
-	else
-	{
-		/* Calculate normal by taking the cross product of ( a x b )
-		 * Note: we are using periodic boundary conditions
-		 *
-		 *   (i,jk)                                b
-		 *     ^                                   ^
-		 *     |                       <====>      |
-		 *     |                                   |
-		 *   (i,j) ------> (ik,j)                  x ------> a
-		 */
-		 	
-		float_t a1, a2, a3, b1, b2, b3, norm;
-		float_t signa = 1.0, signb = 1.0;
-		unsigned ik, jk;
-		for(unsigned i = 0; i < L_; ++i)
-		{
-			signb = -1.0;
-			if(i == L_-1) signa = -1.0;
-
-			for(unsigned j = 0; j < L_; ++j)
-			{
-				jk = (L_ - 1 + j) % L_;
-				ik = (i + 1) % L_;
-
-				// a
-				a1 = signa*array_vertex_[x(ik,j)] - signa*array_vertex_[x(i,j)];
-				a2 = signa*array_vertex_[y(ik,j)] - signa*array_vertex_[y(i,j)];
-				a3 = signa*array_vertex_[z(ik,j)] - signa*array_vertex_[z(i,j)];
-			
-				// b
-				b1 = signb*array_vertex_[x(i,jk)] - signb*array_vertex_[x(i,j)];
-				b2 = signb*array_vertex_[y(i,jk)] - signb*array_vertex_[y(i,j)];
-				b3 = signb*array_vertex_[z(i,jk)] - signb*array_vertex_[z(i,j)];
-			
-				// n = a x b
-				array_normal_[x(i,j)] = a2*b3 - a3*b2;
-				array_normal_[y(i,j)] = a3*b1 - a1*b3;
-				array_normal_[z(i,j)] = a1*b2 - a2*b1;
-
-				norm = std::sqrt(array_normal_[x(i,j)]*array_normal_[x(i,j)] + 
-				                 array_normal_[y(i,j)]*array_normal_[y(i,j)] +
-				                 array_normal_[z(i,j)]*array_normal_[z(i,j)]);
-				// normalize
-				array_normal_[x(i,j)] /= norm;
-				array_normal_[y(i,j)] /= norm;
-				array_normal_[z(i,j)] /= norm;
-			
-				signb = 1.0;
-			}
+			array_normal_[x(i,j)] /= norm;
+			array_normal_[y(i,j)] /= norm;
+			array_normal_[z(i,j)] /= norm;
 		}
 	}
-		
-	// Copy to normal VBO
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
-	                         &array_normal_[0]);
-	vbo_normal.unbind();
 }
 
 void QLB::render()
@@ -318,26 +268,20 @@ void QLB::render()
 	if(!GL_is_initialzed_)
 		FATAL_ERROR("QLB::OpenGL context is not initialized");
 	
-	prepare_arrays();
+	// Copy vertex array to vertex VBO
+	vbo_vertex.bind();
+	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+	                         &array_vertex_[0]);
+	vbo_vertex.unbind();
+		
+	// Copy normal array to normal VBO
+	vbo_normal.bind();
+	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+	                         &array_normal_[0]);
+	vbo_normal.unbind();
+
 	
 //	draw_coordinate_system();	
-
-//	shader_.use_shader();
-	
-//	glColor3d(1,1,1);
-//	glBegin(current_render_);
-//	const unsigned nvertices = 6*(L_-1)*(L_-1);
-//	for(unsigned i = 0; i < nvertices; i++)
-//	{
-//		glNormal3d(array_normal_[3*array_index_solid_[i]    ],   // x
-//	               array_normal_[3*array_index_solid_[i] + 1],   // y
-//	               array_normal_[3*array_index_solid_[i] + 2]);  // z
-//	               
-//		glVertex3d(array_vertex_[3*array_index_solid_[i]    ],   // x
-//	               array_vertex_[3*array_index_solid_[i] + 1],   // y
-//	               array_vertex_[3*array_index_solid_[i] + 2]);  // z
-//	}	
-//	glEnd();
 
 	// Draw the scene
 	std::size_t n_elements;

@@ -8,24 +8,33 @@
 #include "GLUTmain.hpp"
 
 // Local class pointers (needed to access classes during glut callback functions)
-QLB* QLB_system		   = NULL;
-UserInterface* UI	   = NULL;
-CmdArgParser* cmd	   = NULL;
+QLB* QLB_system		= nullptr;
+UserInterface* UI	= nullptr;
+CmdArgParser* cmd	= nullptr;
 
-// GLUT main function
+std::vector<std::thread> threadpool;
+
+/// GLUT main function
 void QLB_run_glut(int argc, char* argv[])
 {
 	// Reparse command-line arguments
 	cmd = new CmdArgParser(argc, argv);
+	
+	// Setup threadpool
+	threadpool.resize(cmd->nthreads_value());
 
-	// Setup QLB 
 	const unsigned L = cmd->L() ? cmd->L_value() : 128;
 	const QLB::float_t dx   = cmd->dx()   ? cmd->dx_value() : 1.5625;
 	const QLB::float_t mass = cmd->mass() ? cmd->mass_value() : 0.1;
 	const QLB::float_t dt   = cmd->dt()   ? cmd->dt_value() : 1.5625;
 	
-	QLBopt opt(cmd->plot(), cmd->verbose(), cmd->stats());
+	QLBopt opt;
+	opt.set_plot(cmd->plot()); 
+	opt.set_verbose(cmd->verbose());
+	opt.set_device(cmd->device());
+	opt.set_nthreads(cmd->nthreads_value());
 	
+	// Setup QLB 
 	QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
 
 	// Setup UserInterface engine
@@ -34,7 +43,7 @@ void QLB_run_glut(int argc, char* argv[])
 	                       float(-1.5*QLB_system->L()*QLB_system->dx()));
 
 	// Setup OpenGL & GLUT	
-	init_GL(argc,argv);
+	init_GL(argc, argv);
 	QLB_system->init_GL();
 
 	glutMainLoop();
@@ -97,8 +106,8 @@ void init_GL(int argc, char* argv[])
 	if(cmd->verbose())
 	{
 		std::cout << " === OpenGL Info === " << std::endl;
-		std::printf("Version : %s\n",glGetString(GL_VERSION));
-		std::printf("Device  : %s\n",glGetString(GL_RENDERER));
+		std::printf("Version : %s\n", glGetString(GL_VERSION));
+		std::printf("Device  : %s\n", glGetString(GL_RENDERER));
 	}
 
 	// GLUT callback registration
@@ -126,9 +135,8 @@ void init_GL(int argc, char* argv[])
 	// Enables
 //	glEnable(GL_CULL_FACE); 
 //	glCullFace(GL_FRONT); 
-	glEnable(GL_DEPTH_TEST);
+//	glEnable(GL_DEPTH_TEST);
 	
-//	glShadeModel(GL_FLAT);
 	glShadeModel(GL_SMOOTH);
 
 	// Set view matrix for the first time
@@ -173,14 +181,55 @@ void callback_display()
 	// Set view matrix
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	if( UI->rotating() ) UI->set_rotate_y(UI->rotate_y() - 0.15f);
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
 
 	// Advance system
-	if(!UI->paused())
-		QLB_system->evolution();
-	QLB_system->render();
+	switch(QLB_system->opt().device())
+	{
+		case 0: // CPU serial
+			if(!UI->paused())
+				QLB_system->evolution_CPU_serial();
+			QLB_system->calculate_vertex(0, 1);
+			QLB_system->calculate_normal();
+			QLB_system->render();
+			break;
+		case 1: // CPU multi threaded
+		{ 
+			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
+				threadpool[tid] = std::thread( &QLB::calculate_vertex, 
+				                                QLB_system, 
+										        int(tid),
+				                                int(threadpool.size()) );
+			for(std::thread& t : threadpool)
+				t.join();
+				
+			if(!UI->paused())
+			{
+				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
+					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
+								                   QLB_system, 
+												   int(tid) ); 
+
+				QLB_system->calculate_normal();
+				QLB_system->render();
+		
+				for(std::thread& t : threadpool)
+					t.join();
+			}
+			else
+			{				
+				QLB_system->calculate_normal();		
+				QLB_system->render();
+			}
+			break;
+		}
+		case 2: // GPU CUDA
+			FATAL_ERROR("CUDA version is not yet implemented");
+			break;
+	}
 
 	// Draw text boxes
 	UI->draw();
@@ -258,7 +307,7 @@ void cleanup()
 {
 	// Delete the local class pointers explicitly, otherwise the destructors are 
 	// not called if we leave the glutMainLoop() with exit()
-	if(UI != NULL)
+	if(UI != nullptr)
 	{
 		if(cmd->verbose())
 		{
@@ -266,22 +315,22 @@ void cleanup()
 			std::printf("cleaning up ... UI at %p\n", UI); 
 		}
 		delete UI;
-		UI = NULL;
+		UI = nullptr;
 	}
 	
-	if(QLB_system != NULL) 
+	if(QLB_system != nullptr) 
 	{	
 		if(cmd->verbose()) 
 			std::printf("cleaning up ... QLB_system at %p\n", QLB_system); 
 		delete QLB_system;
-		QLB_system = NULL;
+		QLB_system = nullptr;
 	}
 	
-	if(cmd != NULL)
+	if(cmd != nullptr)
 	{
 		if(cmd->verbose()) 
 			std::printf("cleaning up ... cmd at %p\n", cmd); 
 		delete cmd;
-		cmd = NULL;
+		cmd = nullptr;
 	}
 }	

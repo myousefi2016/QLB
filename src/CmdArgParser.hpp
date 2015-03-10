@@ -26,6 +26,7 @@
 #include <iomanip>
 #include <limits>
 #include <vector>
+#include <thread>
 #include <algorithm>
 #include <exception>
 
@@ -186,12 +187,9 @@ public:
 		
 			// --verbose
 			verbose_ = find("--verbose").is_present();
-		
-			// --stats
-			stats_ = find("--stats").is_present();
-		
+			
 			// --L=X
-			CmdArgNumeric<int> L = find_numeric<int>("--L");
+			auto L = find_numeric<int>("--L");
 			L_ = L.is_present();
 			if(L_ && L.value() < 2) 
 				throw CmdArgException("'X' must be > 1 in command-line argument"
@@ -199,7 +197,7 @@ public:
 			L_value_ = L.value();
 			
 			// --dx=X
-			CmdArgNumeric<float> dx = find_numeric<float>("--dx");
+			auto dx = find_numeric<float>("--dx");
 			dx_ = dx.is_present();
 			if(dx_ && dx.value() < 0) 
 				throw CmdArgException("'X' must be > 0 in command-line argument"
@@ -207,7 +205,7 @@ public:
 			dx_value_ = dx.value();
 			
 			// --dt=X
-			CmdArgNumeric<float> dt = find_numeric<float>("--dt");
+			auto dt = find_numeric<float>("--dt");
 			dt_ = dt.is_present();
 			if(dt_ && dt.value() < 0) 
 				throw CmdArgException("'X' must be > 0 in command-line argument"
@@ -215,7 +213,7 @@ public:
 			dt_value_ = dt.value();
 			
 			// --mass=X
-			CmdArgNumeric<float> mass = find_numeric<float>("--mass");
+			auto mass = find_numeric<float>("--mass");
 			mass_ = mass.is_present();
 			if(mass_ && mass.value() < 0) 
 				throw CmdArgException("'X' must be > 0 in command-line argument"
@@ -223,7 +221,7 @@ public:
 			mass_value_ = mass.value();
 			
 			// --tmax=X
-			CmdArgNumeric<int> tmax = find_numeric<int>("--tmax");
+			auto tmax = find_numeric<int>("--tmax");
 			tmax_ = tmax.is_present();
 			if(tmax_ && tmax.value() < 0) 
 				throw CmdArgException("'X' must be > 0 in command-line argument"
@@ -231,7 +229,7 @@ public:
 			tmax_value_ = tmax.value();
 			
 			// --gui=[glut|none]
-			CmdArgString gui = find_string("--gui");
+			auto gui = find_string("--gui");
 			gui_ = 0;
 			if(gui.is_present() && compare(gui.str(),"glut"))
 				gui_ = 1;
@@ -242,7 +240,7 @@ public:
 				                      "[glut|none]");
 				
 			// --V=[harmonic|free]
-			CmdArgString V = find_string("--V");
+			auto V = find_string("--V");
 			V_ = 0;
 			if(V.is_present() && compare(V.str(),"free"))
 				V_ = 0;
@@ -251,10 +249,52 @@ public:
 			else if(V.is_present())
 				throw CmdArgException("'S' in '--V=S' must be one of "
 				                      "[harmonic|free]");
-				                      
+				                     
+			// --device=[cpu-serial|cpu-thread|gpu]
+			auto device = find_string("--device");                      
+			device_ = 0;
+			if(device.is_present() && compare(device.str(),"cpu-serial"))
+				device_ = 0;
+			else if(device.is_present() && compare(device.str(),"cpu-thread"))
+				device_ = 1;
+			else if(device.is_present() && compare(device.str(),"gpu"))
+				device_ = 2;	
+			else if(device.is_present())
+				throw CmdArgException("'S' in '--device=S' must be one of "
+				                      "[cpu-serial|cpu-thread|gpu]");
+			
+			// --nthreads=X
+			auto nthreads = find_numeric<int>("--nthreads");
+			nthreads_ = nthreads.is_present();
+			if(nthreads_ && nthreads.value() < 1)
+				throw CmdArgException("'X' must be > 0 in command-line argument"
+				                      " '--nthreads=X'");
+			
+		 	if(device_ == 1 && !nthreads_)
+		 	{
+		 		nthreads_ = true;	
+		 		unsigned hwc = std::thread::hardware_concurrency();
+		 		if(gui_ == 1)
+					nthreads_value_ =  L_value_ > 200 ? hwc - 1 : hwc / 2 - 1;
+				else
+					nthreads_value_ =  L_value_ > 256 ? hwc : hwc / 2;
+			}
+			else if(nthreads_ && nthreads.value() == 1)
+			{
+				device_ = 0;
+				nthreads_value_ = nthreads.value();
+			}
+			else if(nthreads_)
+			{
+				device_ = 1;
+				nthreads_value_ = nthreads.value();
+			}
+			else
+				nthreads_value_ = 1;
+		
 			// --plot=[all,spread,spinor1,spinor2,spinor3,spinor4,density,
 			//         currentX,currentY,veloX,veloY]
-			CmdArgString plot = find_string("--plot");
+			auto plot = find_string("--plot");
 			plot_ = 0;
 			if(plot.is_present())
 				set_plot_args(plot.str());
@@ -262,9 +302,9 @@ public:
 			// --fullscreen
 			fullscreen_ = find("--fullscreen").is_present();
 			if(fullscreen_ && !gui.is_present())
-				gui_ = 2;
+				gui_ = 1;
 		
-			// Throw if we have unparsed arguments starting with "--"
+			// Throw if we have unparsed arguments
 			if(argv_.size())
 			{
 				std::string err_msg = "unrecognized option ";
@@ -285,6 +325,8 @@ public:
 	// === Access Arguments ===
 	inline bool verbose() const { return verbose_; }
 	inline bool fullscreen() const { return fullscreen_; }
+	inline bool nthreads() const { return nthreads_; }
+	inline unsigned nthreads_value() const { return nthreads_value_; }
 	inline bool L() const { return L_; }
 	inline unsigned L_value() const { return L_value_; }
 	inline bool dx() const { return dx_; }
@@ -296,9 +338,9 @@ public:
 	inline bool tmax() const { return tmax_; }
 	inline unsigned tmax_value() const { return tmax_value_; }
 	inline int V() const { return V_; }     //   V = [0:harmonic, 1:free]
-	inline int gui() const { return gui_; } // gui = [0:glut, 2:none]
+	inline int gui() const { return gui_; } // gui = [1:glut, 0:none]
 	inline unsigned int plot() const { return plot_; }
-	inline bool stats() const { return stats_; }
+	inline int device() const { return device_; }
 
 private:
 
@@ -484,6 +526,7 @@ private:
 		                           "to run the simulation, where S is one of [glut|none]"}; 
 		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
+		print_help_line("--nthreads=X","Exectue CPU verison with X threads");
 		print_help_line("--V=S","Set the potential to S, where S is one of "
 		                "[harmonic|free]");
 		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
@@ -497,8 +540,9 @@ private:
 		                           "[all, spread, spinor1, spinor2, spinor3, spinor4,"
 		                           " density,"," currentX, currentY, veloX, veloY]"};
 		print_help_line("--plot=S",svec_t(expl_plot, expl_plot+4));
-		print_help_line("--stats","Time each run of the simulation and display stats");
-		
+		std::string expl_device[2] = {"Set the device the simulation will run on, S must be",
+		                              "one of [cpu-serial|cpu-thread|gpu]"};
+		print_help_line("--device=S",svec_t(expl_device, expl_device+2));
 		exit(EXIT_SUCCESS);
 	}
 
@@ -665,6 +709,8 @@ private:
 	// === Arguments ===
 	bool verbose_;
 	bool fullscreen_;
+	bool nthreads_;
+	unsigned nthreads_value_;
 	bool L_; 	 
 	unsigned L_value_;
 	bool dx_;
@@ -678,7 +724,7 @@ private:
 	int gui_;
 	int V_;
 	unsigned int plot_;
-	bool stats_;
+	int device_;
 	
 	// === IO ===
 	std::size_t width_cmd;

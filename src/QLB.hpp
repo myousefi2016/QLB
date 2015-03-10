@@ -22,11 +22,13 @@
 #include <vector>
 #include <iomanip>
 #include <cmath>
+#include <atomic>
 
 // Local includes
 #include "error.hpp"
 #include "GLerror.hpp"
 #include "utility.hpp"
+#include "barrier.hpp"
 #include "VBO.hpp"
 #include "Shader.hpp"
 #include "matrix.hpp"
@@ -58,6 +60,7 @@ public:
 	typedef matND<complex_t>                                        cmat_t;
 	typedef matND<float_t>                                          fmat_t;
 	typedef matN4D<complex_t>                                       c4mat_t;
+	typedef SpinBarrier                                             barrier_t;
 	
 	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3, potential = 4 };
 	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };
@@ -133,19 +136,30 @@ public:
 	// === Simulation ===
 	
 	/** 
-	 *	Evolve the system for one time step 
-	 *	@file	QLB.cpp	
+	 *	Evolve the system for one time step (CPU - single threaded)
+	 *	@file	QLBcpu.cpp	
 	 */
-	void evolution();
-	void evolution_CPU();
+	void evolution_CPU_serial();
+	
+	/** 
+	 *	Evolve the system for one time step (CPU - multi threaded)
+	 *	@param  tid     thread id in [0, nthreads)
+	 *	@file	QLBcpu.cpp	
+	 */
+	void evolution_CPU_thread(int tid);
+
+	/** 
+	 *	Evolve the system for one time step (CUDA)
+	 *	@file	QLBcuda.cpp	
+	 */
 	void evolution_GPU();
 
 	/**
 	 *	Construct the collision matrix Qhat by calculating X * Q * X^(-1) and
 	 *	Y * Q * Y^(-1) respectively
-	 *	@param 	i 	row index
-	 *	@param 	j 	column index
-	 *	@param 	Q 	collision matrix
+	 *	@param 	i 	    row index
+	 *	@param 	j 	    column index
+	 *	@param 	Q 	    collision matrix
 	 */
 	void Qhat_X(int i, int j, cmat_t& Q) const;
 	void Qhat_Y(int i, int j, cmat_t& Q) const;
@@ -173,15 +187,15 @@ public:
 	
 	/**
 	 *	Harmonic potential: V(r) = 1/2 * m * w0^2 * r^2
-	 *	@param i	row index
-	 *	@param j 	column index 
+	 *	@param i        row index
+	 *	@param j        column index 
 	 */
 	float_t V_harmonic(int i, int j) const;
 	
 	/**
 	 *	Free-particle potential: V(r) = 0
-	 *	@param i	row index
-	 *	@param j 	column index 
+	 *	@param i        row index
+	 *	@param j        column index 
 	 */
 	float_t V_free(int i, int j) const;
 
@@ -193,20 +207,28 @@ public:
 	 */
 	void init_GL();
 	
+	/**
+	 *	Calculate the vertices by copying the norm of the desired spinor matrix
+	 *  to array_vertex_
+	 *	@param  tid       thread id in [0, nthreads)
+	 *	@param  nthreads  number of threads
+	 *	@file QLBgraphics.cpp 
+	 */
+	void calculate_vertex(int tid, int nthreads);
+	
+	/**
+	 *	Calculate the normals depending on array_vertex_ (QLB::calculate_vertex
+	 *	should be called prior)
+	 *	@file QLBgraphics.cpp 
+	 */
+	void calculate_normal();
+	
 	/** 
 	 *	Render the current scene 
 	 *	@file	QLBgraphics.cpp
 	 */
 	void render();
 	
-	/** 
-	 *	Prepare the arrays and VBO's for rendering by copying the content of
-	 *	desired simulation arrays (indicated by current_scene_) to the render
-	 *	arrays (array_vertex_) and calculating the normals (array_normal_).
-	 *	@file	QLBgraphics.cpp
-	 */	
-	void prepare_arrays();
-
 	/** 
 	 *	Draw a coordinate system (mainly used for debugging!)
 	 *	@file	QLBgraphics.cpp
@@ -239,14 +261,22 @@ public:
 	void print_matrix(const c4mat_t& m, std::size_t k) const;
 	
 	/** 
+	 *	Write the current spreads to 'spread.dat'.
+	 *  If dt*t == 0 the file will newly created, otherwise
+	 *  consecutive calls of this function will append to the file.
+	 *	@file 	QLB.cpp 
+	 */
+	void write_content_to_file();
+	
+	/** 
  	 *	Write the current content of all specified quantities (given by 
  	 *	QLBopt's plot_) to the corresponding file(s). 
  	 *	Note: consecutive calls of this function will override the last content
  	 *	      of the files
 	 *	@file 	QLB.cpp 
 	 */
-	void write_content_to_file();
-	
+	void write_spread();
+
 	/** 
 	 *	Adjust the scaling of the rendered scene
 	 *	@param 	change_scaling	-1: decrease by factor of 2.0
@@ -291,6 +321,9 @@ private:
 	
 	int V_indx_;
 	
+	barrier_t barrier;
+	std::atomic<int> flag_;
+	
 	// === Arrays CPU === 
 	c4mat_t spinor_;
 	c4mat_t spinoraux_;
@@ -311,7 +344,6 @@ private:
 	scene_t  current_scene_;
 	render_t current_render_;
 	float_t scaling_;
-	bool normal_per_face_;
 	
 	uvec_t  array_index_solid_;
 	uvec_t  array_index_wire_;  

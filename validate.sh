@@ -23,6 +23,7 @@ print_help()
 	echo "               delimit with ',' e.g --L=128,256,512)"
 	echo "   --plot      Plot the output with python (executes plot/plot_spread.py)"
 	echo "   --save      Save the plot as a pdf"
+	echo "   --mt        Run the multi-threaded cpu version of QLB"
 	exit 1
 }
 
@@ -37,6 +38,7 @@ QLB_exe=./QLB
 print_fig_1=false
 print_fig_4=false
 tmax_arg="--tmax=256"
+mt_arg="";
 L_list="128"
 plot_arg=""
 plot_files=""
@@ -59,6 +61,7 @@ for param in $*
 		"--exe="*)  QLB_exe="${param##*=}" ;;
 		"--tmax="*) tmax_arg="$param" ;;
 		"--L="*)    L_list="${param##*=}" ;;
+		"--mt")     mt_arg="--device=cpu-thread";; 
 		*) 	print_help ;; 
 	esac
 done
@@ -71,11 +74,11 @@ fi
 
 # Set the appropriate command-line arguments
 if [ "$print_fig_1" = "true" ]; then
-	QLB_args="--dx=0.78125 --dt=0.78125 --mass=0.35 --V=free --verbose \
-              --gui=none $tmax_arg $plot_arg"
+	QLB_args="--dx=0.78125 --dt=0.78125 --mass=0.35 --V=free \
+              --gui=none $tmax_arg $plot_arg $mt_arg"
 elif [ "$print_fig_4" = "true" ]; then
-	QLB_args="--dx=1.5625 --dt=1.5625 --mass=0.1 --V=harmonic --verbose \
-	          --gui=none $tmax_arg $plot_arg"
+	QLB_args="--dx=1.5625 --dt=1.5625 --mass=0.1 --V=harmonic \
+	          --gui=none $tmax_arg $plot_arg $mt_arg"
 else
 	exit_after_error "$0 : error : no figure specified try '$0 --help'"
 fi

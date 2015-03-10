@@ -63,8 +63,9 @@ DEBUG       =
 PROFILING   = 
 INCLUDE     = -I./inc/$(OS)
 OPT         = -O2 -march=native
-CXXSTD      =
-CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD)
+CUDAOPT     = -O2
+CXXSTD      = -std=c++11
+CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD) $(CUDAOPT)
 CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES) $(PROFILING)
 LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
@@ -136,7 +137,7 @@ libGLEW :
 .PHONY: clean
 clean:
 	rm -f $(EXE) objects/*.o *.dat $(EXE_BIN) $(BIN_PATH)/*.dat 
-	rm -f analysis.txt *.out *.data *.prof
+	rm -f analysis.txt *.out
 	
 .PHONY: cleanall
 cleanall : clean

@@ -123,6 +123,7 @@ public:
 	inline float translate_z() const { return translate_z_; }
 	inline float rotate_x() const { return rotate_x_; }
 	inline float rotate_y() const { return rotate_y_; }
+	inline bool rotating() const { return rotating_; } 
 
 	inline bool paused()  const { return paused_;  }
 	inline bool restart() const { return restart_; }
@@ -135,6 +136,8 @@ public:
 	// === Setter ===
 	inline void set_height(int height) { height_ = height; }
 	inline void set_width(int width)   { width_  = width;  }
+	inline void set_rotate_x(float rotate_x) { rotate_x_ = rotate_x; }
+	inline void set_rotate_y(float rotate_y) { rotate_y_ = rotate_y; }
 	
 	// === Reset === 
 	inline void reset_param_has_changed() { param_has_changed_ = false; }
@@ -150,6 +153,7 @@ private:
 	float translate_z_;
 	float rotate_x_;
 	float rotate_y_;
+	bool rotating_;
 
 	// === Mouse variables ===
 	int mouse_old_x_;
