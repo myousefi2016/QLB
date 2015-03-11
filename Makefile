@@ -63,7 +63,7 @@ WARNINGS    = -Wall
 DEFINES     = 
 DEBUG       =
 PROFILING   = 
-INCLUDE     = -I./inc/$(OS)
+INCLUDE     = -I./include/$(OS)
 OPT         = -O2 -march=native
 CUDAOPT     = -O2
 CXXSTD      = -std=c++11
@@ -134,9 +134,9 @@ libGLEW :
 	cd $(GLEW_BUILD_DIR)/auto && $(MAKE)
 	cd $(GLEW_BUILD_DIR) && $(MAKE)
 	mkdir -p lib/$(OS)/
-	mkdir -p inc/$(OS)/GL/
+	mkdir -p include/$(OS)/GL/
 	cp $(GLEW_BUILD_DIR)/lib/libGLEW.a lib/$(OS)/
-	cp $(GLEW_BUILD_DIR)/include/GL/* inc/$(OS)/GL/
+	cp $(GLEW_BUILD_DIR)/include/GL/* include/$(OS)/GL/
 	
 # === Cleaning ===
 .PHONY: clean
@@ -147,7 +147,7 @@ clean:
 .PHONY: cleanall
 cleanall : clean
 	rm -rf $(GLEW_BUILD_DIR)
-	rm -rf inc/$(OS)/GL/
+	rm -rf include/$(OS)/GL/
 	rm -rf lib/$(OS)/
 	
 # === Help ===
