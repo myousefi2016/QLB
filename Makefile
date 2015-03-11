@@ -22,14 +22,14 @@
 # For further assistance use: 
 #	make help
 
-CXX     = icpc
+CXX     = clang++
 CXX_NV  = g++
 NVCC    = nvcc
  
 CUDA_DIR = /usr/local/cuda-6.5
 
 # CUDA is not supported yet
-#NO_CUDA ?= false
+NO_CUDA ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
 
