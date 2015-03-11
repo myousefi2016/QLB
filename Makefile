@@ -2,7 +2,7 @@
 # (c) 2015 Fabian Thüring, ETH Zürich
 #
 # [DESCRIPTION]
-# This Makefile is used to compile the whole project on Linux/Mac OSX.
+# This Makefile is used to compile the whole project on Linux/Mac OS X.
 # 
 # === Linux ===
 # The compilation relies on the following libraries:
@@ -12,7 +12,7 @@
 #   -libglut
 # All those libraries should be present in the repository of your distribution.
 # The library 'libGLEW' can be built with this Makefile by using the command
-# 'make libGLEW'.
+# 'make libGLEW' this will build the most recent version directly from github.
 #
 # === Mac OSX ===
 # The compilation relies on 'libGLEW' which is not installed by default. You can
@@ -22,19 +22,21 @@
 # For further assistance use: 
 #	make help
 
-CXX     = clang++
+CXX     = icpc
 CXX_NV  = g++
 NVCC    = nvcc
  
 CUDA_DIR = /usr/local/cuda-6.5
 
 # CUDA is not supported yet
-NO_CUDA ?= false
+#NO_CUDA ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
 
 OS = $(shell uname -s 2>/dev/null)
-GLEW_BUILD_DIR = glew-1.12.0
+
+GLEW_BUILD_DIR = glew
+GLEW_GIT_URL   = https://github.com/nigels-com/glew.git
 
 ifeq ($(OS), )
  OS = unknown
@@ -71,7 +73,7 @@ LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
 # === Build adjustments ===
 
-# Adjust to build on Mac OSX
+# Adjust to build on Mac OS X
 ifeq ($(OS)),Darwin)
  LDFLAGS   = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
  WARNINGS += -Wno-deprecated-declarations -Wno-deprecated-register
@@ -127,7 +129,10 @@ $(EXE_BIN) : $(EXE)
 # build libGLEW
 libGLEW :
 	$(info === Building OpenGL Extension Wrangler Library === )
-	cd $(GLEW_BUILD_DIR)/ && $(MAKE)
+	rm -rf $(GLEW_BUILD_DIR)
+	git clone $(GLEW_GIT_URL) $(GLEW_BUILD_DIR)
+	cd $(GLEW_BUILD_DIR)/auto && $(MAKE)
+	cd $(GLEW_BUILD_DIR) && $(MAKE)
 	mkdir -p lib/$(OS)/
 	mkdir -p inc/$(OS)/GL/
 	cp $(GLEW_BUILD_DIR)/lib/libGLEW.a lib/$(OS)/
@@ -141,9 +146,9 @@ clean:
 	
 .PHONY: cleanall
 cleanall : clean
-	cd glew-1.12.0/ && $(MAKE) clean 
-	rm -f -r inc/$(OS)/GL/
-	rm -f -r lib/$(OS)/
+	rm -rf $(GLEW_BUILD_DIR)
+	rm -rf inc/$(OS)/GL/
+	rm -rf lib/$(OS)/
 	
 # === Help ===
 .PHONY: help
@@ -154,7 +159,7 @@ help :
 	@echo "    all      - compiles the program (default)"
 	@echo "    libGLEW  - build the OpenGL Extension Wrangler Library (libGLEW)"
 	@echo "    clean    - removes all execuatbles and object files"
-	@echo "    cleanall - like clean but removes targets from libGLEW aswell"
+	@echo "    cleanall - like clean but removes libGLEW aswell"
 	@echo "    help     - prints this help"
 	@echo ""
 	@echo " Options:"
