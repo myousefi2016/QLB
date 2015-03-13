@@ -56,7 +56,7 @@ public:
 	// === typedefs ===
 	typedef std::complex<float_t>                                   complex_t;
 	typedef std::vector<float_t, aligned_allocator<float_t, 64> >   fvec_t;
-	typedef std::vector<unsigned, aligned_allocator<int, 64> >      uvec_t;
+	typedef std::vector<unsigned>                                   uvec_t;
 	typedef matND<complex_t>                                        cmat_t;
 	typedef matND<float_t>                                          fmat_t;
 	typedef matN4D<complex_t>                                       c4mat_t;
