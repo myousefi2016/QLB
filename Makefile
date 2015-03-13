@@ -74,7 +74,7 @@ LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 # === Build adjustments ===
 
 # Adjust to build on Mac OS X
-ifeq ($(OS)),Darwin)
+ifeq ($(OS),Darwin)
  LDFLAGS   = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
  WARNINGS += -Wno-deprecated-declarations -Wno-deprecated-register
 endif
