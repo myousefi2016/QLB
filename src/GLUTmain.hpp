@@ -23,7 +23,7 @@
 
 void QLB_run_glut(int argc, char* argv[]);
 void init_GL(int argc, char* argv[]);
-void cleanup();
+void cleanup_and_exit();
 
 // GLUT callback functions
 void callback_display();

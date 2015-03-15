@@ -5,7 +5,12 @@
 #
 # This script can profile the application with 'gprof' and perform sanatizing
 # tests provided by LLVM sanatizer or Valgrind. In addition it supports
-# Profile Guided Optimization (PGO) for LLVM.
+# Profile Guided Optimization (PGO) for LLVM (currently only on Linux).
+# 
+# Note: To use PGO to it's full potential you might have to allow sampling of 
+#       kernel functions during recording
+#       > sudo -s
+#       > echo 0 > /proc/sys/kernel/kptr_restrict
 
 print_help() 
 {
@@ -23,7 +28,7 @@ print_help()
 	echo "   --args=Args       The follwing arguments are passed to the executing"
 	echo "                     program while multiple arguments are delimited with ','" 
 	echo "                     (e.g '--args=--L=128,--dx=1.5')"
-	echo "   --g++=DIR         Command to invoke g++ (GNU Compiler used by '--profile')"
+	echo "   --g++=DIR         Command to invoke g++ (GNU Compiler used by '--gprof')"
 	echo "                     (e.g '--g++=/usr/bin/g++')"
 	echo "   --clang++=DIR     Command to invoke clang++ (used by '--llvm-sanatizer')"
 	echo "   --llvm_prof=DIR   Command to invoke create_llvm_prof (used by '--pgo')"
@@ -83,7 +88,7 @@ else
 	CXX=$CLANG
 fi
 
-# Seprate arguments
+# Separate arguments
 for arg in $(echo $exe_args_cmd | tr "," "\n")
 do
 	EXEargs="$EXEargs $arg"
@@ -148,13 +153,14 @@ if [ "$pgo" = "true" ]; then
 	# Check for prof
 	perf --version > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
-		exit_after_error "$0 : error : cannot find 'prof'"
+		exit_after_error "$0 : error : cannot find 'perf'"
 	fi
 	
 	# Check for create_llvm_prof
-	$CREATE_LLVM_PROF --version /dev/null 2>&1
+	$CREATE_LLVM_PROF --version > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
-		exit_after_error "$0 : error : cannot find 'create_llvm_prof'"
+		echo "$0 : error : cannot find 'create_llvm_prof' take a look at"
+		exit_after_error " http://github.com/google/autofdo"
 	fi
 	
 	echo " === RECOMPILING === "

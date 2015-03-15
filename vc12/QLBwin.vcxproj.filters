@@ -60,6 +60,9 @@
     <ClInclude Include="..\src\barrier.hpp">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\DumpQLB.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -90,6 +93,9 @@
       <Filter>GLUT</Filter>
     </ClCompile>
     <ClCompile Include="..\src\PerformanceCounter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\DumpQLB.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

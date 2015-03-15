@@ -39,9 +39,6 @@
 #define FATAL_ERROR(msg) { fatal_error((msg), __FILE__, __LINE__); }
 #define WARNING(msg)     { warning((msg), __FILE__, __LINE__); }
 
-/****************************
- *        Coloring          *
- ****************************/
 class ConsoleColorAPI
 {
 public:
@@ -154,9 +151,7 @@ private:
 
 #endif
 
-/****************************
- *     Error handling       *
- ****************************/
+
 template< typename msg_t >
 NO_RETURN static inline void fatal_error(const msg_t errmsg , const char *file, int line)
 {
@@ -170,9 +165,7 @@ NO_RETURN static inline void fatal_error(const msg_t errmsg , const char *file, 
 	exit(EXIT_FAILURE);
 }
 
-/****************************
- *        Warnings          *
- ****************************/
+
 template< typename msg_t >
 static inline void warning(const msg_t warmsg , const char *file, int line)
 {

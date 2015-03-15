@@ -4,28 +4,28 @@
  *
  *  QLBopt is used to set various options of the QLB class.
  *  The options are:
- *   - plot    unsigned integer where the bits indicate which quantities are
- *             written to file after calling 'QLB::write_content_to_file()'
- *             all           <==>        1
- *             spread        <==>        2
- *             spinor1       <==>        4
- *             spinor2       <==>        8
- *             spinor3       <==>       16
- *             spinor4       <==>       32
- *             density       <==>       64
- *             currentX      <==>      128
- *             currentY      <==>      256
- *             veloX         <==>      512
- *             veloY         <==>     1024
- *             e.g to write spinor1 and currentX to file pass:
- *			   unsigned int plot = QLBopt::spinor1 | QLBopt::currentX;
- *  - verbose  enables verbose mode to get some additional information written
- *             to STDOUT during the simulation
- *  - device   Set the device the simulation will run on
- *             0 :   CPU serial
- *             1 :   CPU multi threaded
- *             2 :   GPU (CUDA)
- *  - nthrads  Number of threads used by the CPU implementation
+ *   - plot     unsigned integer where the bits indicate which quantities are
+ *              written to file after calling 'QLB::write_content_to_file()'
+ *              all           <==>        1
+ *              spread        <==>        2
+ *              spinor1       <==>        4
+ *              spinor2       <==>        8
+ *              spinor3       <==>       16
+ *              spinor4       <==>       32
+ *              density       <==>       64
+ *              currentX      <==>      128
+ *              currentY      <==>      256
+ *              veloX         <==>      512
+ *              veloY         <==>     1024
+ *              e.g to write spinor1 and currentX to file pass:
+ *			    unsigned int plot = QLBopt::spinor1 | QLBopt::currentX;
+ *  - verbose   enables verbose mode to get some additional information written
+ *              to STDOUT during the simulation
+ *  - device    Set the device the simulation will run on
+ *              0 :   CPU serial
+ *              1 :   CPU multi threaded
+ *              2 :   GPU (CUDA)
+ *  - tnhreads  Number of threads used by the CPU implementation
  */
 
 #ifndef QLB_OPT_HPP
@@ -51,7 +51,7 @@ public:
 	
 	QLBopt(const QLBopt& opt)
 		:	plot_(opt.plot()), verbose_(opt.verbose()), device_(opt.device()),
-		    nthreads_(opt.nthreads())
+			nthreads_(opt.nthreads())
 	{}
 	
 	// === Getter ===

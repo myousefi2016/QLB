@@ -34,10 +34,12 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		veloY_(L),
 		wrot_(L),
 		rho_(L),
+		V_(L),
 		// === OpenGL context ===
 		GL_is_initialzed_(false),
 		current_scene_(spinor0),
 		current_render_(SOLID),
+		draw_potential_(false),
 		scaling_(L/2.0),
 		array_index_solid_(6*(L-1)*(L-1), 0),
 		array_index_wire_(2*L*(L-1), 0),
@@ -47,33 +49,59 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		opt_(opt)
 {
 	// Set initial condition
-	initial_condition_gaussian();
+	if( V_indx_ == 2 )
+		initial_condition_gaussian(2*L_/3 , L_/2);
+	else
+		initial_condition_gaussian(L_/2 , L_/2);
+		
 	calculate_macroscopic_vars();
 	
 	// Copy arrays to device
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 	allocate_device_arrays();
 	init_device();
 #endif
+
+	// Setup potential
+	for(unsigned i = 0; i < L_; ++i)
+	{
+		for(unsigned j = 0; j < L_; ++j)
+		{
+			switch( V_indx_ )
+			{
+				case 0:
+					V_(i,j) = V_free(i,j);
+					break; 
+				case 1:
+					V_(i,j) = V_harmonic(i,j);
+					break;
+				case 2:
+					V_(i,j) = V_barrier(i,j);
+					break;
+			}
+		}
+	}
 }
 
 // === DESTRUCTOR ====
 
 QLB::~QLB()
 {
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 	free_device_arrays();
 #endif
 }
 
 // === INITIALIZATION ===
 
-void QLB::initial_condition_gaussian()
+void QLB::initial_condition_gaussian(int i0, int j0)
 {
 	float_t gaussian;
 	float_t x, y;
+	const float_t x0 = dx_*(i0 - 0.5*(L_-1));
+	const float_t y0 = dx_*(j0 - 0.5*(L_-1));
 	const float_t stddev = 2*delta0_*delta0_;
-	//const float_t C = 1.0 / (2*M_PI * stddev); (?)
+//	const float_t C = 1.0 / (2*M_PI * stddev);
 	
 	for(unsigned i = 0; i < L_; ++i)
 	{
@@ -81,7 +109,7 @@ void QLB::initial_condition_gaussian()
 		{
 			x = dx_*(i-0.5*(L_-1));
 			y = dx_*(j-0.5*(L_-1));	
-			gaussian = std::exp( -(x*x + y*y)/(2*stddev) );
+			gaussian = std::exp( -( (x-x0)*(x-x0) + (y-y0)*(y-y0) )/(2*stddev) );
 			                           
 			spinor_(i,j,0) = gaussian;
 			spinor_(i,j,1) = 0;

@@ -7,9 +7,6 @@
 
 #include "Shader.hpp"
 
-/****************************
- *      Error Logging       *
- ****************************/
 static inline void get_error_log(GLuint object, GLuint type)
 {
 	GLint max_len = 0;	
@@ -43,9 +40,7 @@ static inline void get_error_log(GLuint object, GLuint type)
 	throw ShaderException(warning_msg);
 }
 
-/****************************
- *      ShaderLoader        *
- ****************************/
+
 ShaderLoader::ShaderLoader()
 	:	shader_(0), is_valid_(false)
 {}
@@ -147,9 +142,6 @@ ShaderLoader::~ShaderLoader()
 }
 
 
-/****************************
- *          Shader          *
- ****************************/
 Shader::Shader()
 	: program_(0), program_state_(UNINITIALIZED)
 {}

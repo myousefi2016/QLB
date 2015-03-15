@@ -62,9 +62,6 @@
  #define SPRINTF(buf, ...) std::sprintf((buf), __VA_ARGS__)
 #endif
 
-/****************************
- *       Timer class        *
- ****************************/
 #ifdef _WIN32 // Windows 
 class Timer
 {

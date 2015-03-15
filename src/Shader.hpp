@@ -21,9 +21,6 @@
 #include "GLerror.hpp"
 #include "error.hpp"
 
-/****************************
- *    Shader Exceptions     *
- ****************************/
 class ShaderException : public std::exception
 {
 public:
@@ -50,9 +47,6 @@ private:
 };
 
 
-/****************************
- *      ShaderLoader        *
- ****************************/
 class ShaderLoader
 {
 public:
@@ -110,9 +104,6 @@ private:
 };
 
 
-/****************************
- *          Shader          *
- ****************************/
 class Shader
 {
 public:

@@ -172,19 +172,8 @@ void QLB::calculate_vertex(int tid, int nthreads)
 				for(int j = 0; j < L; ++j)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,3));
 			break;
-		case potential:
-			for(int i = lower; i < upper; ++i)
-				for(int j = 0; j < L; ++j)
-				{
-					if(V_indx_ == 0)
-						array_vertex_[y(i,j)] = std::abs(V_free(i,j)); 
-					else
-						array_vertex_[y(i,j)] = scaling_*std::abs(V_harmonic(i,j));
-				}
-			break;
 	}
 }
-
 
 void QLB::calculate_normal()
 {
@@ -279,10 +268,7 @@ void QLB::render()
 	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
 	                         &array_normal_[0]);
 	vbo_normal.unbind();
-
 	
-//	draw_coordinate_system();	
-
 	// Draw the scene
 	std::size_t n_elements;
 	if(current_render_ == SOLID)
@@ -316,6 +302,54 @@ void QLB::render()
 		vbo_index_solid.unbind();
 	else 
 		vbo_index_wire.unbind();
+		
+		
+	// Draw potential if needed
+	if(draw_potential_)
+	{
+		glEnable(GL_BLEND);
+	
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+				array_vertex_[y(i,j)] = scaling_*std::abs(V_(i,j)) - 0.005*L_;
+		
+		calculate_normal(); 
+		
+		vbo_vertex.bind();
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+				                 &array_vertex_[0]);
+		vbo_vertex.unbind();
+
+		vbo_normal.bind();
+		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+				                 &array_normal_[0]);
+		vbo_normal.unbind();
+
+		glColor4d(1, 0, 0, 0.20);
+		
+		vbo_index_solid.bind();
+
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+	
+		vbo_normal.bind();
+		glNormalPointer(QLB_FLOAT_T, 0, 0);
+		vbo_normal.unbind();
+	
+		vbo_vertex.bind();
+		glVertexPointer(3, QLB_FLOAT_T, 0, 0);
+		vbo_vertex.unbind();
+
+		glDrawElements( SOLID, (GLsizei) array_index_solid_.size(), 
+		                GL_UNSIGNED_INT, 0);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_NORMAL_ARRAY);
+
+		vbo_index_solid.unbind();
+		glDisable(GL_BLEND);
+		glColor4d(1, 1, 1, 1);
+	}
 }
 
 

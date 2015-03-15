@@ -25,6 +25,14 @@ QLB::float_t QLB::V_free(int i, int j) const
 	return float_t(0);
 }
 
+QLB::float_t QLB::V_barrier(int i, int j) const
+{
+	const float_t delta0_2 = delta0_ * delta0_;
+	const float_t V0 = L_*L_ / ( 32.0 * delta0_2 * delta0_2 * mass_);
+	
+	return float_t(i < 1./3.*L_ && i > 1./6. * L_) * V0;
+}
+
 // === Simulation ===
 
 /**
@@ -40,15 +48,9 @@ QLB::float_t QLB::V_free(int i, int j) const
 
 void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
 {
-	float_t V_ij;
-	if(V_indx_ == 0)
-		V_ij = V_free(i,j);
-	else
-		V_ij = V_harmonic(i,j); 
-
 	// Precompute frequently used values
 	const float_t m = 0.5 * mass_* dt_;
-	const float_t g = 0.5 * V_ij * dt_;
+	const float_t g = 0.5 * V_(i,j) * dt_;
 	const float_t omega = m*m - g*g;
 
 	const complex_t a = (one - float_t(0.25)*omega) / 
@@ -81,14 +83,8 @@ void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
 void QLB::Qhat_Y(int i, int j, QLB::cmat_t& Q) const
 {
 	// Precompute frequently used values
-	float_t V_ij;
-	if(V_indx_ == 0)
-		V_ij = V_free(i,j);
-	else
-		V_ij = V_harmonic(i,j); 
-
 	const float_t m = 0.5 * mass_* dt_;
-	const float_t g = 0.5 * V_ij * dt_;
+	const float_t g = 0.5 *  V_(i,j) * dt_;
 	const float_t omega = m*m - g*g;
 
 	const complex_t a = (one - float_t(0.25)*omega) / 

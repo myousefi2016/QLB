@@ -34,6 +34,9 @@
 #include "matrix.hpp"
 #include "QLBopt.hpp"
 
+#define QLB_MAJOR	1
+#define QLB_MINOR	0
+
 #ifndef QLB_SINGLE_PRECISION
  #define QLB_FLOAT_T GL_DOUBLE
 #else
@@ -62,7 +65,7 @@ public:
 	typedef matN4D<complex_t>                                       c4mat_t;
 	typedef SpinBarrier                                             barrier_t;
 	
-	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3, potential = 4 };
+	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3 };
 	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };
 
 	// === Constants ===
@@ -91,6 +94,7 @@ public:
 	 *	@param 	V_indx  Index of the potential function V
 	 *	                0: no potential
 	 *	                1: harmonic potential
+	 *	                2: barrier potential
 	 *	@param  opt     Class defining options concerning plotting etc. 
 	 *	                (see at QLBopt (QLBopt.hpp) for further information)
 	 *	@file 	QLB.cpp
@@ -128,10 +132,12 @@ public:
 	/** 
 	 *	Initial condition in which the positive energy, spin-up component is 
 	 *	a spherically symmetric Gaussian wave packet with spread delta0.
-	 * 	spinor0 = C * exp( -(x^2 + y^2) / (4 * delta0^2) )
+	 * 	spinor0 = C * exp( -( (x - x0)^2 + (y - y0)^2) / (4 * delta0^2) )
+	 *  @param  i0    row index of the potential minimum in x-axis 
+	 *  @param  j0    column index of the potential minimum in y-axis
 	 *	@file 	QLB.cpp	
 	 */
-	void initial_condition_gaussian();
+	void initial_condition_gaussian(int i0, int j0);
 
 	// === Simulation ===
 	
@@ -187,6 +193,7 @@ public:
 	
 	/**
 	 *	Harmonic potential: V(r) = 1/2 * m * w0^2 * r^2
+	 *	with w0 = 1 / (2m * delta0^2)
 	 *	@param i        row index
 	 *	@param j        column index 
 	 */
@@ -198,6 +205,16 @@ public:
 	 *	@param j        column index 
 	 */
 	float_t V_free(int i, int j) const;
+	
+	/**
+	 *	Barrier potential: V(r) = V0  if i >= L/2
+	 *	                        = 0   else
+	 *	where V0 is given by  m * L^2 * w0^2 / 8  with w0 = 1 / (2m * delta0^2)
+	 *	@param i        row index
+	 *	@param j        column index 
+	 */
+	float_t V_barrier(int i, int j) const;
+	
 
 	// === Rendering ===
 
@@ -300,10 +317,12 @@ public:
 	inline float_t scaling() const { return scaling_;}
 	inline scene_t current_scene() const { return current_scene_; }
 	inline render_t current_render() const { return current_render_; }
+	inline bool draw_potential() const { return draw_potential_; }
 	inline QLBopt opt() const { return opt_; }
 	
 	// === Setter ===
 	inline void set_current_scene(scene_t cs)   { current_scene_ = cs; }
+	inline void set_draw_potential(bool dp)     { draw_potential_ = dp; }
 	inline void set_current_render(render_t cr) { current_render_ = cr; }
 
 private:
@@ -334,6 +353,7 @@ private:
 	cmat_t  veloY_;
 	cmat_t  wrot_;
 	cmat_t  rho_;
+	fmat_t  V_;
 	
 	// === Arrays GPU === 
 	complex_t* d_spinor_;
@@ -343,6 +363,7 @@ private:
 	bool GL_is_initialzed_;
 	scene_t  current_scene_;
 	render_t current_render_;
+	bool draw_potential_;
 	float_t scaling_;
 	
 	uvec_t  array_index_solid_;

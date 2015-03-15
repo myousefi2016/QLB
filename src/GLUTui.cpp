@@ -35,6 +35,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		change_scaling_(0),
 		current_scene_(QLB::spinor0),
 		current_render_(QLB::SOLID),
+		draw_potential_(false),
 		// === Light ===
 		light_()
 {
@@ -136,7 +137,7 @@ void UserInterface::keyboard(int key, int x, int y)
 			break;
 		case 118:   // v
 			param_has_changed_ = true;
-			current_scene_ = QLB::potential;
+			draw_potential_ = !draw_potential_;
 			break;
 		case 119:   // w
 			param_has_changed_ = true;
@@ -266,10 +267,10 @@ void UserInterface::update_performance_counter()
 		text_boxes_[BOX_PERFORMANCE].add_text(2, entry);
 	
 		// Update GPU memory
-#ifdef QLB_NO_CUDA
-		SPRINTF(entry, "GPU memory     %s   ", "N/A");
-#else
+#ifdef QLB_HAS_CUDA
 		SPRINTF(entry, "GPU memory    %4.0f MB ", pc_.gpu_memory()*1e-6);
+#else
+		SPRINTF(entry, "GPU memory     %s   ", "N/A");
 #endif
 		text_boxes_[BOX_PERFORMANCE].add_text(3, entry);
 	

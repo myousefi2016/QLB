@@ -132,6 +132,7 @@ public:
 	inline int change_scaling() const { return change_scaling_;  }
 	inline QLB::scene_t current_scene() const { return current_scene_; }
 	inline QLB::render_t current_render() const { return current_render_; }
+	inline bool draw_potential() const { return draw_potential_; }
 
 	// === Setter ===
 	inline void set_height(int height) { height_ = height; }
@@ -178,6 +179,7 @@ private:
 	int change_scaling_; // -1: decrease 0: false 1: increase
 	QLB::scene_t current_scene_;
 	QLB::render_t current_render_;
+	bool draw_potential_; 
 
 	// === Light ===
 	Light light_;

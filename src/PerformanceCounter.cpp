@@ -43,7 +43,7 @@ struct CPUstats
 static CPUstats* CPU;
  
 PerformanceCounter::PerformanceCounter()
-:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+:	cpu_max_memory_(0), gpu_max_memory_(0), GPU_query_failed_(false)
 {
 	// maximum memory
 	MEMORYSTATUSEX memInfo;
@@ -141,7 +141,7 @@ std::size_t PerformanceCounter::cpu_memory()
 
 std::size_t PerformanceCounter::gpu_memory()
 {
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 	std::size_t free;
 	std::size_t total;
 	cudaMemGetInfo( &free, &total );
@@ -215,7 +215,7 @@ struct CPUstats
 static CPUstats* CPU; 
 
 PerformanceCounter::PerformanceCounter()
-:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+:	cpu_max_memory_(0), gpu_max_memory_(0), GPU_query_failed_(false)
 {
 
 	// === CPU ===
@@ -285,7 +285,7 @@ std::size_t PerformanceCounter::cpu_memory()
 
 std::size_t PerformanceCounter::gpu_memory()
 {
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 	std::size_t free;
 	std::size_t total;
 	cudaMemGetInfo( &free, &total );
@@ -345,7 +345,7 @@ double PerformanceCounter::gpu_usage()
 #else /* UNIX */
 
 PerformanceCounter::PerformanceCounter()
-:	cpu_max_memory_(0), gpu_max_memory_(0), num_processor_(0), GPU_query_failed_(false)
+:	cpu_max_memory_(0), gpu_max_memory_(0), GPU_query_failed_(false)
 {
 	
 }
@@ -372,7 +372,7 @@ std::size_t PerformanceCounter::cpu_memory()
 
 std::size_t PerformanceCounter::gpu_memory()
 {
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 	std::size_t free;
 	std::size_t total;
 	cudaMemGetInfo( &free, &total );

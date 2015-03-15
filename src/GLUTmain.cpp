@@ -47,7 +47,7 @@ void QLB_run_glut(int argc, char* argv[])
 	QLB_system->init_GL();
 
 	glutMainLoop();
-	cleanup();
+	cleanup_and_exit();
 }
 
 /****************************
@@ -118,12 +118,6 @@ void init_GL(int argc, char* argv[])
 	glutKeyboardFunc(callback_keyboard);
 	glutSpecialFunc(callback_keyboard_2);
 
-#if defined (__APPLE__) || defined(MACOSX)
-	atexit(cleanup);
-#else
-	glutCloseFunc(cleanup);
-#endif
-
 	// Viewport
 	glViewport(0, 0, UI->width(),UI->height());
 
@@ -136,7 +130,7 @@ void init_GL(int argc, char* argv[])
 //	glEnable(GL_CULL_FACE); 
 //	glCullFace(GL_FRONT); 
 //	glEnable(GL_DEPTH_TEST);
-	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glShadeModel(GL_SMOOTH);
 
 	// Set view matrix for the first time
@@ -167,6 +161,7 @@ void callback_display()
 	
 		QLB_system->set_current_scene(UI->current_scene());
 		QLB_system->set_current_render(UI->current_render());
+		QLB_system->set_draw_potential(UI->draw_potential());
 		
 		UI->reset_param_has_changed();
 	}
@@ -201,7 +196,7 @@ void callback_display()
 			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 				threadpool[tid] = std::thread( &QLB::calculate_vertex, 
 				                                QLB_system, 
-										        int(tid),
+				                                int(tid),
 				                                int(threadpool.size()) );
 			for(std::thread& t : threadpool)
 				t.join();
@@ -211,7 +206,7 @@ void callback_display()
 				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
 								                   QLB_system, 
-												   int(tid) ); 
+					                               int(tid) ); 
 
 				QLB_system->calculate_normal();
 				QLB_system->render();
@@ -271,7 +266,7 @@ void callback_reshape(int width, int height)
  ****************************/
 void callback_keyboard(unsigned char key, int x, int y)
 {
-	if(key == 27) cleanup(); // Esc
+	if(key == 27) cleanup_and_exit(); // Esc
 	UI->keyboard(int(key),x,y);
 }	
 
@@ -280,7 +275,7 @@ void callback_keyboard(unsigned char key, int x, int y)
  ****************************/
 void callback_keyboard_2(int key, int x, int y)
 {
-	if(key == 27) cleanup(); // Esc
+	if(key == 27) cleanup_and_exit(); // Esc
 	UI->keyboard(key,x,y);
 }
 
@@ -303,7 +298,7 @@ void callback_mouse_motion(int x, int y)
 /****************************
  *         cleanup          *
  ****************************/
-void cleanup()
+void cleanup_and_exit()
 {
 	// Delete the local class pointers explicitly, otherwise the destructors are 
 	// not called if we leave the glutMainLoop() with exit()
@@ -320,8 +315,9 @@ void cleanup()
 	
 	if(QLB_system != nullptr) 
 	{	
-		if(cmd->verbose()) 
+		if(cmd->verbose())
 			std::printf("cleaning up ... QLB_system at %p\n", QLB_system); 
+		
 		delete QLB_system;
 		QLB_system = nullptr;
 	}
@@ -333,4 +329,7 @@ void cleanup()
 		delete cmd;
 		cmd = nullptr;
 	}
+	
+	// We now exit
+	exit(EXIT_SUCCESS);
 }	

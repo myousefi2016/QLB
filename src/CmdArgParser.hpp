@@ -66,9 +66,6 @@
  #define ARCH	"unknown architecture"
 #endif
 
-/****************************
- *        CmdArg            *
- ****************************/
 class CmdArg
 {
 public:
@@ -84,9 +81,7 @@ private:
 	bool is_present_;
 };
 
-/****************************
- *       CmdArgNumeric      *
- ****************************/
+
 template< typename value_t >
 class CmdArgNumeric : public CmdArg
 {
@@ -107,9 +102,7 @@ private:
 	value_t value_;
 };
 
-/****************************
- *       CmdArgString      *
- ****************************/
+
 class CmdArgString : public CmdArg
 {
 public:
@@ -129,9 +122,7 @@ private:
 	std::string str_;
 };
 
-/****************************
- *     CmdArgException      *
- ****************************/
+
 class CmdArgException : public std::exception
 {
 public:
@@ -158,9 +149,7 @@ private:
 	std::string msg_;
 };
 
-/****************************
- *       CmdArgParser       *
- ****************************/
+
 class CmdArgParser
 {
 public:
@@ -239,16 +228,18 @@ public:
 				throw CmdArgException("'S' in '--gui=S' must be one of "
 				                      "[glut|none]");
 				
-			// --V=[harmonic|free]
+			// --V=[harmonic|free|barrier]
 			auto V = find_string("--V");
 			V_ = 0;
 			if(V.is_present() && compare(V.str(),"free"))
 				V_ = 0;
 			else if(V.is_present() && compare(V.str(),"harmonic"))
 				V_ = 1;
+			else if(V.is_present() && compare(V.str(),"barrier"))
+				V_ = 2;
 			else if(V.is_present())
 				throw CmdArgException("'S' in '--V=S' must be one of "
-				                      "[harmonic|free]");
+				                      "[free|harmonic|barrier]");
 				                     
 			// --device=[cpu-serial|cpu-thread|gpu]
 			auto device = find_string("--device");                      
@@ -527,8 +518,9 @@ private:
 		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
 		print_help_line("--nthreads=X","Exectue CPU verison with X threads");
-		print_help_line("--V=S","Set the potential to S, where S is one of "
-		                "[harmonic|free]");
+		std::string expl_V[2] = {"Set the potential to S, where S is one of ",
+                                      "[free|harmonic|barrier]"};
+		print_help_line("--V=S", svec_t(expl_V, expl_V+2));
 		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
 		print_help_line("--L=X","Set the grid size to X where X > 1");
 		print_help_line("--dx=X","Set spatial discretization to X where X > 0");
@@ -555,7 +547,7 @@ private:
 		std::cout << "Built on " << __TIMESTAMP__ << " for " << ARCH << std::endl;
 		std::cout << "Compiled with " << COMPILER << VERSION << std::endl;
 		std::cout << "Compute model : CPU";
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
 		std::cout << ", CUDA";
 #endif
 		std::cout << std::endl;

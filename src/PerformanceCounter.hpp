@@ -13,9 +13,6 @@
 #ifndef PERFORMANCE_COUNTER_HPP
 #define PERFORMANCE_COUNTER_HPP
 
-// By default we assume Intel HyperThreading
-#define PC_HAS_HT 1
-
 // System Includes
 #ifdef _WIN32
  #include <windows.h>
@@ -34,7 +31,7 @@
 #include <cstring>
 #include <exception>
 
-#ifndef QLB_NO_CUDA
+#ifdef QLB_HAS_CUDA
  #include <cuda_runtime.h>
 #endif
 
@@ -78,13 +75,9 @@ public:
 	 */
 	double gpu_usage();
 	
-	// == Getter ===
-	inline int num_processor() const { return num_processor_; }
-	
 private:
 	std::size_t cpu_max_memory_;
 	std::size_t gpu_max_memory_;
-	int num_processor_;
 	bool GPU_query_failed_;
 };
 

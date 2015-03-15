@@ -29,7 +29,7 @@ NVCC    = nvcc
 CUDA_DIR = /usr/local/cuda-6.5
 
 # CUDA is not supported yet
-NO_CUDA ?= false
+CUDA ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
 
@@ -50,10 +50,10 @@ CUDA_LIB    = -L$(CUDA_DIR)/lib64/ -lcudart
 # === Sources ===
 EXE         = QLB
 SRC_CU      = $(wildcard src/*.cu)
-SRC_CPP     = $(wildcard src/*.cpp)
+SRC_CXX     = $(wildcard src/*.cpp)
 OBJECTS_CU  = $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
-OBJECTS_CPP = $(patsubst src/%.cpp,objects/%.o,$(SRC_CPP))
-OBJECTS     = $(OBJECTS_CPP)
+OBJECTS_CXX = $(patsubst src/%.cpp,objects/%.o,$(SRC_CXX))
+OBJECTS     = $(OBJECTS_CXX)
 
 BIN_PATH    = ./bin/$(OS)
 EXE_BIN     = $(BIN_PATH)/$(EXE)
@@ -85,9 +85,8 @@ ifeq ($(CXX),clang++)
 endif
 
 # Adjust the build to use CUDA
-ifdef NO_CUDA
- DEFINES    += -DQLB_NO_CUDA
-else
+ifeq ($(CUDA),true)
+ DEFINES    += -DQLB_HAS_CUDA
  OBJECTS    += $(OBJECTS_CU)
  LDFLAGS    += $(CUDA_LIB)
 endif
@@ -163,9 +162,9 @@ help :
 	@echo "    help     - prints this help"
 	@echo ""
 	@echo " Options:"
-	@echo "    NO_CUDA=true"
-	@echo "       This flag will disable compilation against CUDA"
+	@echo "    NO_CUDA=[true|false]"
+	@echo "       This flag will enable or disable compilation against CUDA"
 	@echo ""
 	@echo " Example:"
-	@echo "   make NO_CUDA=true"
+	@echo "   make CUDA=false"
 	@echo ""

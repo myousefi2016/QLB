@@ -81,9 +81,7 @@
  #endif
 #endif
 
-/*****************************
- *     Aligned Allocator     *
- *****************************/
+
 template< typename T, unsigned int alignment >
 class aligned_allocator
 {
@@ -240,9 +238,7 @@ public:
 }; 
 
 
-/*****************************
- *      Matrix (N x N)       *
- *****************************/
+
 #if defined( MATRIX_USE_STL )
 #include <vector>
 
@@ -500,9 +496,6 @@ private:
 #endif /* MATRIX_USE_STL */
 
 
-/*****************************
- *    Matrix (N x N x 4)     *
- *****************************/
 #if defined( MATRIX_USE_STL )
 
 template < class T >

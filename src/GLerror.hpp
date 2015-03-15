@@ -27,9 +27,7 @@
 // Local includes
 #include "error.hpp"
 
-/****************************
- *    OpenGL Check Error    *
- ****************************/
+
 #define glCheckLastError() glCheckLastError_(__FILE__, __LINE__)
 static inline void glCheckLastError_(const char* file, int line)
 {

@@ -22,6 +22,7 @@
     <ClInclude Include="..\src\barrier.hpp" />
     <ClInclude Include="..\src\CmdArgParser.hpp" />
     <ClInclude Include="..\src\cuassert.hpp" />
+    <ClInclude Include="..\src\DumpQLB.hpp" />
     <ClInclude Include="..\src\error.hpp" />
     <ClInclude Include="..\src\GLerror.hpp" />
     <ClInclude Include="..\src\GLUTlight.hpp" />
@@ -37,6 +38,7 @@
     <ClInclude Include="..\src\VBO.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\DumpQLB.cpp" />
     <ClCompile Include="..\src\GLUTlight.cpp" />
     <ClCompile Include="..\src\GLUTmain.cpp" />
     <ClCompile Include="..\src\GLUTtextbox.cpp" />
@@ -182,7 +184,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include\Windows;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <AdditionalOptions>/DQLB_HAS_QT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -207,7 +209,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include\Windows;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <AdditionalOptions>/DQLB_HAS_QT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
