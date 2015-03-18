@@ -43,7 +43,7 @@ public:
 	 *	@param 	has_background  boolean whether a background is drawn
 	 *	@param  width_aligned   boolean whether the box is width aligned to the window
 	 *	@param  width_relative  boolean whether the box is width is independant
-	 *                          of the current window size (paramter w is ignored)
+	 *	                        of the current window size (paramter w is ignored)
 	 */
 	TextBox(float x, float y, float w, float h, std::size_t nrow, std::size_t ncol, 
 	        bool has_border, bool has_background, bool width_aligned, 

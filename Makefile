@@ -26,7 +26,7 @@ CXX     = clang++
 CXX_NV  = g++
 NVCC    = nvcc
  
-CUDA_DIR = /usr/local/cuda-6.5
+CUDA_DIR = /usr/local/cuda
 
 # CUDA is not supported yet
 CUDA ?= false
@@ -162,7 +162,7 @@ help :
 	@echo "    help     - prints this help"
 	@echo ""
 	@echo " Options:"
-	@echo "    NO_CUDA=[true|false]"
+	@echo "    CUDA=[true|false]"
 	@echo "       This flag will enable or disable compilation against CUDA"
 	@echo ""
 	@echo " Example:"

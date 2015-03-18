@@ -3,7 +3,7 @@
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich
 #
-# This script reproduces the figures (although in 2D) from the paper [1] 
+# This script reproduces the figures (in 2D) from the paper [1] 
 # by passing the appropriate command-line arguments to the program QLB.
 #
 # [1] Isotropy of three-dimensional quantum lattice Boltzmann schemes, 
@@ -16,12 +16,13 @@ print_help()
 	echo "options:"
 	echo "   --fig-1     Print the figure 1 (no potential)"
 	echo "   --fig-4     Print the figure 4 (harmonic potential)"
-	echo "   --help      Print this help statement"
+	echo ""
+	echo "   --plot      Plot the output with python (executes plot/plot_spread.py)"
 	echo "   --exe=PATH  Set the path of the QLB executable (e.g --exe=./QLB)"
 	echo "   --tmax=X    Set the parameter '--tmax' of QLB to 'X'"
 	echo "   --L=X       Set the parameter '--L' of QLB to 'X' (multiple possible"
-	echo "               delimit with ',' e.g --L=128,256,512)"
-	echo "   --plot      Plot the output with python (executes plot/plot_spread.py)"
+	echo "               delimited with ',' e.g --L=128,256,512)"
+	echo "   --help      Print this help statement"
 	echo "   --save      Save the plot as a pdf"
 	echo "   --mt        Run the multi-threaded cpu version of QLB"
 	exit 1

@@ -203,9 +203,10 @@ void callback_display()
 				
 			if(!UI->paused())
 			{
+				// Overlap computation and drawing
 				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
-								                   QLB_system, 
+					                               QLB_system, 
 					                               int(tid) ); 
 
 				QLB_system->calculate_normal();
@@ -330,6 +331,6 @@ void cleanup_and_exit()
 		cmd = nullptr;
 	}
 	
-	// We now exit
+	// We exit now
 	exit(EXIT_SUCCESS);
 }	

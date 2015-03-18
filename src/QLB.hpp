@@ -132,9 +132,9 @@ public:
 	/** 
 	 *	Initial condition in which the positive energy, spin-up component is 
 	 *	a spherically symmetric Gaussian wave packet with spread delta0.
-	 * 	spinor0 = C * exp( -( (x - x0)^2 + (y - y0)^2) / (4 * delta0^2) )
-	 *  @param  i0    row index of the potential minimum in x-axis 
-	 *  @param  j0    column index of the potential minimum in y-axis
+	 *	spinor0 = C * exp( -( (x - x0)^2 + (y - y0)^2) / (4 * delta0^2) )
+	 *	@param  i0    row index of the potential minimum in x-axis 
+	 *	@param  j0    column index of the potential minimum in y-axis
 	 *	@file 	QLB.cpp	
 	 */
 	void initial_condition_gaussian(int i0, int j0);
@@ -226,7 +226,7 @@ public:
 	
 	/**
 	 *	Calculate the vertices by copying the norm of the desired spinor matrix
-	 *  to array_vertex_
+	 *	to array_vertex_
 	 *	@param  tid       thread id in [0, nthreads)
 	 *	@param  nthreads  number of threads
 	 *	@file QLBgraphics.cpp 
@@ -279,8 +279,8 @@ public:
 	
 	/** 
 	 *	Write the current spreads to 'spread.dat'.
-	 *  If dt*t == 0 the file will newly created, otherwise
-	 *  consecutive calls of this function will append to the file.
+	 *	If dt*t == 0 the file will newly created, otherwise
+	 *	consecutive calls of this function will append to the file.
 	 *	@file 	QLB.cpp 
 	 */
 	void write_content_to_file();

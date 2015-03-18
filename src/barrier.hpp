@@ -78,12 +78,12 @@ public:
 			// spin waiting
 			lock.unlock();
 			while(true) 
-            {
-                lock.lock();
-                if (gen != generation_)
-                    break;
-                lock.unlock();
-            }
+			{
+				lock.lock();
+				if (gen != generation_)
+					break;
+				lock.unlock();
+			}
         }
     }
 };

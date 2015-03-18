@@ -69,7 +69,7 @@ void QLB::init_GL()
 		
 	/* Index array for GL_TRIANGLE_STRIP (used when drawing wire frame)
 	 * The index array describes the order in which we are going to draw the 
-	 * vertices. In this case l we have to draw 2*L*(L-1) vertices.
+	 * vertices. In this case we have to draw 2*L*(L-1) vertices.
 	 *
 	 *    0 ------ 3 ------ 6
 	 *    |        |        |

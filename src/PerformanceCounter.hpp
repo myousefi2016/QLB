@@ -66,12 +66,12 @@ public:
 	std::size_t gpu_memory();
 	
 	/**
-	 * Get the current CPU usage [0,100] by the current process
+	 *	Get the current CPU usage [0,100] by the current process
 	 */
 	double cpu_usage();
 	
 	/**
-	 * Get the current GPU usage [0,100]
+	 *	Get the current GPU usage [0,100]
 	 */
 	double gpu_usage();
 	

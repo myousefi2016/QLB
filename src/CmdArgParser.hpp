@@ -664,7 +664,7 @@ private:
 
 	/**
 	 *	Compute the levenshtein distance between two strings. 
-	 *  @Refrence http://en.wikipedia.org/wiki/Levenshtein_distance
+	 *	@Refrence http://en.wikipedia.org/wiki/Levenshtein_distance
 	 *
 	 *	@param	str1	first string
 	 *	@param 	str2	second string

@@ -87,32 +87,32 @@ class aligned_allocator
 {
 public:
 	// === typedefs ===
-    typedef T*              pointer;
-    typedef T const*        const_pointer;
-    typedef T&              reference;
-    typedef T const&        const_reference;
-    typedef T               value_type;
-    typedef std::size_t     size_type;
-    typedef std::ptrdiff_t  difference_type;
+	typedef T*              pointer;
+	typedef T const*        const_pointer;
+	typedef T&              reference;
+	typedef T const&        const_reference;
+	typedef T               value_type;
+	typedef std::size_t     size_type;
+	typedef std::ptrdiff_t  difference_type;
 
 	template< typename U >
-    struct rebind 
-    {
-        typedef aligned_allocator< U, alignment > other;
-    };
+	struct rebind 
+	{
+		typedef aligned_allocator< U, alignment > other;
+	};
 
 	/**
 	 *	Constructor - default
 	 */
-    aligned_allocator() NOEXCEPT 
-    {}
+	aligned_allocator() NOEXCEPT 
+	{}
 
 	/**
 	 *	Constructor - copy
 	 *	@param 	a 	aligned_allocator
 	 */
-    aligned_allocator(aligned_allocator const& a) NOEXCEPT 
-    {}
+	aligned_allocator(aligned_allocator const& a) NOEXCEPT 
+	{}
 
 
 	/**
@@ -120,53 +120,53 @@ public:
 	 *	@param 	a 	aligned_allocator
 	 */
 	template< typename U >
-    aligned_allocator(aligned_allocator<U, alignment> const& a) NOEXCEPT 
-    {}
+	aligned_allocator(aligned_allocator<U, alignment> const& a) NOEXCEPT 
+	{}
 
 	/**
 	 *	Allocate aligned memory
 	 *	@param 	size 	allocate size bytes
 	 *	@return pointer to address of the memory location
 	 */
-    pointer allocate(size_type size) 
-    {
-        pointer p;
+	pointer allocate(size_type size) 
+	{
+		pointer p;
 
 #ifdef _WIN32
-        p = reinterpret_cast<pointer>(_aligned_malloc(size*sizeof(T), alignment));
-        if(p == NULL)
-            throw std::bad_alloc();
+		p = reinterpret_cast<pointer>(_aligned_malloc(size*sizeof(T), alignment));
+		if(p == NULL)
+			throw std::bad_alloc();
 #else // UNIX
-        if(posix_memalign(reinterpret_cast<void**>(&p), alignment, size*sizeof(T)))
-            throw std::bad_alloc();
+		if(posix_memalign(reinterpret_cast<void**>(&p), alignment, size*sizeof(T)))
+			throw std::bad_alloc();
 #endif
-        return p;
-    }
+		return p;
+	}
 
 	/**
 	 *	Deallocate aligned memory
 	 *	@param  p		address of the beginning of the memory location
 	 *	@param 	size 	deallocate size bytes
 	 */
-    void deallocate(pointer p, size_type n) NOEXCEPT
-    {
+	void deallocate(pointer p, size_type n) NOEXCEPT
+	{
 #ifdef _WIN32
 		_aligned_free(p);
 #else
-        std::free(p);
+		std::free(p);
 #endif 
-    }
+	}
 
 	/**
 	 *	Returns the maximum theoretically possible value of n, for which the 
 	 *	call to std::allocator<T>::allocate(n,0) could succeed.
 	 *	@return the maximum supported allocation size
 	 */
-    size_type max_size() const NOEXCEPT
-    {
-        std::allocator<T> a;
-        return a.max_size();
-    }
+	size_type max_size() const NOEXCEPT
+	{
+		std::allocator<T> a;
+		return a.max_size();
+	}
 
 	/**
 	 *	Constructs an object of type T in allocated uninitialized storage 
@@ -176,16 +176,16 @@ public:
 	 *	@param 	args...	the constructor arguments to use
 	 */
 #if __cplusplus >= 201103L 
-    template <typename U, class... Args>
-    void construct(U* p, Args&&... args) 
-    {
-        new ((void*)p) U(std::forward<Args>(args)...);
-    }
+	template <typename U, class... Args>
+	void construct(U* p, Args&&... args) 
+	{
+		new ((void*)p) U(std::forward<Args>(args)...);
+	}
 #else
-    void construct(pointer p, const_reference t) 
-    {
-        new((void *)p) T(t);
-    }
+	void construct(pointer p, const_reference t) 
+	{
+		new((void *)p) T(t);
+	}
 #endif
 
 	/**
@@ -206,34 +206,34 @@ public:
 	 *	Destructs an object in allocated storage 
 	 *	@param 	p	pointer to the object that is going to be destroyed
 	 */
-    template< typename U >
-    void destroy(U* p) 
-    {
-        p->~U();
-    }
+	template< typename U >
+	void destroy(U* p) 
+	{
+		p->~U();
+	}
 
 	// === Operator ===
-    bool operator==(aligned_allocator const& a2) const NOEXCEPT 
-    {
-        return true;
-    }
+	bool operator==(aligned_allocator const& a2) const NOEXCEPT 
+	{
+		return true;
+	}
 
-    bool operator!=(aligned_allocator const& a2) const NOEXCEPT 
-    {
-        return false;
-    }
+	bool operator!=(aligned_allocator const& a2) const NOEXCEPT 
+	{
+		return false;
+	}
 
-    template <typename U, unsigned int U_alignment>
-    bool operator==(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
-    {
-        return false;
-    }
+	template <typename U, unsigned int U_alignment>
+	bool operator==(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
+	{
+		return false;
+	}
 
-    template <typename U, unsigned int U_alignment>
-    bool operator!=(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
-    {
-        return true;
-    }
+	template <typename U, unsigned int U_alignment>
+	bool operator!=(aligned_allocator<U, U_alignment> const& b) const NOEXCEPT 
+	{
+		return true;
+	}
 
 }; 
 
