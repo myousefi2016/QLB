@@ -1,6 +1,6 @@
 /**
  *  Quantum Lattice Boltzmann 
- *  (c) 2015 Fabian Thüring, ETH Zürich
+ *  (c) 2015 Fabian ThÃ¼ring, ETH ZÃ¼rich
  *
  *  This file contains the class "CmdArgParser" and it's friends which are 
  *  used to parse command-line input passed to the function main(...).
@@ -108,7 +108,7 @@ class CmdArgString : public CmdArg
 public:
 	/** 
 	 *	Represent a single command-line argument which is of the form "--command=S"
-	 *  @param is_present	boolean whether the command-line argument 
+	 *	@param is_present	boolean whether the command-line argument 
 	 *						was passed.						
 	 *	@param str			value of the string (if present) 
 	 */
