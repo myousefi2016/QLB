@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		case 1:  // glut
 			QLB_run_glut(argc, argv);
 			break;
-	}
+	}	
 
 	return 0;
 }
@@ -74,13 +74,17 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	{
 		case 0: // CPU serial
 		{
-			while(tmax--)
+			for(unsigned t = 0; t < tmax; ++t)
+			{
 				QLB_system.evolution_CPU_serial();
+				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t))
+					QLB_system.dump_simulation(false);
+			}
 			break;
 		}
 		case 1: // CPU multi threaded
 		{
-			while(tmax--)
+			for(unsigned t = 0; t < tmax; ++t)
 			{
 				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
@@ -88,6 +92,9 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 					                               int(tid) ); 
 				for(std::thread& t : threadpool)
 					t.join();
+				
+				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t))
+					QLB_system.dump_simulation(false);
 			}
 			break;
 		}
@@ -101,7 +108,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	QLB_system.print_spread();
 	QLB_system.write_content_to_file();	
 	
-	std::cout << "Simulation time : " << tsim << std::endl;
+	std::cout << "Simulation time : " << tsim << " s" << std::endl;
 }
 
 

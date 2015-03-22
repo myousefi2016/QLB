@@ -34,18 +34,22 @@ void QLB_run_glut(int argc, char* argv[])
 	opt.set_device(cmd->device());
 	opt.set_nthreads(cmd->nthreads_value());
 	
-	// Setup QLB 
-	QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
-
+	// Setup QLB or StaticViewer
+	if(!cmd->static_viewer())
+		QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
+	else
+		QLB_system = StaticViewerLoader(cmd);
+	
 	// Setup UserInterface engine
 	int width = 800, height = 800;
 	UI = new UserInterface(width, height, "QLB - v1.0", 
-	                       float(-1.5*QLB_system->L()*QLB_system->dx()));
+	                       float(-1.5f * QLB_system->L() * QLB_system->dx()), 
+	                       cmd->static_viewer() ); 
 
 	// Setup OpenGL & GLUT	
 	init_GL(argc, argv);
-	QLB_system->init_GL();
-
+	QLB_system->init_GL(cmd->static_viewer());
+	
 	glutMainLoop();
 	cleanup_and_exit();
 }
@@ -111,7 +115,10 @@ void init_GL(int argc, char* argv[])
 	}
 
 	// GLUT callback registration
-	glutDisplayFunc(callback_display);
+	if(!cmd->static_viewer())
+		glutDisplayFunc(callback_display);
+	else
+		glutDisplayFunc(callback_display_SV);
 	glutReshapeFunc(callback_reshape);
 	glutMouseFunc(callback_mouse);
 	glutMotionFunc(callback_mouse_motion);
@@ -127,9 +134,6 @@ void init_GL(int argc, char* argv[])
 	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 10000.0);
 
 	// Enables
-//	glEnable(GL_CULL_FACE); 
-//	glCullFace(GL_FRONT); 
-//	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glShadeModel(GL_SMOOTH);
 
@@ -141,6 +145,12 @@ void init_GL(int argc, char* argv[])
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
 
 	UI->init_light();
+
+	if(cmd->start_rotating())
+		UI->set_rotatating(true);
+	
+	if(cmd->start_paused())
+		UI->set_paused(true);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -163,6 +173,10 @@ void callback_display()
 		QLB_system->set_current_render(UI->current_render());
 		QLB_system->set_draw_potential(UI->draw_potential());
 		
+		if(UI->dump_simulation()) 
+			QLB_system->dump_simulation(false);
+
+		UI->reset_dump_simulation();
 		UI->reset_param_has_changed();
 	}
 		
@@ -191,7 +205,7 @@ void callback_display()
 			QLB_system->calculate_normal();
 			QLB_system->render();
 			break;
-		case 1: // CPU multi threaded
+		case 1: // CPU multi-threaded
 		{ 
 			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 				threadpool[tid] = std::thread( &QLB::calculate_vertex, 
@@ -226,6 +240,60 @@ void callback_display()
 			FATAL_ERROR("CUDA version is not yet implemented");
 			break;
 	}
+
+	// Draw text boxes
+	UI->draw();
+
+	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
+
+/****************************
+ *        SV display        *
+ ****************************/
+void callback_display_SV()
+{
+	bool VBO_changed = false;
+	
+	// Adjust simulation parameter if something has changed
+	if(UI->param_has_changed())
+	{
+		if(UI->change_scaling() != 0)
+		{
+			QLB_system->change_scaling(UI->change_scaling());
+			QLB_system->scale_vertex(UI->change_scaling());
+			QLB_system->calculate_normal();
+			VBO_changed = true;
+		}
+		UI->reset_change_scaling();
+		
+		QLB_system->set_current_render(UI->current_render());
+		
+		if(UI->dump_simulation()) 
+			QLB_system->dump_simulation(true);
+
+		UI->reset_dump_simulation();
+		UI->reset_param_has_changed();
+	}
+
+	// Reset color's and clear bits	
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// Update cpu/gpu usage/memory etc..
+	UI->update_performance_counter();
+
+	// Set view matrix
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	if( UI->rotating() ) UI->set_rotate_y(UI->rotate_y() - 0.15f);
+	glTranslatef(0.0f, 0.0f, UI->translate_z());
+	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
+	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
+
+	// Draw the scene
+	QLB_system->render_statically(VBO_changed);
 
 	// Draw text boxes
 	UI->draw();

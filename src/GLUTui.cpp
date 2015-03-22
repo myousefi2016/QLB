@@ -8,12 +8,13 @@
 #include "GLUTui.hpp"
 
 UserInterface::UserInterface(int width, int height, const char* title,
-	                         float translate_z)
+	                         float translate_z, bool static_viewer)
 	:	
 		// === Window variables ===
 		width_(width),
 		height_(height),
 		title_(const_cast<char*>(title)),
+		static_viewer_(static_viewer),
 		// === Camera variables ===
 		translate_z_(translate_z),
 		rotate_x_(25.0f),
@@ -36,11 +37,12 @@ UserInterface::UserInterface(int width, int height, const char* title,
 		current_scene_(QLB::spinor0),
 		current_render_(QLB::SOLID),
 		draw_potential_(false),
+		dump_simulation_(false),
 		// === Light ===
 		light_()
 {
 
-	text_boxes_.resize(3);		
+	text_boxes_.resize(4);		
 
 	// BOX_HELP_DETAIL
 	TextBox::svec_t text(15);
@@ -54,11 +56,11 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[7] = "3    - Draw spinor 3 ";
 	text[8] = "4    - Draw spinor 4 ";
 	text[9] = "V    - Draw potential";
-	text[10] = "S    - Show Performance"; 
-	text[11] = "C    - Rotating camera ";
-	text[12] = "                       ";
-	text[13] = "                       ";
-	text[14] = "                       ";
+	text[10] = "S    - Show Performance   "; 
+	text[11] = "C    - Rotating camera    ";
+	text[12] = "D    - Dump the simulation";
+	text[13] = "                          ";
+	text[14] = "                          ";
 	
 	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 3, 
 	                                  true, true, true, true, 1.0f);
@@ -87,6 +89,15 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text_boxes_[BOX_PERFORMANCE].add_text(text.begin(), text.end());
 	text_boxes_[BOX_PERFORMANCE].deactivate();
 	
+	// BOX_STATIC_VIEWER
+	text.resize(1);
+	text[0] = "Static Viewer";
+
+	text_boxes_[BOX_STATIC_VIEWER].init(-0.13f, 0.91f, 0.5f, 0.06f, 1, 1, 
+	                               false, false, false, false, 1.0f);
+	text_boxes_[BOX_STATIC_VIEWER].add_text(text.begin(), text.end());
+	if(!static_viewer_)
+		text_boxes_[BOX_STATIC_VIEWER].deactivate();
 }
 
 UserInterface::~UserInterface()
@@ -115,6 +126,10 @@ void UserInterface::keyboard(int key, int x, int y)
 		case 45:    // -
 			param_has_changed_ = true;
 			change_scaling_ = -1;
+			break;
+		case 100:   // d
+			param_has_changed_ = true;
+			dump_simulation_ = true;
 			break;
 		case 99:    // c
 			rotating_ = !rotating_;
@@ -275,10 +290,11 @@ void UserInterface::update_performance_counter()
 		text_boxes_[BOX_PERFORMANCE].add_text(3, entry);
 	
 		// Update GPU usage
-#ifndef _WIN32
-		SPRINTF(entry, "GPU usage      %s   ", "N/A");
-#else 
+#if defined(QLB_HAS_CUDA) && (defined(_WIN32) || \
+                             (defined(__linux__) && defined(QLB_HAS_GPU_COUNTER)))
 		SPRINTF(entry, "GPU usage       %2.0f %% ", pc_.gpu_usage());
+#else 
+		SPRINTF(entry, "GPU usage      %s   ", "N/A");
 #endif
 		text_boxes_[BOX_PERFORMANCE].add_text(4, entry);
 	}	
@@ -293,7 +309,7 @@ QLB* UserInterface::reset(QLB* qlb_old)
 	                       qlb_old->V(),
 	                       qlb_old->opt());
 	delete qlb_old;
-	new_qlb->init_GL();	
+	new_qlb->init_GL(static_viewer_);	
 	
 	restart_ = !restart_;
 	current_render_ = new_qlb->current_render();

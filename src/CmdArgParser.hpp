@@ -1,6 +1,6 @@
 /**
  *  Quantum Lattice Boltzmann 
- *  (c) 2015 Fabian ThÃ¼ring, ETH ZÃ¼rich
+ *  (c) 2015 Fabian Thüring, ETH Zürich
  *
  *  This file contains the class "CmdArgParser" and it's friends which are 
  *  used to parse command-line input passed to the function main(...).
@@ -294,6 +294,27 @@ public:
 			fullscreen_ = find("--fullscreen").is_present();
 			if(fullscreen_ && !gui.is_present())
 				gui_ = 1;
+				
+			// --dump-at=X
+			auto dump = find_numeric<int>("--dump-at");
+			dump_ = dump.is_present();
+			if(dump_ && dump.value() < 0) 
+				throw CmdArgException("'X' must be non-negativ in command-line "
+				                      "argument '--dump-at=X'");
+			dump_value_ = dump.value();
+			
+			// --dump-load=S
+			auto static_viewer = find_string("--dump-load");
+			static_viewer_ = static_viewer.is_present();
+			static_viewer_file_ = static_viewer.str();
+			if(static_viewer_)
+				gui_ = 1;
+		
+			// --start-rotating
+			start_rotating_ = find("--start-rotating").is_present();
+	
+			// --start-paused
+			start_paused_ = find("--start-paused").is_present();
 		
 			// Throw if we have unparsed arguments
 			if(argv_.size())
@@ -328,9 +349,15 @@ public:
 	inline float mass_value() const { return mass_value_; }
 	inline bool tmax() const { return tmax_; }
 	inline unsigned tmax_value() const { return tmax_value_; }
+	inline bool dump() const { return dump_; }
+	inline unsigned dump_value() const { return dump_value_; }
+	inline bool static_viewer() const { return static_viewer_; }
+	inline std::string static_viewer_file() const { return static_viewer_file_; }
 	inline int V() const { return V_; }     //   V = [0:harmonic, 1:free]
 	inline int gui() const { return gui_; } // gui = [1:glut, 0:none]
 	inline unsigned int plot() const { return plot_; }
+	inline bool start_rotating() const { return start_rotating_; }
+	inline bool start_paused() const { return start_paused_; }
 	inline int device() const { return device_; }
 
 private:
@@ -517,7 +544,6 @@ private:
 		                           "to run the simulation, where S is one of [glut|none]"}; 
 		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
-		print_help_line("--nthreads=X","Exectue CPU verison with X threads");
 		std::string expl_V[2] = {"Set the potential to S, where S is one of ",
                                       "[free|harmonic|barrier]"};
 		print_help_line("--V=S", svec_t(expl_V, expl_V+2));
@@ -535,6 +561,10 @@ private:
 		std::string expl_device[2] = {"Set the device the simulation will run on, S must be",
 		                              "one of [cpu-serial|cpu-thread|gpu]"};
 		print_help_line("--device=S",svec_t(expl_device, expl_device+2));
+		print_help_line("--nthreads=X","Exectue CPU verison with X threads");
+		print_help_line("--dump-at=X","Dump the state of the simulation at time X*dt to "
+		                "a file" );
+		print_help_line("--dump-load=S","Load the dump file S to be used with the static viewer");
 		exit(EXIT_SUCCESS);
 	}
 
@@ -713,10 +743,16 @@ private:
 	float mass_value_;
 	bool tmax_;
 	unsigned tmax_value_;
+	bool dump_;
+	unsigned dump_value_;
+	bool static_viewer_;
+	std::string static_viewer_file_;
 	int gui_;
 	int V_;
 	unsigned int plot_;
 	int device_;
+	bool start_rotating_;
+	bool start_paused_;
 	
 	// === IO ===
 	std::size_t width_cmd;

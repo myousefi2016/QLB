@@ -25,15 +25,16 @@
 #include "PerformanceCounter.hpp"
 
 // Defines
-#define MOUSE_LEFT       0x0000
-#define MOUSE_MIDDLE     0x0001
-#define MOUSE_RIGHT      0x0002
-#define WHEEL_UP         0x0003
-#define WHEEL_DOWN       0x0004
+#define MOUSE_LEFT        0x0000
+#define MOUSE_MIDDLE      0x0001
+#define MOUSE_RIGHT       0x0002
+#define WHEEL_UP          0x0003
+#define WHEEL_DOWN        0x0004
 
-#define BOX_HELP_DETAIL  0x0000
-#define BOX_HELP_ASK     0x0001
-#define BOX_PERFORMANCE  0x0002
+#define BOX_HELP_DETAIL   0x0000
+#define BOX_HELP_ASK      0x0001
+#define BOX_PERFORMANCE   0x0002
+#define BOX_STATIC_VIEWER 0x0003
 
 #define FPS_UPDATE_FRQ	500 // ms
 
@@ -43,16 +44,19 @@
 class UserInterface
 {
 public:
+
 	// === Initialization ===
 
 	/** 
 	 *	Constructor 
-	 *	@param 	width        width of the initial window in pixels
-	 *	@param	height       height of the initial window in pixels
-	 *	@param	title        title of the window
-	 *	@param 	translate_z  initial distance in z direction
+	 *	@param 	width          width of the initial window in pixels
+	 *	@param	height         height of the initial window in pixels
+	 *	@param	title          title of the window
+	 *	@param 	translate_z    initial distance in z direction
+	 *	@param  static_viewer  boolean whether static viewer is active
 	 */
-	UserInterface(int width, int height, const char* title, float translate_z);
+	UserInterface(int width, int height, const char* title, float translate_z,
+	              bool static_viewer);
 	
 	~UserInterface();
 
@@ -119,6 +123,7 @@ public:
 	inline int height() const { return height_; }
 	inline int width()  const { return width_;  }
 	inline char* title()  const { return title_;  }
+	inline bool static_viewer() const { return static_viewer_; }
 
 	inline float translate_z() const { return translate_z_; }
 	inline float rotate_x() const { return rotate_x_; }
@@ -133,15 +138,20 @@ public:
 	inline QLB::scene_t current_scene() const { return current_scene_; }
 	inline QLB::render_t current_render() const { return current_render_; }
 	inline bool draw_potential() const { return draw_potential_; }
+	inline bool dump_simulation() const { return dump_simulation_; }
 
 	// === Setter ===
 	inline void set_height(int height) { height_ = height; }
 	inline void set_width(int width)   { width_  = width;  }
 	inline void set_rotate_x(float rotate_x) { rotate_x_ = rotate_x; }
 	inline void set_rotate_y(float rotate_y) { rotate_y_ = rotate_y; }
+	inline void set_rotatating(bool rotating) { rotating_ = rotating; }
+	inline void set_paused(bool paused) { paused_ = paused; }
+	inline void set_static_viewer(bool sv) { static_viewer_ = sv; }
 	
 	// === Reset === 
 	inline void reset_param_has_changed() { param_has_changed_ = false; }
+	inline void reset_dump_simulation(){ dump_simulation_ = false; }
 	inline void reset_change_scaling() { change_scaling_ = 0; }
 
 private:
@@ -149,6 +159,7 @@ private:
 	int width_;
 	int height_;
 	char* title_;
+	bool static_viewer_;
 
 	// === Camera variables ===
 	float translate_z_;
@@ -179,7 +190,8 @@ private:
 	int change_scaling_; // -1: decrease 0: false 1: increase
 	QLB::scene_t current_scene_;
 	QLB::render_t current_render_;
-	bool draw_potential_; 
+	bool draw_potential_;
+	bool dump_simulation_; 
 
 	// === Light ===
 	Light light_;

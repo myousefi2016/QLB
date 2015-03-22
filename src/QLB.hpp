@@ -58,8 +58,9 @@ public:
 
 	// === typedefs ===
 	typedef std::complex<float_t>                                   complex_t;
-	typedef std::vector<float_t, aligned_allocator<float_t, 64> >   fvec_t;
+	typedef std::vector<float_t, aligned_allocator<float_t, 32> >   fvec_t;
 	typedef std::vector<unsigned>                                   uvec_t;
+	typedef std::vector<int>                                        ivec_t;
 	typedef matND<complex_t>                                        cmat_t;
 	typedef matND<float_t>                                          fmat_t;
 	typedef matN4D<complex_t>                                       c4mat_t;
@@ -100,6 +101,16 @@ public:
 	 *	@file 	QLB.cpp
 	 */
 	QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt);
+	
+	/** 
+	 *	Constructor (used by the StaticViewer)
+	 *	@param  array_vertex  coordinates of the vertices
+	 *	@param  array_normal  coordinates of the corresponding normals
+	 *	@file 	QLB.cpp
+	 */
+	QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling, 
+        const std::vector<float>& array_vertex, 
+        const std::vector<float>& array_normal, QLBopt opt);
 	
 	/** 
 	 *	Destructor
@@ -220,9 +231,10 @@ public:
 
 	/**
 	 *	Setup all OpenGL context - this call is mandatory to use QLB::render()
+	 *  @param  static_viewer   boolean whether this is used by the static viewer
 	 *	@file 	QLBgraphics.cpp
 	 */
-	void init_GL();
+	void init_GL(bool static_viewer);
 	
 	/**
 	 *	Calculate the vertices by copying the norm of the desired spinor matrix
@@ -240,11 +252,27 @@ public:
 	 */
 	void calculate_normal();
 	
+	/**
+	 *	Scale the vertices according to 'scaling_' (This function is used by the
+	 *	StaticViewer)
+	 *	@param 	change_scaling	-1: decrease by factor of 2.0
+	 * 	                         1: increase by factor of 2.0  
+	 *	@file QLBgraphics.cpp 
+	 */
+	void scale_vertex(int change_scaling);
+	
 	/** 
 	 *	Render the current scene 
 	 *	@file	QLBgraphics.cpp
 	 */
 	void render();
+	
+	/** 
+	 *	Render the current scene (used by the static viewer) 
+	 *	@param  VBO_changed   boolean whether the VBO's must be updated
+	 *	@file	QLBgraphics.cpp
+	 */
+	void render_statically(bool VBO_changed);
 	
 	/** 
 	 *	Draw a coordinate system (mainly used for debugging!)
@@ -283,7 +311,7 @@ public:
 	 *	consecutive calls of this function will append to the file.
 	 *	@file 	QLB.cpp 
 	 */
-	void write_content_to_file();
+	void write_spread();
 	
 	/** 
  	 *	Write the current content of all specified quantities (given by 
@@ -292,7 +320,15 @@ public:
  	 *	      of the files
 	 *	@file 	QLB.cpp 
 	 */
-	void write_spread();
+	void write_content_to_file();
+	
+	/** 
+ 	 *	Dump the vertex_array and normal_array to a binary file.
+ 	 *	@param  static_viewer   boolean whether this command is invoked from the
+ 	 *	                        static viewer 
+	 *	@file 	QLBdump.cpp 
+	 */
+	void dump_simulation(bool static_viewer);
 
 	/** 
 	 *	Adjust the scaling of the rendered scene

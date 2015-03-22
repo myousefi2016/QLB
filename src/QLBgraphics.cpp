@@ -13,7 +13,7 @@
 
 #define tri(i,j) 6*((i)*(L_-1) + (j))
 
-void QLB::init_GL()
+void QLB::init_GL(bool static_viewer)
 {
 	/* Initialize the arrays
 	 * Note: the coordinate system in OpenGL is as follows
@@ -28,14 +28,16 @@ void QLB::init_GL()
 	 * This is why we are storing the y-coordinates form the simulation 
 	 * in the z array position
 	 */
-	   
-	for(unsigned i = 0; i < L_; ++i)
-		for(unsigned j = 0; j < L_; ++j)
-		{
-			array_vertex_[x(i,j)] = dx_*(i-0.5*(L_-1));  // x
-			array_vertex_[y(i,j)] = 0.0;                 
-			array_vertex_[z(i,j)] = dx_*(j-0.5*(L_-1));  // y
-		}
+	if(!static_viewer)
+	{   
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+			{
+				array_vertex_[x(i,j)] = dx_*(i-0.5*(L_-1));  // x
+				array_vertex_[y(i,j)] = 0.0;                 
+				array_vertex_[z(i,j)] = dx_*(j-0.5*(L_-1));  // y
+			}
+	}
 		
 	/* Index array for GL_TRIANGLES. (used when drawing solid)
 	 * The index array describes the order in which we are going to draw the 
@@ -140,6 +142,9 @@ void QLB::init_GL()
 	vbo_index_wire.unbind();
 	
 	GL_is_initialzed_ = true;
+	
+	if(static_viewer)
+		render_statically(true);
 }
 
 void QLB::calculate_vertex(int tid, int nthreads)
@@ -173,6 +178,14 @@ void QLB::calculate_vertex(int tid, int nthreads)
 					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,3));
 			break;
 	}
+}
+
+void QLB::scale_vertex(int change_scaling)
+{
+	const float_t scaling = change_scaling == 1 ? 2. : 1./2.;;
+	for(unsigned i = 0; i < L_; ++i)
+		for(unsigned j = 0; j < L_; ++j)
+			array_vertex_[y(i,j)] = scaling * array_vertex_[y(i,j)];
 }
 
 void QLB::calculate_normal()
@@ -352,6 +365,61 @@ void QLB::render()
 	}
 }
 
+void QLB::render_statically(bool VBO_changed)
+{
+	if(!GL_is_initialzed_)
+		FATAL_ERROR("QLB::OpenGL context is not initialized");
+	
+	// Copy vertex array to vertex VBO
+	if(VBO_changed)
+	{
+		vbo_vertex.bind();
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+			                     &array_vertex_[0]);
+		vbo_vertex.unbind();
+		
+		// Copy normal array to normal VBO
+		vbo_normal.bind();
+		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+			                     &array_normal_[0]);
+		vbo_normal.unbind();
+	}
+	
+	// Draw the scene
+	std::size_t n_elements;
+	if(current_render_ == SOLID)
+	{
+		n_elements = array_index_solid_.size();
+		vbo_index_solid.bind();
+	}
+	else
+	{ 
+		n_elements = array_index_wire_.size();
+		vbo_index_wire.bind();
+	}	
+
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	
+	vbo_normal.bind();
+	glNormalPointer(QLB_FLOAT_T, 0, 0);
+	vbo_normal.unbind();
+	
+	vbo_vertex.bind();
+	glVertexPointer(3, QLB_FLOAT_T, 0, 0);
+	vbo_vertex.unbind();
+
+	glDrawElements(current_render_, (GLsizei) n_elements, GL_UNSIGNED_INT, 0);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	if(current_render_ == SOLID)
+		vbo_index_solid.unbind();
+	else 
+		vbo_index_wire.unbind();
+}
+
 
 void QLB::draw_coordinate_system() const
 {
@@ -405,4 +473,3 @@ void QLB::draw_coordinate_system() const
 #undef y
 #undef z
 #undef tri
-

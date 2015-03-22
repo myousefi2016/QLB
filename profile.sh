@@ -24,7 +24,7 @@ print_help()
 	echo "   --valgrind        Run the program in valgrind to detect memory management"
 	echo "                     and threading bugs"
 	echo ""
-	echo "   --no-recompile    Do not recompile the program"
+	echo "   --CUDA=S          Compile against CUDA if S=true [default S=false]"
 	echo "   --args=Args       The follwing arguments are passed to the executing"
 	echo "                     program while multiple arguments are delimited with ','" 
 	echo "                     (e.g '--args=--L=128,--dx=1.5')"
@@ -47,12 +47,12 @@ gprof=false
 pgo=false
 llvm_sanatizer=false
 valgrind=false
+CUDA=false
 
 GCC=g++
 CLANG=clang++
 CREATE_LLVM_PROF=create_llvm_prof
 CXX=""
-no_recompile=false
 
 EXE=./QLB
 EXEargs=""
@@ -61,7 +61,7 @@ exe_args_cmd=""
 for param in $*
 	do case $param in
 		"--help") print_help ;;
-		"--no-recompile")  no_recompile=true ;;
+		"--CUDA="*)  CUDA="${param#*=}" ;;
 		"--args="*) exe_args_cmd="${param#*=}" ;;
 		"--valgrind") valgrind=true ;;
 		"--g++="*) GCC="${param#*=}" ;;
@@ -109,10 +109,9 @@ fi
 # ============================= LLVM sanatizer =================================
 if [ "$llvm_sanatizer" = "true" ]; then
 	# Recompile with sanatizer flags
-	if [ "$no_recompile" != "true" ]; then
-		make clean && make -j 4 \
-		 PROFILING='-fsanitize=undefined -fsanitize=address' CXX=$CXX
-	fi	
+	make clean && make -j 4 \
+		 PROFILING='-fsanitize=undefined -fsanitize=address' CXX=$CXX CUDA=$CUDA
+	
 	echo " === LLVM SANATIZER === "
 	EXEargs="$EXEargs --tmax=1"
 	$EXE $EXEargs
@@ -129,9 +128,7 @@ if [ "$gprof" = "true" ]; then
 	fi
 	
 	# Recompile with '-pg' flag
-	if [ "$no_recompile" != "true" ]; then
-		make clean && make -j 4 PROFILING='-pg' CXX=$CXX
-	fi
+	make clean && make -j 4 PROFILING='-pg' CXX=$CXX CUDA=$CUDA
 
 	# Execute the program
 	echo " === EXECUTING === "
@@ -150,6 +147,11 @@ fi
 # ================================== PGO =======================================
 if [ "$pgo" = "true" ]; then
 	
+	# Check if we are on Linux
+	if [ `uname -s 2>/dev/null` != "Linux" ]; then
+		exit_after_error "$0 : error : PGO is currently only supported on Linux"
+	fi
+	
 	# Check for prof
 	perf --version > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
@@ -162,31 +164,35 @@ if [ "$pgo" = "true" ]; then
 		echo "$0 : error : cannot find 'create_llvm_prof' take a look at"
 		exit_after_error " http://github.com/google/autofdo"
 	fi
-	
-	echo " === RECOMPILING === "
-	# Recompile with '-g -gline-tables-only' flag
-	make clean && make -j 4 DEBUG='-g -gline-tables-only' CXX=$CLANG
 
+	# Recompile with '-g -gline-tables-only' flag
+	printf "Recompiling ... "
+	make -s clean && make -s -j 4 PROFILING='-g -gline-tables-only' CXX=$CLANG CUDA=$CUDA
+	printf "Done\n"
+	
 	# Execute the program
-	echo " === PROFILING === "
+	printf "Profiling ... \n\n"
 	perf record -b $EXE $EXEargs
 	if [ "$?" != "0" ]; then
 		exit 1
 	fi
-	echo "Creating profile information ... perf.data"
-	
-	# Convert
+
+	#Convert 	
+	printf "\nCreating profile information 'perf.data' ... "
 	$CREATE_LLVM_PROF --binary=$EXE --out=code.prof
-	echo "Converting to LLVM's format ... code.prof"
+	printf "Done\n"
+	printf "Converting to LLVM's format 'code.prof' ... Done\n"
 
-	echo " === RECOMPILING === "
+	printf "Recompiling ... "
 	# Recompile with '-g -gline-tables-only -fprofile-sample-use=code.prof' flag
-	make clean && make -j 4 DEBUG='-g -gline-tables-only -fprofile-sample-use=code.prof' \
-	CXX=$CLANG
+	make -s clean && make -s -j 4 PROFILING='-g -gline-tables-only -fprofile-sample-use=code.prof' \
+	CXX=$CLANG CUDA=$CUDA
+	printf "Done\n"
 
+	printf "Cleaning up ..."
 	rm -f code.prof perf.data
-	echo "Cleaning up ... Done"
-	echo "Profile Guided Optimization completed successfully."
+	printf "Done\n"
+	printf "Profile Guided Optimization completed successfully.\n"
 	exit 0	
 fi
 

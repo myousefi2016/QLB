@@ -83,6 +83,53 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 	}
 }
 
+QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling, 
+         const std::vector<float>& array_vertex, 
+         const std::vector<float>& array_normal, QLBopt opt)
+	:
+		// === Simulation variables ===
+		L_(L),
+		dx_(dx),
+		mass_(mass),
+		t_(0),
+		dt_(0),
+		deltax_(0),
+		deltay_(0),
+		delta0_(0),
+		V_indx_(V_indx),
+		barrier(opt.nthreads()),
+		flag_(1),
+		// === Arrays CPU ===
+		spinor_(0),
+		spinoraux_(0),
+		spinorrot_(0),
+		currentX_(0),
+		currentY_(0),
+		veloX_(0),
+		veloY_(0),
+		wrot_(0),
+		rho_(0),
+		V_(0),
+		// === OpenGL context ===
+		GL_is_initialzed_(false),
+		current_scene_(spinor0),
+		current_render_(SOLID),
+		draw_potential_(false),
+		scaling_(scaling),
+		array_index_solid_(6*(L-1)*(L-1), 0),
+		array_index_wire_(2*L*(L-1), 0),
+		array_vertex_(3*L*L, 0),
+		array_normal_(3*L*L, 0), 
+		// === IO ===
+		opt_(opt)
+{
+	for(std::size_t i = 0; i < array_vertex_.size(); ++i)
+	{
+		array_vertex_[i] = array_vertex[i];
+		array_normal_[i] = array_normal[i];
+	}
+}
+
 // === DESTRUCTOR ====
 
 QLB::~QLB()
@@ -134,7 +181,7 @@ void QLB::print_spread()
 	std::cout << std::setw(15) << "time";
 	std::cout << std::setw(15) << "deltaX";
 	std::cout << std::setw(15) << "deltaY";
-	if(V_indx_ == 0) std::cout << std::setw(15) << "Schrödinger";
+	if(V_indx_ == 0) std::cout << std::setw(15) << "Schroedinger";
 	std::cout << std::endl;
 
 	std::cout << std::setw(15) << t_*dt_;
@@ -150,7 +197,8 @@ void QLB::write_spread()
 		fout.open("spread.dat");
 	else
 		fout.open("spread.dat", std::ios::app);
-			
+	
+	fout << std::left << std::setprecision(6);
 	fout << std::setw(15) << t_*dt_;
 	fout << std::setw(15) << deltax_;
 	fout << std::setw(15) << deltay_;

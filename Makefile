@@ -91,6 +91,13 @@ ifeq ($(CUDA),true)
  LDFLAGS    += $(CUDA_LIB)
 endif
 
+# Adjust the build to not use the GPU PerformanceCounter
+ifneq ($(GPUCOUNTER),false)
+ ifeq ($(CUDA),true)
+  DEFINES    += -DQLB_HAS_GPU_COUNTER
+ endif
+endif
+
 # Detect multi display environment in Linux
 ifeq ($(OS),Linux)
  ifeq ($(shell xrandr -q 2>/dev/null | grep ' connected' | wc -l),2)
@@ -164,6 +171,10 @@ help :
 	@echo " Options:"
 	@echo "    CUDA=[true|false]"
 	@echo "       This flag will enable or disable compilation against CUDA"
+	@echo ""
+	@echo "    GPUCOUNTER=[true|false]"
+	@echo "       This flag will enable or disable the GPU performance counter"
+	@echo "       (Only affects Linux and CUDA builds)"
 	@echo ""
 	@echo " Example:"
 	@echo "   make CUDA=false"
