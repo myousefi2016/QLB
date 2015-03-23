@@ -30,12 +30,13 @@ void QLB::init_GL(bool static_viewer)
 	 */
 	if(!static_viewer)
 	{   
+		const float dx = float(dx_);
 		for(unsigned i = 0; i < L_; ++i)
 			for(unsigned j = 0; j < L_; ++j)
 			{
-				array_vertex_[x(i,j)] = dx_*(i-0.5*(L_-1));  // x
-				array_vertex_[y(i,j)] = 0.0;                 
-				array_vertex_[z(i,j)] = dx_*(j-0.5*(L_-1));  // y
+				array_vertex_[x(i,j)] = dx*(i-0.5f*(L_-1));  // x
+				array_vertex_[y(i,j)] = 0.0f;                 
+				array_vertex_[z(i,j)] = dx*(j-0.5f*(L_-1));  // y
 			}
 	}
 		
@@ -121,12 +122,12 @@ void QLB::init_GL(bool static_viewer)
 	// Setup Vertex Buffer Objects
 	vbo_vertex.init(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);  
 	vbo_vertex.bind();
-	vbo_vertex.malloc(array_vertex_.size()*sizeof(float_t));
+	vbo_vertex.malloc(array_vertex_.size()*sizeof(float));
 	vbo_vertex.unbind();
 	
 	vbo_normal.init(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);  
 	vbo_normal.bind();
-	vbo_normal.malloc(array_normal_.size()*sizeof(float_t));
+	vbo_normal.malloc(array_normal_.size()*sizeof(float));
 	vbo_normal.unbind();
 		
 	vbo_index_solid.init(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
@@ -160,29 +161,29 @@ void QLB::calculate_vertex(int tid, int nthreads)
 		case spinor0:
 			for(int i = lower; i < upper; ++i)
 				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,0));
+					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,0)));
 			break;
 		case spinor1:
 			for(int i = lower; i < upper; ++i)
 				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,1));
+					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,1)));
 			break;
 		case spinor2:
 			for(int i = lower; i < upper; ++i)
 				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,2));
+					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,2)));
 			break;
 		case spinor3:
 			for(int i = lower; i < upper; ++i)
 				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = scaling_*std::norm(spinor_(i,j,3));
+					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,3)));
 			break;
 	}
 }
 
 void QLB::scale_vertex(int change_scaling)
 {
-	const float_t scaling = change_scaling == 1 ? 2. : 1./2.;;
+	const float scaling = change_scaling == 1 ? 2.f : 1.f/2.f;;
 	for(unsigned i = 0; i < L_; ++i)
 		for(unsigned j = 0; j < L_; ++j)
 			array_vertex_[y(i,j)] = scaling * array_vertex_[y(i,j)];
@@ -228,7 +229,7 @@ void QLB::calculate_normal()
 		array_normal_[z(L_-1,j)] = -1.0;
 	}
 
-	float_t a1, a2, a3, b1, b2, b3, norm;
+	float a1, a2, a3, b1, b2, b3, norm;
 	unsigned ik, jk;
 
 	for(unsigned i = 0; i < L_; ++i)
@@ -272,13 +273,13 @@ void QLB::render()
 	
 	// Copy vertex array to vertex VBO
 	vbo_vertex.bind();
-	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
 	                         &array_vertex_[0]);
 	vbo_vertex.unbind();
 		
 	// Copy normal array to normal VBO
 	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
 	                         &array_normal_[0]);
 	vbo_normal.unbind();
 	
@@ -299,11 +300,11 @@ void QLB::render()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	
 	vbo_normal.bind();
-	glNormalPointer(QLB_FLOAT_T, 0, 0);
+	glNormalPointer(GL_FLOAT, 0, 0);
 	vbo_normal.unbind();
 	
 	vbo_vertex.bind();
-	glVertexPointer(3, QLB_FLOAT_T, 0, 0);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
 	vbo_vertex.unbind();
 
 	glDrawElements(current_render_, (GLsizei) n_elements, GL_UNSIGNED_INT, 0);
@@ -324,17 +325,17 @@ void QLB::render()
 	
 		for(unsigned i = 0; i < L_; ++i)
 			for(unsigned j = 0; j < L_; ++j)
-				array_vertex_[y(i,j)] = scaling_*std::abs(V_(i,j)) - 0.005*L_;
+				array_vertex_[y(i,j)] = float(scaling_*std::abs(V_(i,j))) - 0.005f*L_;
 		
 		calculate_normal(); 
 		
 		vbo_vertex.bind();
-		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
 				                 &array_vertex_[0]);
 		vbo_vertex.unbind();
 
 		vbo_normal.bind();
-		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
 				                 &array_normal_[0]);
 		vbo_normal.unbind();
 
@@ -346,11 +347,11 @@ void QLB::render()
 		glEnableClientState(GL_VERTEX_ARRAY);
 	
 		vbo_normal.bind();
-		glNormalPointer(QLB_FLOAT_T, 0, 0);
+		glNormalPointer(GL_FLOAT, 0, 0);
 		vbo_normal.unbind();
 	
 		vbo_vertex.bind();
-		glVertexPointer(3, QLB_FLOAT_T, 0, 0);
+		glVertexPointer(3, GL_FLOAT, 0, 0);
 		vbo_vertex.unbind();
 
 		glDrawElements( SOLID, (GLsizei) array_index_solid_.size(), 
@@ -374,13 +375,13 @@ void QLB::render_statically(bool VBO_changed)
 	if(VBO_changed)
 	{
 		vbo_vertex.bind();
-		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float_t), 
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
 			                     &array_vertex_[0]);
 		vbo_vertex.unbind();
 		
 		// Copy normal array to normal VBO
 		vbo_normal.bind();
-		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float_t),
+		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
 			                     &array_normal_[0]);
 		vbo_normal.unbind();
 	}
@@ -402,11 +403,11 @@ void QLB::render_statically(bool VBO_changed)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	
 	vbo_normal.bind();
-	glNormalPointer(QLB_FLOAT_T, 0, 0);
+	glNormalPointer(GL_FLOAT, 0, 0);
 	vbo_normal.unbind();
 	
 	vbo_vertex.bind();
-	glVertexPointer(3, QLB_FLOAT_T, 0, 0);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
 	vbo_vertex.unbind();
 
 	glDrawElements(current_render_, (GLsizei) n_elements, GL_UNSIGNED_INT, 0);

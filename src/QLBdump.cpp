@@ -30,28 +30,19 @@ void QLB::dump_simulation(bool static_viewer)
 	
 	if(!static_viewer)
 	{
+		const float dx = float(dx_);
 		// Setup vertex arrays
 		for(unsigned i = 0; i < L_; ++i)
 			for(unsigned j = 0; j < L_; ++j)
 			{
-				array_vertex_[x(i,j)] = dx_*(i-0.5*(L_-1));
-				array_vertex_[y(i,j)] = 0.0;                 
-				array_vertex_[z(i,j)] = dx_*(j-0.5*(L_-1));
+				array_vertex_[x(i,j)] = dx*(i-0.5f*(L_-1));
+				array_vertex_[y(i,j)] = 0.0f;                 
+				array_vertex_[z(i,j)] = dx*(j-0.5f*(L_-1));
 			}
 	
 		// Calculate current vertices and normals
 		calculate_vertex(0, 1);
 		calculate_normal();
-	}
-	
-	// To not waste space we save the arrays as floats
-	std::vector<float> array_vertex(array_vertex_.size());
-	std::vector<float> array_normal(array_normal_.size());
-	
-	for(std::size_t i = 0; i < array_vertex.size(); ++i)
-	{
-		array_vertex[i] = static_cast<float>(array_vertex_[i]);
-		array_normal[i] = static_cast<float>(array_normal_[i]);
 	}
 	
 	// Write to binary file
@@ -69,10 +60,10 @@ void QLB::dump_simulation(bool static_viewer)
 
 	fout.write(reinterpret_cast<char*>(int_args),   sizeof(int_args));
 	fout.write(reinterpret_cast<char*>(float_args), sizeof(float_args));
-	fout.write(reinterpret_cast<char*>(array_vertex.data()), 
-	           array_vertex.size() * sizeof(array_vertex[0]));
-	fout.write(reinterpret_cast<char*>(array_normal.data()), 
-	           array_normal.size() * sizeof(array_normal[0]));
+	fout.write(reinterpret_cast<char*>(array_vertex_.data()), 
+	           array_vertex_.size() * sizeof(array_vertex_[0]));
+	fout.write(reinterpret_cast<char*>(array_normal_.data()), 
+	           array_normal_.size() * sizeof(array_normal_[0]));
 	
 	fout.close();
 	std::cout << "Done" << std::endl;
@@ -80,7 +71,7 @@ void QLB::dump_simulation(bool static_viewer)
 	double t_write = t.stop();
 	if(opt_.verbose())
 	{
-		std::size_t size = 3*sizeof(int) + (1 + 2*array_vertex.size())*sizeof(float);
+		std::size_t size = 3*sizeof(int) + (1 + 2*array_vertex_.size())*sizeof(float);
 		std::printf("  Size : %5.2f MB\n", size * 1e-6 );
 		std::printf("  Time : %5.2f s\n", t_write );
 	}

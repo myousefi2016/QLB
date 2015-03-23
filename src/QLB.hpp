@@ -37,12 +37,6 @@
 #define QLB_MAJOR	1
 #define QLB_MINOR	0
 
-#ifndef QLB_SINGLE_PRECISION
- #define QLB_FLOAT_T GL_DOUBLE
-#else
- #define QLB_FLOAT_T GL_FLOAT
-#endif
-
 /********************************
  *  Quantum Lattice Boltzmann   *
  ********************************/
@@ -57,14 +51,14 @@ public:
 #endif
 
 	// === typedefs ===
-	typedef std::complex<float_t>                                   complex_t;
-	typedef std::vector<float_t, aligned_allocator<float_t, 32> >   fvec_t;
-	typedef std::vector<unsigned>                                   uvec_t;
-	typedef std::vector<int>                                        ivec_t;
-	typedef matND<complex_t>                                        cmat_t;
-	typedef matND<float_t>                                          fmat_t;
-	typedef matN4D<complex_t>                                       c4mat_t;
-	typedef SpinBarrier                                             barrier_t;
+	typedef std::complex<float_t>    complex_t;
+	typedef std::vector<float>       fvec_t;
+	typedef std::vector<unsigned>    uvec_t;
+	typedef std::vector<int>         ivec_t;
+	typedef matND<complex_t>         cmat_t;
+	typedef matND<float_t>           fmat_t;
+	typedef matN4D<complex_t>        c4mat_t;
+	typedef SpinBarrier              barrier_t;
 	
 	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3 };
 	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };

@@ -131,7 +131,7 @@ void init_GL(int argc, char* argv[])
 	// Perspective
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 10000.0);
+	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 1000000.0);
 
 	// Enables
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -319,7 +319,7 @@ void callback_reshape(int width, int height)
 	// Perspective
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 10000.0);
+	gluPerspective(60.0, GLdouble(UI->width()) / UI->height(), 0.1, 1000000.0);
 
 	// Set view matrix
 	glMatrixMode(GL_MODELVIEW);
