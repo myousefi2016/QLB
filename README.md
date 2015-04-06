@@ -16,7 +16,6 @@ To compile the project:
 
 1. Obtain the source `git clone https://github.com/thfabian/QLB`
 2. Change into the QLB folder `cd QLB/`
-3. Compile with `make` which builts QLB by default with CUDA and assumes your CUDA installation is residing in `/usr/local/cuda/`. To disable CUDA run `make CUDA=false` instead.
 
 [libGLEW]: http://glew.sourceforge.net/
 [libglut]: http://freeglut.sourceforge.net/
