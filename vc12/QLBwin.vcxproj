@@ -21,7 +21,9 @@
   <ItemGroup>
     <ClInclude Include="..\src\barrier.hpp" />
     <ClInclude Include="..\src\CmdArgParser.hpp" />
+    <ClInclude Include="..\src\ConsoleColor.hpp" />
     <ClInclude Include="..\src\cuassert.hpp" />
+    <ClInclude Include="..\src\cudaComplex.hpp" />
     <ClInclude Include="..\src\error.hpp" />
     <ClInclude Include="..\src\GLerror.hpp" />
     <ClInclude Include="..\src\GLUTlight.hpp" />
@@ -32,7 +34,6 @@
     <ClInclude Include="..\src\PerformanceCounter.hpp" />
     <ClInclude Include="..\src\QLB.hpp" />
     <ClInclude Include="..\src\QLBopt.hpp" />
-    <ClInclude Include="..\src\Shader.hpp" />
     <ClInclude Include="..\src\StaticViewer.hpp" />
     <ClInclude Include="..\src\utility.hpp" />
     <ClInclude Include="..\src\VBO.hpp" />
@@ -48,7 +49,6 @@
     <ClCompile Include="..\src\QLBcpu.cpp" />
     <ClCompile Include="..\src\QLBdump.cpp" />
     <ClCompile Include="..\src\QLBgraphics.cpp" />
-    <ClCompile Include="..\src\Shader.cpp" />
     <ClCompile Include="..\src\StaticViewer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -139,7 +139,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include\Windows;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/DQLB_HAS_QT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -149,6 +149,7 @@
     </Link>
     <CudaCompile>
       <Include>../inc;%(Include)</Include>
+      <AdditionalOptions>-DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,7 +162,7 @@
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include\Windows;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalOptions>/DQLB_HAS_QT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -172,6 +173,7 @@
     <CudaCompile>
       <Include>../inc;%(Include)</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalOptions>-DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -197,6 +199,7 @@
     </Link>
     <CudaCompile>
       <Include>../inc;%(Include)</Include>
+      <AdditionalOptions>-DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -225,7 +228,11 @@
     </Link>
     <CudaCompile>
       <Include>../inc;%(Include)</Include>
+      <AdditionalOptions>-DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <CudaLink>
+      <AdditionalDependencies>$(CudaToolkitlibdir)\cudart.lib</AdditionalDependencies>
+    </CudaLink>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

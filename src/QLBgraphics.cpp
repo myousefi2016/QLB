@@ -118,7 +118,6 @@ void QLB::init_GL(bool static_viewer)
 		inc *= -1;
 	}
 	
-	
 	// Setup Vertex Buffer Objects
 	vbo_vertex.init(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);  
 	vbo_vertex.bind();
@@ -142,6 +141,14 @@ void QLB::init_GL(bool static_viewer)
 	                          &array_index_wire_[0]);
 	vbo_index_wire.unbind();
 	
+	if(opt_.device() == 2)
+	{
+		vbo_vertex.bind();
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
+	    	                     &array_vertex_[0]);
+		vbo_vertex.unbind();
+	}
+	
 	GL_is_initialzed_ = true;
 	
 	if(static_viewer)
@@ -150,35 +157,14 @@ void QLB::init_GL(bool static_viewer)
 
 void QLB::calculate_vertex(int tid, int nthreads)
 {
-
 	const int L_per_thread = L_ / nthreads;
 	const int lower = tid*L_per_thread;
 	const int upper = (tid + 1) != nthreads ? (tid+1)*L_per_thread : L_;
 	const int L = L_;
 
-	switch( current_scene_ )
-	{
-		case spinor0:
-			for(int i = lower; i < upper; ++i)
-				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,0)));
-			break;
-		case spinor1:
-			for(int i = lower; i < upper; ++i)
-				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,1)));
-			break;
-		case spinor2:
-			for(int i = lower; i < upper; ++i)
-				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,2)));
-			break;
-		case spinor3:
-			for(int i = lower; i < upper; ++i)
-				for(int j = 0; j < L; ++j)
-					array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,3)));
-			break;
-	}
+	for(int i = lower; i < upper; ++i)
+		for(int j = 0; j < L; ++j)
+			array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,current_scene_)));
 }
 
 void QLB::scale_vertex(int change_scaling)
@@ -189,50 +175,27 @@ void QLB::scale_vertex(int change_scaling)
 			array_vertex_[y(i,j)] = scaling * array_vertex_[y(i,j)];
 }
 
-void QLB::calculate_normal()
+void QLB::calculate_normal(int tid, int nthreads)
 {
 	/* Calculate normal by taking the cross product of ( a x b )
 	 *
-	 *   (i,jk)                                b
-	 *     ^                                   ^
-	 *     |                       <====>      |
-	 *     |                                   |
-	 *   (i,j) ------> (ik,j)                  x ------> a
-	 *
-	 * To accommodate for periodic boundary conditions we set the normal array
-	 * initially to 1 or -1 depending whether we have to flip the normal vector
-	 *
-	 *  normal_array :     -1    ...     -1   1
-	 *                      1    ...      1  -1
-	 *                      :             :   :
-	 *                      :             :   :
-	 *                      1    ...      1  -1
-	 *
-	 * This will allow a branchless exectution
+	 *   (i,jk)                                 b
+	 *     ^                                    ^
+	 *     |                       <====>   dx  |
+	 *     |                                    |
+	 *   (i,j) ------> (ik,j)                   x ------> a
+	 *                                              dx
 	 */
 
-	const unsigned L3 = 3*L_*L_;
-	for(unsigned i = 0; i < L3; ++i)
-		array_normal_[i] = 1.0;
-	
-	for(unsigned i = 0; i < L_-1; ++i)
-	{
-		array_normal_[x(i,0)] = -1.0;
-		array_normal_[y(i,0)] = -1.0;
-		array_normal_[z(i,0)] = -1.0;
-	}
+	const unsigned L_per_thread = L_ / nthreads;
+	const unsigned lower = tid*L_per_thread;
+	const unsigned upper = (tid + 1) != nthreads ? (tid+1)*L_per_thread : L_;
 
-	for(unsigned j = 1; j < L_; ++j)
-	{
-		array_normal_[x(L_-1,j)] = -1.0;
-		array_normal_[y(L_-1,j)] = -1.0;
-		array_normal_[z(L_-1,j)] = -1.0;
-	}
-
-	float a1, a2, a3, b1, b2, b3, norm;
+	float a1, a2, b2, b3, norm;
+	const float dx = float(dx_);
 	unsigned ik, jk;
 
-	for(unsigned i = 0; i < L_; ++i)
+	for(unsigned i = lower; i < upper; ++i)
 	{
 		ik = (i + 1) % L_;
 
@@ -241,19 +204,17 @@ void QLB::calculate_normal()
 			jk = (L_ - 1 + j) % L_;
 
 			// a
-			a1 = array_vertex_[x(ik,j)] - array_vertex_[x(i,j)];
+			a1 = dx;
 			a2 = array_vertex_[y(ik,j)] - array_vertex_[y(i,j)];
-			a3 = array_vertex_[z(ik,j)] - array_vertex_[z(i,j)];
 		
 			// b
-			b1 = array_vertex_[x(i,jk)] - array_vertex_[x(i,j)];
 			b2 = array_vertex_[y(i,jk)] - array_vertex_[y(i,j)];
-			b3 = array_vertex_[z(i,jk)] - array_vertex_[z(i,j)];
+			b3 = -dx;
 		
-			// n = a x b
-			array_normal_[x(i,j)] *= ( a2*b3 - a3*b2 );
-			array_normal_[y(i,j)] *= ( a3*b1 - a1*b3 );
-			array_normal_[z(i,j)] *= ( a1*b2 - a2*b1 );
+			// n = a x b   (optimized as a3 == 0 and b1 == 0)
+			array_normal_[x(i,j)] =   a2*b3;
+			array_normal_[y(i,j)] = - a1*b3;
+			array_normal_[z(i,j)] =   a1*b2;
 
 			norm = std::sqrt(array_normal_[x(i,j)]*array_normal_[x(i,j)] + 
 			                 array_normal_[y(i,j)]*array_normal_[y(i,j)] +
@@ -271,19 +232,31 @@ void QLB::render()
 	if(!GL_is_initialzed_)
 		FATAL_ERROR("QLB::OpenGL context is not initialized");
 	
-	// Copy vertex array to vertex VBO
-	vbo_vertex.bind();
-	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
-	                         &array_vertex_[0]);
-	vbo_vertex.unbind();
+	// Setup VBO's
+	if(opt_.device() != 2)
+	{
+		// Copy vertex array to vertex VBO
+		vbo_vertex.bind();
+		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
+			                     &array_vertex_[0]);
+		vbo_vertex.unbind();
 		
-	// Copy normal array to normal VBO
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-	                         &array_normal_[0]);
-	vbo_normal.unbind();
+		// Copy normal array to normal VBO
+		vbo_normal.bind();
+		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
+			                     &array_normal_[0]);
+		vbo_normal.unbind();
+	}
+#ifdef QLB_HAS_CUDA
+	else
+	{
+		calculate_vertex_spinor_cuda();
+		calculate_normal_spinor_cuda();
+		cudaDeviceSynchronize();
+	}
+#endif
 	
-	// Draw the scene
+	// === Draw the scene ===
 	std::size_t n_elements;
 	if(current_render_ == SOLID)
 	{
@@ -318,26 +291,37 @@ void QLB::render()
 		vbo_index_wire.unbind();
 		
 		
-	// Draw potential if needed
+	// === Draw potential ===
 	if(draw_potential_)
 	{
 		glEnable(GL_BLEND);
 	
-		for(unsigned i = 0; i < L_; ++i)
-			for(unsigned j = 0; j < L_; ++j)
-				array_vertex_[y(i,j)] = float(scaling_*std::abs(V_(i,j))) - 0.005f*L_;
+		if(opt_.device() != 2)
+		{
+			for(unsigned i = 0; i < L_; ++i)
+				for(unsigned j = 0; j < L_; ++j)
+					array_vertex_[y(i,j)] = float(scaling_*std::abs(V_(i,j))) - 0.005f*L_;
 		
-		calculate_normal(); 
+			calculate_normal(0, 1); 
 		
-		vbo_vertex.bind();
-		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
-				                 &array_vertex_[0]);
-		vbo_vertex.unbind();
+			vbo_vertex.bind();
+			vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
+						             &array_vertex_[0]);
+			vbo_vertex.unbind();
 
-		vbo_normal.bind();
-		vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-				                 &array_normal_[0]);
-		vbo_normal.unbind();
+			vbo_normal.bind();
+			vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
+						             &array_normal_[0]);
+			vbo_normal.unbind();
+		}
+#ifdef QLB_HAS_CUDA
+		else
+		{
+			calculate_vertex_V_cuda();
+			calculate_normal_V_cuda();
+			cudaDeviceSynchronize();
+		}
+#endif
 
 		glColor4d(1, 0, 0, 0.20);
 		
@@ -419,55 +403,6 @@ void QLB::render_statically(bool VBO_changed)
 		vbo_index_solid.unbind();
 	else 
 		vbo_index_wire.unbind();
-}
-
-
-void QLB::draw_coordinate_system() const
-{
-	// Draw origin
-	glPushMatrix();
-		glColor3d(1,0,0);
-		glTranslated(0,0,0);		
-		glutSolidSphere(0.1,20,20);
-	glPopMatrix();
-	
-	// Draw x - red
-	glPushMatrix();
-		glColor3d(1,0,0);
-		glTranslated(dx_*L_/2.0,0,0);		
-		glutSolidSphere(0.1,20,20);
-	glPopMatrix();
-	
-	glBegin(GL_LINES);
-		glVertex3d(0,0,0);
-		glVertex3d(dx_*L_/2.0,0,0);
-	glEnd();
-	
-	// Draw y - green
-	glPushMatrix();
-		glColor3d(0,1,0);
-		glTranslated(0,dx_*L_/2.0,0);		
-		glutSolidSphere(0.1,20,20);
-	glPopMatrix();
-	
-	glBegin(GL_LINES);
-		glVertex3d(0,0,0);
-		glVertex3d(0,dx_*L_/2.0,0);
-	glEnd();
-	
-	// Draw z - blue
-	glPushMatrix();
-		glColor3d(0,0,1);
-		glTranslated(0,0,dx_*L_/2.0);		
-		glutSolidSphere(0.1,20,20);
-	glPopMatrix();
-	
-	glBegin(GL_LINES);
-		glVertex3d(0,0,0);
-		glVertex3d(0,0,dx_*L_/2.0);
-	glEnd();
-	
-	glColor3d(1,1,1);
 }
 
 #undef x

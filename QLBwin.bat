@@ -5,4 +5,4 @@ REM
 REM This script launches the 64-bit Windows version in GUI mode
 
 cd %~dp0/bin/Windows/64-bit
-start QLBwin.exe --gui=glut --L=256 --device=cpu-thread --fullscreen --start-rotating
+start QLBwin.exe --gui=glut --L=512 --device=gpu --fullscreen --start-rotating

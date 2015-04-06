@@ -38,7 +38,10 @@ void QLB_run_glut(int argc, char* argv[])
 	if(!cmd->static_viewer())
 		QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
 	else
+	{
 		QLB_system = StaticViewerLoader(cmd);
+		threadpool.resize(cmd->max_threads());
+	}
 	
 	// Setup UserInterface engine
 	int width = 800, height = 800;
@@ -111,7 +114,7 @@ void init_GL(int argc, char* argv[])
 	{
 		std::cout << " === OpenGL Info === " << std::endl;
 		std::printf("Version : %s\n", glGetString(GL_VERSION));
-		std::printf("Device  : %s\n", glGetString(GL_RENDERER));
+		std::printf("Device  : %s\n\n", glGetString(GL_RENDERER));
 	}
 
 	// GLUT callback registration
@@ -124,6 +127,12 @@ void init_GL(int argc, char* argv[])
 	glutMotionFunc(callback_mouse_motion);
 	glutKeyboardFunc(callback_keyboard);
 	glutSpecialFunc(callback_keyboard_2);
+
+#if defined (__APPLE__) || defined(MACOSX)
+	atexit(cleanup_and_exit);
+#else
+	glutCloseFunc(cleanup_and_exit);
+#endif
 
 	// Viewport
 	glViewport(0, 0, UI->width(),UI->height());
@@ -194,24 +203,26 @@ void callback_display()
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
-
+	
 	// Advance system
 	switch(QLB_system->opt().device())
 	{
 		case 0: // CPU serial
+		{
 			if(!UI->paused())
 				QLB_system->evolution_CPU_serial();
 			QLB_system->calculate_vertex(0, 1);
-			QLB_system->calculate_normal();
+			QLB_system->calculate_normal(0, 1);
 			QLB_system->render();
 			break;
+		}
 		case 1: // CPU multi-threaded
 		{ 
 			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 				threadpool[tid] = std::thread( &QLB::calculate_vertex, 
-				                                QLB_system, 
-				                                int(tid),
-				                                int(threadpool.size()) );
+				                               QLB_system, 
+				                               int(tid),
+				                               int(threadpool.size()) );
 			for(std::thread& t : threadpool)
 				t.join();
 				
@@ -223,24 +234,35 @@ void callback_display()
 					                               QLB_system, 
 					                               int(tid) ); 
 
-				QLB_system->calculate_normal();
+				QLB_system->calculate_normal(0, 1);
 				QLB_system->render();
 		
 				for(std::thread& t : threadpool)
 					t.join();
 			}
 			else
-			{				
-				QLB_system->calculate_normal();		
+			{
+				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
+					threadpool[tid] = std::thread( &QLB::calculate_normal, 
+					                               QLB_system, 
+					                               int(tid), 
+					                               int(threadpool.size()) );
+				for(std::thread& t : threadpool)
+					t.join(); 				
+			
 				QLB_system->render();
 			}
 			break;
 		}
 		case 2: // GPU CUDA
-			FATAL_ERROR("CUDA version is not yet implemented");
+		{
+			if(!UI->paused())
+				QLB_system->evolution_GPU();
+			QLB_system->render();
 			break;
+		}
 	}
-
+	
 	// Draw text boxes
 	UI->draw();
 
@@ -263,7 +285,16 @@ void callback_display_SV()
 		{
 			QLB_system->change_scaling(UI->change_scaling());
 			QLB_system->scale_vertex(UI->change_scaling());
-			QLB_system->calculate_normal();
+
+			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
+					threadpool[tid] = std::thread( &QLB::calculate_normal, 
+					                               QLB_system, 
+					                               int(tid), 
+					                               int(threadpool.size()) );
+			
+			for(std::thread& t : threadpool)
+					t.join(); 		
+			
 			VBO_changed = true;
 		}
 		UI->reset_change_scaling();
@@ -398,6 +429,10 @@ void cleanup_and_exit()
 		delete cmd;
 		cmd = nullptr;
 	}
+	
+#ifdef QLB_HAS_CUDA
+	cudaDeviceReset();
+#endif 
 	
 	// We exit now
 	exit(EXIT_SUCCESS);

@@ -9,6 +9,7 @@
 #define GLUT_MAIN_HPP
 
 // System includes 
+#include <cstdlib>
 #include <iostream>
 
 // Local includes

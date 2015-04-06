@@ -15,6 +15,7 @@
  *  -  array_normal_   ( float[3*L_*L_] )
  */
  
+// Local includes
 #include "QLB.hpp"
 
 #define x(i,j) 	3*((i)*L_ + (j))
@@ -24,6 +25,11 @@
 void QLB::dump_simulation(bool static_viewer)
 {
 	Timer t; t.start();
+	
+#ifdef QLB_HAS_CUDA
+	if(opt_.device() == 2)
+		get_device_arrays();
+#endif
 	
 	std::string filename("dump" + std::to_string(L_) + ".bin");
 	std::cout << "Writing to '" << filename << "' ... " << std::flush;
@@ -42,7 +48,7 @@ void QLB::dump_simulation(bool static_viewer)
 	
 		// Calculate current vertices and normals
 		calculate_vertex(0, 1);
-		calculate_normal();
+		calculate_normal(0, 1);
 	}
 	
 	// Write to binary file

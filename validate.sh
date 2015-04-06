@@ -25,6 +25,7 @@ print_help()
 	echo "   --help      Print this help statement"
 	echo "   --save      Save the plot as a pdf"
 	echo "   --mt        Run the multi-threaded cpu version of QLB"
+	echo "   --gpu       Run the GPU version of QLB"
 	exit 1
 }
 
@@ -63,6 +64,7 @@ for param in $*
 		"--tmax="*) tmax_arg="$param" ;;
 		"--L="*)    L_list="${param##*=}" ;;
 		"--mt")     mt_arg="--device=cpu-thread";; 
+		"--gpu")    mt_arg="--device=gpu";; 
 		*) 	print_help ;; 
 	esac
 done

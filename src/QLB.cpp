@@ -8,7 +8,7 @@
  
 #include "QLB.hpp"
 
-// === CONSTRUCTOR === 
+// ==== CONSTRUCTOR ==== 
 
 QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt)
 	:	
@@ -49,38 +49,53 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		opt_(opt)
 {
 	// Set initial condition
-	if( V_indx_ == 2 )
+	if( V_indx_ == 2 ) // barrier
 		initial_condition_gaussian(2*L_/3 , L_/2);
 	else
 		initial_condition_gaussian(L_/2 , L_/2);
 		
 	calculate_macroscopic_vars();
 	
+	// Setup potential
+	switch( V_indx_ )
+	{
+		case 0:
+			for(unsigned i = 0; i < L_; ++i)
+				for(unsigned j = 0; j < L_; ++j)
+					V_(i,j) = V_free(i,j);
+			break; 
+		case 1:
+			for(unsigned i = 0; i < L_; ++i)
+				for(unsigned j = 0; j < L_; ++j)
+					V_(i,j) = V_harmonic(i,j);
+			break;
+		case 2:
+			for(unsigned i = 0; i < L_; ++i)
+				for(unsigned j = 0; j < L_; ++j)
+					V_(i,j) = V_barrier(i,j);
+			break;
+	}
+	
 	// Copy arrays to device
 #ifdef QLB_HAS_CUDA
-	allocate_device_arrays();
-	init_device();
+	if(opt_.device() == 2)
+	{
+		// Check available memory
+		std::size_t free, total;
+		cudaMemGetInfo(&free, &total);
+		if( (total - free) < 14 * L_*L_* sizeof(float))
+		{
+			cudaDeviceProp deviceProp; 
+			cuassert(cudaGetDeviceProperties(&deviceProp, 0));
+			std::string device(deviceProp.name);
+			WARNING("Device ["+device+"] might run out of memory");
+		}
+		
+		allocate_device_arrays();
+		init_device();
+	}
 #endif
 
-	// Setup potential
-	for(unsigned i = 0; i < L_; ++i)
-	{
-		for(unsigned j = 0; j < L_; ++j)
-		{
-			switch( V_indx_ )
-			{
-				case 0:
-					V_(i,j) = V_free(i,j);
-					break; 
-				case 1:
-					V_(i,j) = V_harmonic(i,j);
-					break;
-				case 2:
-					V_(i,j) = V_barrier(i,j);
-					break;
-			}
-		}
-	}
 }
 
 QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling, 
@@ -118,28 +133,23 @@ QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling,
 		scaling_(scaling),
 		array_index_solid_(6*(L-1)*(L-1), 0),
 		array_index_wire_(2*L*(L-1), 0),
-		array_vertex_(3*L*L, 0),
-		array_normal_(3*L*L, 0), 
+		array_vertex_(array_vertex),
+		array_normal_(array_normal), 
 		// === IO ===
 		opt_(opt)
-{
-	for(std::size_t i = 0; i < array_vertex_.size(); ++i)
-	{
-		array_vertex_[i] = array_vertex[i];
-		array_normal_[i] = array_normal[i];
-	}
-}
+{}
 
-// === DESTRUCTOR ====
+// ==== DESTRUCTOR ====
 
 QLB::~QLB()
 {
 #ifdef QLB_HAS_CUDA
-	free_device_arrays();
+	if(opt_.device() == 2)
+		free_device_arrays();
 #endif
 }
 
-// === INITIALIZATION ===
+// ==== INITIALIZATION ====
 
 void QLB::initial_condition_gaussian(int i0, int j0)
 {
@@ -166,7 +176,32 @@ void QLB::initial_condition_gaussian(int i0, int j0)
 	}
 }
 
-// === PRINTING ===
+void QLB::set_current_scene(QLB::scene_t current_scene)
+{
+	current_scene_ = current_scene;
+	
+#ifdef QLB_HAS_CUDA
+	if(opt_.device() == 2)
+		update_device_constants();
+#endif	
+
+}
+
+void QLB::change_scaling(int change_scaling) 
+{ 
+	if(change_scaling == 1) 
+		scaling_ *= 2.0;
+	else if(change_scaling == -1) 
+		scaling_ /= 2.0; 
+
+#ifdef QLB_HAS_CUDA
+	if(opt_.device() == 2)
+		update_device_constants();
+#endif
+}
+
+
+// ==== PRINTING ====
 
 void QLB::print_spread()
 {
@@ -305,20 +340,18 @@ void QLB::print_matrix(const c4mat_t& m, std::size_t k) const
 template< typename msg_t >
 static inline void verbose_write_to_file(msg_t filename)
 {
-	std::cout << "Writing to ... " << filename << std::endl;
+	std::cout << "Writing to ... '" << filename << "'" << std::endl;
 }
 
 void QLB::write_content_to_file()
 {
 	calculate_macroscopic_vars();
 
-	// We have to mask and shift to get the bit
-	
 	// spinor1
 	if((opt_.plot() & QLBopt::spinor1) >> 2 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor1.dat");
-		if(opt_.verbose()) verbose_write_to_file("spinor1.dat");
+		verbose_write_to_file("spinor1.dat");
 		print_mat(spinor_, L_, L_, 4, 0, fout);
 		fout.close();	
 	}
@@ -327,7 +360,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::spinor2) >> 3 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor2.dat");
-		if(opt_.verbose()) verbose_write_to_file("spinor2.dat");
+		verbose_write_to_file("spinor2.dat");
 		print_mat(spinor_, L_, L_, 4, 1, fout);
 		fout.close();	
 	}
@@ -336,7 +369,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::spinor3) >> 4 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor3.dat");
-		if(opt_.verbose()) verbose_write_to_file("spinor3.dat");
+		verbose_write_to_file("spinor3.dat");
 		print_mat(spinor_, L_, L_, 4, 2, fout);
 		fout.close();	
 	}
@@ -345,7 +378,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::spinor4) >> 5 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("spinor4.dat");
-		if(opt_.verbose()) verbose_write_to_file("spinor4.dat");
+		verbose_write_to_file("spinor4.dat");
 		print_mat(spinor_, L_, L_, 4, 3, fout);
 		fout.close();	
 	}
@@ -354,7 +387,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::density) >> 6 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("density.dat");
-		if(opt_.verbose()) verbose_write_to_file("density.dat");
+		verbose_write_to_file("density.dat");
 		print_mat_eval(rho_, L_, L_, 1, 0, fout, 3);
 		fout.close();
 	}
@@ -363,7 +396,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::currentX) >> 7 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("currentX.dat");
-		if(opt_.verbose()) verbose_write_to_file("currentX.dat");
+		verbose_write_to_file("currentX.dat");
 		print_mat_eval(currentX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
@@ -372,7 +405,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::currentY) >> 8 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("currentY.dat");
-		if(opt_.verbose()) verbose_write_to_file("currentY.dat");
+		verbose_write_to_file("currentY.dat");
 		print_mat_eval(currentY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
@@ -381,7 +414,7 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::veloX) >> 9 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("veloX.dat");
-		if(opt_.verbose()) verbose_write_to_file("veloX.dat");
+		verbose_write_to_file("veloX.dat");
 		print_mat_eval(veloX_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
@@ -390,13 +423,32 @@ void QLB::write_content_to_file()
 	if((opt_.plot() & QLBopt::veloY) >> 10 || (opt_.plot() & QLBopt::all))
 	{ 
 		fout.open("veloY.dat");
-		if(opt_.verbose()) verbose_write_to_file("veloY.dat");
+		verbose_write_to_file("veloY.dat");
 		print_mat_eval(veloY_, L_, L_, 1, 0, fout, 1);
 		fout.close();	
 	}
 }
 
-// === Constants === 
+// Stubs
+#ifndef QLB_HAS_CUDA
+void QLB::evolution_GPU()
+{
+	FATAL_ERROR("QLB was compiled without CUDA support");
+}
+
+void QLB::write_spread_cuda()
+{
+	FATAL_ERROR("QLB was compiled without CUDA support");
+}
+
+void QLB::get_device_arrays()
+{
+	FATAL_ERROR("QLB was compiled without CUDA support");
+}
+#endif
+
+
+// === CONSTANTS === 
 
 const QLB::complex_t QLB::one(1.0,0.0);
 const QLB::complex_t QLB::img(0.0,1.0);

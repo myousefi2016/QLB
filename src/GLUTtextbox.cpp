@@ -77,7 +77,7 @@ void TextBox::draw(int width, int height) const
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_LIGHTING );
 	
-	// If have draw relative window size we first determine how long our text is
+	// If we draw relative window size we first determine how long our text is
 	float w_ = 0.0f;	
 	if(width_relative_)
 	{

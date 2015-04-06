@@ -4,7 +4,7 @@
 # [DESCRIPTION]
 # This Makefile is used to compile the whole project on Linux/Mac OS X.
 # 
-# === Linux ===
+#  ==== Linux ====
 # The compilation relies on the following libraries:
 #   -libGL
 #   -libGLU
@@ -14,22 +14,30 @@
 # The library 'libGLEW' can be built with this Makefile by using the command
 # 'make libGLEW' this will build the most recent version directly from github.
 #
-# === Mac OSX ===
+# Note: Ubuntu 14.04/14.10 might suffer from a linker regression that is
+#       exposed when linking against the system OpenGL library (Mesa) but
+#       running the application against the NVIDIA one.   
+#       The bug can be fixed by directly linking against the OpenGL library from 
+#       NVIDIA by adding '-L/usr/lib/nvidia-346/' to the LDFLAGS.
+#       See https://bugs.launchpad.net/ubuntu/+source/nvidia-graphics-drivers-319/+bug/1248642
+#
+#  ==== Mac OSX ====
 # The compilation relies on 'libGLEW' which is not installed by default. You can
-# build the library with this Makefile by issuing 'make libGLEW' or install it
+# build the library with this Makefile with 'make libGLEW' or install it
 # on your own from http://glew.sourceforge.net/.
 #
 # For further assistance use: 
-#	make help
+#   make help
+#
 
-CXX     = clang++
-CXX_NV  = g++
-NVCC    = nvcc
+CXX        = clang++
+CXX_NV     = g++
+NVCC       = nvcc
  
-CUDA_DIR = /usr/local/cuda
+CUDA      ?= true
+CUDA_DIR   = /usr/local/cuda
 
-# CUDA is not supported yet
-CUDA ?= false
+FAST_MATH ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
 
@@ -38,7 +46,7 @@ OS = $(shell uname -s 2>/dev/null)
 GLEW_BUILD_DIR = glew
 GLEW_GIT_URL   = https://github.com/nigels-com/glew.git
 
-ifeq ($(OS), )
+ifeq ($(OS), )	
  OS = unknown
 endif
 
@@ -67,8 +75,8 @@ INCLUDE     = -I./include/$(OS)
 OPT         = -O2 -march=native
 CUDAOPT     = -O2
 CXXSTD      = -std=c++11
-CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD) $(CUDAOPT)
-CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(OPT) $(WARNINGS) $(DEFINES) $(PROFILING)
+CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(CUDAOPT)
+CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(OPT) $(WARNINGS) $(PROFILING)
 LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
 # === Build adjustments ===
@@ -79,7 +87,12 @@ ifeq ($(OS),Darwin)
  WARNINGS += -Wno-deprecated-declarations -Wno-deprecated-register
 endif
 
-# Compiler specific warnings
+ifeq ($(FAST_MATH),true)
+ OPT      += -ffast-math
+ CUDAOPT  += --use_fast_math
+endif
+
+# Clang specific flags
 ifeq ($(CXX),clang++)
  WARNINGS += -Wno-deprecated-register
 endif
@@ -162,19 +175,23 @@ help :
 	@echo "Usage: make Target [Options...]"
 	@echo ""
 	@echo " Target:"
-	@echo "    all      - compiles the program (default)"
+	@echo "    all      - compiles the program [default]"
 	@echo "    libGLEW  - build the OpenGL Extension Wrangler Library (libGLEW)"
 	@echo "    clean    - removes all execuatbles and object files"
 	@echo "    cleanall - like clean but removes libGLEW aswell"
 	@echo "    help     - prints this help"
 	@echo ""
 	@echo " Options:"
-	@echo "    CUDA=[true|false]"
-	@echo "       This flag will enable or disable compilation against CUDA"
+	@echo "    CUDA={true|false}"
+	@echo "       This flag will enable or disable CUDA support [default : true]"
 	@echo ""
-	@echo "    GPUCOUNTER=[true|false]"
+	@echo "    GPUCOUNTER={true|false}"
 	@echo "       This flag will enable or disable the GPU performance counter"
-	@echo "       (Only affects Linux and CUDA builds)"
+	@echo "       (Only affects Linux and CUDA builds) [default : true]"
+	@echo ""
+	@echo "    FAST_MATH={true|false}"
+	@echo "       This flag will enable or disable fast-math operations which break"
+	@echo "       ANSI or IEEE rules for speed (potentially dangerous) [default : false]"
 	@echo ""
 	@echo " Example:"
 	@echo "   make CUDA=false"

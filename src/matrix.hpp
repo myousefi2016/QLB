@@ -246,7 +246,6 @@ template < typename T >
 class matND : private VEC_T(64)
 {
 public:
-
 	// === Constructor ===
 	
 	/**

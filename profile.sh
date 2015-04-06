@@ -3,9 +3,10 @@
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich
 #
-# This script can profile the application with 'gprof' and perform sanatizing
-# tests provided by LLVM sanatizer or Valgrind. In addition it supports
-# Profile Guided Optimization (PGO) for LLVM (currently only on Linux).
+# This script can profile the application with 'gprof' (GNU Profiler) and 
+# 'nvprof' (NVIDIA Cuda profiler) aswell as perform some sanatizing tests
+# provided by the LLVM sanatizer or Valgrind. In addition it supports
+# Profile Guided Optimization (PGO) for LLVM (Linux only).
 # 
 # Note: To use PGO to it's full potential you might have to allow sampling of 
 #       kernel functions during recording
@@ -18,6 +19,7 @@ print_help()
 	echo ""
 	echo "options:"
 	echo "   --gprof           Profile the program with 'gprof'"
+	echo "   --nvprof          Profile the program with 'nvprof'"
 	echo "   --pgo             Use LLVM's Profile Guided Optimization (PGO) with the"
 	echo "                     Linux Perf profiler [Linux only]"
 	echo "   --llvm-sanatize   Run LLVM sanatizer tests (address and undefined)"
@@ -44,6 +46,7 @@ exit_after_error()
 
 # ======================== Parse Command-line Arguments ========================
 gprof=false
+nvprof=false
 pgo=false
 llvm_sanatizer=false
 valgrind=false
@@ -69,6 +72,7 @@ for param in $*
 		"--llvm_prof="*) CREATE_LLVM_PROF="${param#*=}" ;;
 		"--llvm-sanatize") llvm_sanatizer=true ;;
 		"--gprof") gprof=true ;;
+		"--nvprof") nvprof=true ;;
 		"--pgo") pgo=true ;;
 	esac
 done
@@ -128,19 +132,60 @@ if [ "$gprof" = "true" ]; then
 	fi
 	
 	# Recompile with '-pg' flag
-	make clean && make -j 4 PROFILING='-pg' CXX=$CXX CUDA=$CUDA
+	printf "Recompiling ... "
+	make -s clean && make -s -j 4 PROFILING='-pg' CXX=$CXX CUDA=$CUDA
+	printf "Done\n"
 
 	# Execute the program
-	echo " === EXECUTING === "
+	printf "Profiling ... \n\n"
 	$EXE $EXEargs
 	if [ "$?" != "0" ]; then
 		exit 1
 	fi
 
 	# Create profile information
-	echo " === PROFILING === "
-	echo "Creating profile information ... analysis.txt"
+	printf "Creating profile information 'analysis.txt' ..."
 	gprof QLB gmon.out > analysis.txt
+	printf "Done\n"
+	exit 0
+fi
+
+# =============================== nvprof =======================================
+if [ "$nvprof" = "true" ]; then
+	
+	# Check for gprof
+	nvprof --version > /dev/null 2>&1
+	if [ "$?" != "0" ]; then
+		exit_after_error "$0 : error : cannot find 'nvprof'"
+	fi
+	
+	# Recompile to assure CUDA is enabled
+	printf "Recompiling ... "
+	make -s clean && make -j -s CUDA=true
+	printf "Done\n"
+
+	# Check if '--device=gpu' flag is already present
+	device_flag=false
+	for cmd in $(echo $EXEargs | tr "," "\n")
+	do
+		if [ "$cmd" = "--device=gpu" ]; then
+			device_flag=true
+		fi
+	done
+
+	if [ "$device_flag" = "false" ]; then
+		EXEargs="$EXEargs --device=gpu"
+	fi 
+	
+	# Execute the program
+	printf "Profiling ... \n\n"
+	nvprof --log-file analysis.txt $EXE $EXEargs
+	if [ "$?" != "0" ]; then
+		exit 1
+	fi
+
+	# Create profile information
+	printf "\nCreating profile information 'analysis.txt' ... Done\n"
 	exit 0
 fi
 
@@ -148,8 +193,8 @@ fi
 if [ "$pgo" = "true" ]; then
 	
 	# Check if we are on Linux
-	if [ `uname -s 2>/dev/null` != "Linux" ]; then
-		exit_after_error "$0 : error : PGO is currently only supported on Linux"
+	if [ $(uname -s 2>/dev/null) = "Linux" ]; then
+		exit_after_error "$0 : error : PGO is only supported on Linux"
 	fi
 	
 	# Check for prof

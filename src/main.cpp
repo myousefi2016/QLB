@@ -40,7 +40,10 @@ int main(int argc, char* argv[])
 			QLB_run_glut(argc, argv);
 			break;
 	}	
-
+	
+#ifdef QLB_HAS_CUDA
+	cudaDeviceReset();
+#endif
 	return 0;
 }
 
@@ -62,14 +65,16 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	opt.set_verbose(cmd.verbose());
 	opt.set_device(cmd.device());
 	opt.set_nthreads(cmd.nthreads_value());
-
+	
 	// Setup the system
 	QLB QLB_system(L, dx, mass, dt, cmd.V(), opt);
+
+	Progressbar p(tmax);
 	
 	Timer t;
 	t.start();
 	
-	// Run simulation in [0, dt*tmax]
+	// Run simulation in [0, dt*tmax]	
 	switch(opt.device())
 	{
 		case 0: // CPU serial
@@ -77,8 +82,15 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 			for(unsigned t = 0; t < tmax; ++t)
 			{
 				QLB_system.evolution_CPU_serial();
-				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t))
+				
+				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t+1))
+				{
+					p.pause();
 					QLB_system.dump_simulation(false);
+				}
+				
+				if(cmd.progressbar())
+					p.progress();
 			}
 			break;
 		}
@@ -90,20 +102,47 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
 					                               &QLB_system, 
 					                               int(tid) ); 
+					                               
 				for(std::thread& t : threadpool)
 					t.join();
-				
-				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t))
+			
+				if(cmd.progressbar())
+					p.progress();
+					
+				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t+1))
+				{
+					p.pause();
 					QLB_system.dump_simulation(false);
+				}
+
 			}
 			break;
 		}
 		case 2: // GPU CUDA
-			FATAL_ERROR("CUDA version is not yet implemented");
-			break;
+			for(unsigned t = 0; t < tmax; ++t)
+			{
+				QLB_system.evolution_GPU();
+				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t+1))
+				{
+					p.pause();
+					QLB_system.get_device_arrays();
+					QLB_system.dump_simulation(false);
+				}
+			
+				if(cmd.progressbar())
+					p.progress();
+			
+			}
+			
+			if( (QLB_system.opt().plot() & QLBopt::spread) >> 1 || 
+			    (QLB_system.opt().plot() & QLBopt::all) )
+				QLB_system.write_spread_cuda();
 	}
 	double tsim = t.stop();
 	
+	if(cmd.device() == 2)
+		QLB_system.get_device_arrays();
+		
 	// Write values to file
 	QLB_system.print_spread();
 	QLB_system.write_content_to_file();	

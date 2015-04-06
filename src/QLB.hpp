@@ -30,9 +30,16 @@
 #include "utility.hpp"
 #include "barrier.hpp"
 #include "VBO.hpp"
-#include "Shader.hpp"
 #include "matrix.hpp"
 #include "QLBopt.hpp"
+
+#ifdef QLB_HAS_CUDA
+ #include <cuda.h>
+ #include <cuda_runtime.h>
+ #include <device_launch_parameters.h>
+ #include "cudaComplex.hpp"
+ #include "cuassert.hpp"
+#endif
 
 #define QLB_MAJOR	1
 #define QLB_MINOR	0
@@ -44,21 +51,19 @@ class QLB
 {
 public:
 
-#ifndef QLB_SINGLE_PRECISION 
-	typedef double float_t;
-#else
-	typedef float float_t;
-#endif
-
 	// === typedefs ===
-	typedef std::complex<float_t>    complex_t;
-	typedef std::vector<float>       fvec_t;
-	typedef std::vector<unsigned>    uvec_t;
-	typedef std::vector<int>         ivec_t;
-	typedef matND<complex_t>         cmat_t;
-	typedef matND<float_t>           fmat_t;
-	typedef matN4D<complex_t>        c4mat_t;
-	typedef SpinBarrier              barrier_t;
+#ifdef QLB_SINGLE_PRECISION 
+	typedef float                  float_t;
+	typedef std::complex<float>    complex_t;
+#else
+	typedef double                 float_t;
+	typedef std::complex<double>   complex_t;
+#endif
+ 
+	typedef matND<complex_t>       cmat_t;
+	typedef matND<float_t>         fmat_t;
+	typedef matN4D<complex_t>      c4mat_t;
+	typedef SpinBarrier            barrier_t;
 	
 	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3 };
 	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };
@@ -77,6 +82,19 @@ public:
 	static const cmat_t alphaY;
 
 	static const cmat_t beta;
+	
+#ifdef QLB_HAS_CUDA 
+	cuFloatComplex* d_X;
+	cuFloatComplex* d_Y;
+	
+	cuFloatComplex* d_Xinv;
+	cuFloatComplex* d_Yinv;
+	
+	cuFloatComplex* d_alphaX;
+	cuFloatComplex* d_alphaY;
+	
+	cuFloatComplex* d_beta;
+#endif 
 	
 	// === Constructor & Destructor ===
 	
@@ -186,6 +204,13 @@ public:
 	 *	@file 	QLBcpu.cpp 
 	 */
 	void calculate_spread();
+	
+	/**
+	 *	Calculate the spreads (deltaX and deltaY) and store them in 'd_spreadsX_'
+	 *	and 'd_spreadsY_'
+	 *	@file 	QLBcuda.cu 
+	 */
+	void calculate_spread_cuda();
 
 	/**
 	 *	Print the current spreads in the format:
@@ -238,14 +263,33 @@ public:
 	 *	@file QLBgraphics.cpp 
 	 */
 	void calculate_vertex(int tid, int nthreads);
-	
+
+	/**
+	 *	Calculate the vertices by copying the norm of the desired spinor matrix
+	 *	or the potential directly to the vertex VBO by a CUDA kernel
+	 *	@file QLBcuda.cu 
+	 */	
+	void calculate_vertex_spinor_cuda();
+	void calculate_vertex_V_cuda();
+
 	/**
 	 *	Calculate the normals depending on array_vertex_ (QLB::calculate_vertex
 	 *	should be called prior)
+ 	 *	@param  tid       thread id in [0, nthreads)
+	 *	@param  nthreads  number of threads
 	 *	@file QLBgraphics.cpp 
 	 */
-	void calculate_normal();
+	void calculate_normal(int tid, int nthreads);
 	
+	/**
+	 *	Calculate the normals of the desired spinor matrix or the potential and
+	 *	copy the result directly to the normal VBO by a CUDA kernel (this call 
+	 *	can be overlapped with 'calculate_vertex_*_cuda()' calls)
+	 *	@file QLBcuda.cu 
+	 */	
+	void calculate_normal_spinor_cuda();
+	void calculate_normal_V_cuda();
+
 	/**
 	 *	Scale the vertices according to 'scaling_' (This function is used by the
 	 *	StaticViewer)
@@ -267,12 +311,6 @@ public:
 	 *	@file	QLBgraphics.cpp
 	 */
 	void render_statically(bool VBO_changed);
-	
-	/** 
-	 *	Draw a coordinate system (mainly used for debugging!)
-	 *	@file	QLBgraphics.cpp
-	 */	
-	void draw_coordinate_system() const;
 	
 	// === IO ===
 
@@ -308,6 +346,12 @@ public:
 	void write_spread();
 	
 	/** 
+	 *	Write all the spreads stored in 'd_time_' and 'd_spread_' to 'spread.dat'
+	 *	@file 	QLBcuda.cu 
+	 */
+	void write_spread_cuda();
+	
+	/** 
  	 *	Write the current content of all specified quantities (given by 
  	 *	QLBopt's plot_) to the corresponding file(s). 
  	 *	Note: consecutive calls of this function will override the last content
@@ -328,12 +372,15 @@ public:
 	 *	Adjust the scaling of the rendered scene
 	 *	@param 	change_scaling	-1: decrease by factor of 2.0
 	 * 	                         1: increase by factor of 2.0
+	 *	@file	QLB.cpp 
 	 */
-	inline void change_scaling(int change_scaling) 
-	{ 
-		if(change_scaling == 1) scaling_ *= 2.0;
-		else if(change_scaling == -1) scaling_ /= 2.0; 
-	}
+	void change_scaling(int change_scaling);
+	
+	/** 
+	 *	Update the constants (d_scaling, d_current_scene) on the device
+	 *	@file	QLBcuda.cu 
+	 */
+	void update_device_constants(); 
 	
 	// === Getter ===
 	inline unsigned L() const { return L_;  }
@@ -351,10 +398,10 @@ public:
 	inline QLBopt opt() const { return opt_; }
 	
 	// === Setter ===
-	inline void set_current_scene(scene_t cs)   { current_scene_ = cs; }
 	inline void set_draw_potential(bool dp)     { draw_potential_ = dp; }
 	inline void set_current_render(render_t cr) { current_render_ = cr; }
-
+	void set_current_scene(scene_t current_scene);
+	
 private:
 	// === Simulation variables ===
 	const unsigned L_;
@@ -385,9 +432,21 @@ private:
 	cmat_t  rho_;
 	fmat_t  V_;
 	
-	// === Arrays GPU === 
-	complex_t* d_spinor_;
-	complex_t* d_rho_, d_rho0_;
+	// === Arrays GPU ===
+#ifdef QLB_HAS_CUDA 
+	cuFloatComplex* d_spinor_;
+	cuFloatComplex* d_spinoraux_;
+	cuFloatComplex* d_spinorrot_;
+	float* d_V_;
+	
+	std::vector<float> d_deltaX_;
+	std::vector<float> d_deltaY_;
+	
+	dim3 block1_;
+	dim3 block4_;
+	dim3 grid1_;
+	dim3 grid4_;
+#endif 
 
 	// === OpenGL context ===
 	bool GL_is_initialzed_;
@@ -396,17 +455,15 @@ private:
 	bool draw_potential_;
 	float_t scaling_;
 	
-	uvec_t  array_index_solid_;
-	uvec_t  array_index_wire_;  
-	fvec_t  array_vertex_;
-	fvec_t  array_normal_;
+	std::vector<unsigned> array_index_solid_;
+	std::vector<unsigned> array_index_wire_;  
+	std::vector<float>    array_vertex_;
+	std::vector<float>    array_normal_;
 	
 	VBO vbo_vertex;
 	VBO vbo_normal;
 	VBO vbo_index_solid;
 	VBO vbo_index_wire;
-	
-	Shader shader_;
 	
 	// === IO ===
 	QLBopt opt_;

@@ -94,7 +94,7 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[0] = "Static Viewer";
 
 	text_boxes_[BOX_STATIC_VIEWER].init(-0.13f, 0.91f, 0.5f, 0.06f, 1, 1, 
-	                               false, false, false, false, 1.0f);
+	                                    false, false, false, true, 1.0f);
 	text_boxes_[BOX_STATIC_VIEWER].add_text(text.begin(), text.end());
 	if(!static_viewer_)
 		text_boxes_[BOX_STATIC_VIEWER].deactivate();

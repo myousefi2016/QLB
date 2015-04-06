@@ -261,14 +261,14 @@ public:
 				throw CmdArgException("'X' must be > 0 in command-line argument"
 				                      " '--nthreads=X'");
 			
+			max_threads_ = std::thread::hardware_concurrency();
 		 	if(device_ == 1 && !nthreads_)
 		 	{
 		 		nthreads_ = true;	
-		 		unsigned hwc = std::thread::hardware_concurrency();
 		 		if(gui_ == 1)
-					nthreads_value_ =  L_value_ > 200 ? hwc - 1 : hwc / 2 - 1;
+					nthreads_value_ =  L_value_ > 200 ? max_threads_ - 1 : max_threads_ / 2 - 1;
 				else
-					nthreads_value_ =  L_value_ > 256 ? hwc : hwc / 2;
+					nthreads_value_ =  L_value_ > 256 ? max_threads_ : max_threads_ / 2;
 			}
 			else if(nthreads_ && nthreads.value() == 1)
 			{
@@ -315,6 +315,9 @@ public:
 	
 			// --start-paused
 			start_paused_ = find("--start-paused").is_present();
+			
+			// --disable-progressbar
+			progressbar_ = !find("--disable-progressbar").is_present();
 		
 			// Throw if we have unparsed arguments
 			if(argv_.size())
@@ -339,6 +342,7 @@ public:
 	inline bool fullscreen() const { return fullscreen_; }
 	inline bool nthreads() const { return nthreads_; }
 	inline unsigned nthreads_value() const { return nthreads_value_; }
+	inline unsigned max_threads() const { return max_threads_; }
 	inline bool L() const { return L_; }
 	inline unsigned L_value() const { return L_value_; }
 	inline bool dx() const { return dx_; }
@@ -358,6 +362,7 @@ public:
 	inline unsigned int plot() const { return plot_; }
 	inline bool start_rotating() const { return start_rotating_; }
 	inline bool start_paused() const { return start_paused_; }
+	inline bool progressbar() const { return progressbar_; }
 	inline int device() const { return device_; }
 
 private:
@@ -573,7 +578,7 @@ private:
 	 */
 	NO_RETURN void print_version() const
 	{
-		std::cout << "QLB  - version 1.0" << std::endl;
+		std::cout << "QLB - 1.0" << std::endl;
 		std::cout << "Built on " << __TIMESTAMP__ << " for " << ARCH << std::endl;
 		std::cout << "Compiled with " << COMPILER << VERSION << std::endl;
 		std::cout << "Compute model : CPU";
@@ -733,6 +738,7 @@ private:
 	bool fullscreen_;
 	bool nthreads_;
 	unsigned nthreads_value_;
+	unsigned max_threads_;
 	bool L_; 	 
 	unsigned L_value_;
 	bool dx_;
@@ -753,6 +759,7 @@ private:
 	int device_;
 	bool start_rotating_;
 	bool start_paused_;
+	bool progressbar_;
 	
 	// === IO ===
 	std::size_t width_cmd;

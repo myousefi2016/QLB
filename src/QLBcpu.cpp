@@ -149,7 +149,7 @@ void QLB::evolution_CPU_serial()
 		}
 	}
 	
-	// collide & stream with Q 
+	// collide & stream with Q_X 
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -215,7 +215,7 @@ void QLB::evolution_CPU_serial()
 		}
 	}
 		
-	// collide & stream with Q
+	// collide & stream with Q_Y
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j = 0; j < L; ++j)
