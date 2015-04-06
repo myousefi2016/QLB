@@ -15,7 +15,7 @@ To built QLB on Linux the following libraries are required:
 - [libglut][libglut]
 
 All those libraries should be present in the repositories of your distribution. Alternatively [libGLEW][libGLEW] can be built directly within this project with `make libGLEW`.
-If you want to built QLB with CUDA you have to install the [CUDA SDK][cudasdk] and make sure the environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly.
+If you want to built QLB with CUDA you have to install the [CUDA SDK 7.0][cudasdk] (Versions older than CUDA 6.5 might not work as the code make use of C++11 which is only partially supported in prior versions). Make sure the CUDA environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly.
 
 To compile the project:
 
