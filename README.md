@@ -1,6 +1,6 @@
 # Quantum Lattice Boltzmann
 
-Dirac Solver using the Quantum Lattice Boltzmann scheme and 3D visualization with OpenGL.
+QLB is a Dirac Solver using the Quantum Lattice Boltzmann scheme. The goal of this project is to provide an efficient implementation which allows to visualize the solution of the Dirac equation in real-time. To achieve this goal QLB relies heavily on multi-threading and GPU acceleration through CUDA.
 
 <p align="center">
   <img src="https://github.com/thfabian/QLB/blob/master/data/QLBtest.png?raw=true" alt="QLB"/>
@@ -25,7 +25,7 @@ cd QLB/
 make 
 ````
 
-Which builts QLB by default with CUDA and assumes you CUDA installation is residing in `/usr/local/cuda/`. To disable CUDA run:
+Which builts QLB by default with CUDA and assumes your CUDA installation is residing in `/usr/local/cuda/`. To disable CUDA run:
 
 `make CUDA=false`
 
