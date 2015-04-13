@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 
 def Usage():
 	""" Print the usage of this program """
-	print "Usage: 	python plot_spread.py [Options]"
+	print "Usage: 	python plot_benchmark.py [Options]"
 	print ""
 	print "Options:"
 	print "     --cpu-serial=FILE    File with the cpu-serial data stored as (N x 2)"

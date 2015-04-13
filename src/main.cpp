@@ -67,7 +67,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	opt.set_nthreads(cmd.nthreads_value());
 	
 	// Setup the system
-	QLB QLB_system(L, dx, mass, dt, cmd.V(), opt);
+	QLB QLB_system(L, dx, mass, dt, tmax, cmd.V(), opt);
 
 	Progressbar p(tmax);
 	
@@ -122,6 +122,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 			for(unsigned t = 0; t < tmax; ++t)
 			{
 				QLB_system.evolution_GPU();
+
 				if(UNLIKELY(cmd.dump() && cmd.dump_value() == t+1))
 				{
 					p.pause();
@@ -131,19 +132,15 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 			
 				if(cmd.progressbar())
 					p.progress();
-			
 			}
-			
-			if( (QLB_system.opt().plot() & QLBopt::spread) >> 1 || 
-			    (QLB_system.opt().plot() & QLBopt::all) )
-				QLB_system.write_spread_cuda();
 	}
 	double tsim = t.stop();
+	p.pause();
 	
 	if(cmd.device() == 2)
 		QLB_system.get_device_arrays();
 		
-	// Write values to file
+	// Write values to file (if requested)
 	QLB_system.print_spread();
 	QLB_system.write_content_to_file();	
 	

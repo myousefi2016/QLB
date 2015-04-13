@@ -15,6 +15,7 @@ __constant__ unsigned int d_L;
 __constant__ float d_dx;
 __constant__ float d_dt;
 __constant__ float d_mass;
+__constant__ unsigned int d_t;
 
 __constant__ float d_scaling;
 __constant__ int d_current_scene;
@@ -177,12 +178,13 @@ void QLB::init_device()
 	cuassert(cudaMemcpyToSymbol(d_current_scene, &current_scene, sizeof(current_scene)));
 	float scaling = static_cast<float>(scaling_);
 	cuassert(cudaMemcpyToSymbol(d_scaling, &scaling, sizeof(scaling)));
+	cuassert(cudaMemcpyToSymbol(d_t, &t_, sizeof(t_)));
 	
 	cudaDeviceProp deviceProp; 
 	cuassert(cudaGetDeviceProperties(&deviceProp, 0));
 	
 	// Experiments showed that the minimal number of threads per block, which is
-	// the warps size yield best performance in this case	
+	// the warp size yields best performance in my case (NVIDIA GeForce 770)
 
 	block4_.x = 1;
 	block4_.y = deviceProp.warpSize / 4;
@@ -444,13 +446,16 @@ void QLB::evolution_GPU()
 	
 	cudaDeviceSynchronize();
 	
-	// Calculate the spreads and store them in a buffer as it would be too expensive
-	// to always copy them to the CPU
+	// Calculate the spreads
 	if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
-		calculate_spread_cuda();
-	
+	{
+		copy_from_device_to_host(d_spinor_, spinor_);
+		cudaDeviceSynchronize();
+		calculate_spread();
+	}
+		
 	// Update time;
-	t_ += 1.0;
+	t_ += 1;
 }
 
 
@@ -485,7 +490,7 @@ void QLB::calculate_vertex_spinor_cuda()
 }
 
 /** 
- *	Calculate the vertices (by taking the norm of the potential V) and copy them 
+ *	Calculate the vertices (by taking the abs of the potential V) and copy them 
  *	to the vertex VBO
  *	@param vbo_ptr   pointer to the VBO
  *	@param d_ptr     pointer to the spinors
@@ -618,79 +623,3 @@ void QLB::calculate_normal_V_cuda()
 
 	vbo_normal.unmap();
 }
-
-// ============================== PRINTING =====================================
-
-/** 
- *	Calculate spreads
- */
-__global__ void kernel_calculate_spread(cuFloatComplex* spinor, 
-                                        float* deltaX,
-                                        float* deltaY)
-{
-//	int i = blockIdx.x*blockDim.x + threadIdx.x;
-//	int j = blockIdx.y*blockDim.y + threadIdx.y;
-//	
-//	if(i < d_L && j < d_L)
-//	{
-//		float deltax_nom = 0.0f; 
-//		float deltax_den = 0.0f;
-//		float deltay_nom = 0.0f; 
-//		float deltay_den = 0.0f;
-
-//		const float dV = dx_*dx_;
-//	
-//		float x = dx * ( i -0.5 *(d_L_-1));
-//		float y = dx * ( j -0.5 *(d_L_-1));
-
-//		}
-
-//	// Update global variables
-//	deltax_ = std::sqrt(deltax_nom/deltax_den);
-//	deltay_ = std::sqrt(deltay_nom/deltay_den);
-//	}
-}
-
-
-void QLB::calculate_spread_cuda()
-{	
-	copy_from_device_to_host(d_spinor_, spinor_);
-	calculate_spread();
-	d_deltaX_.push_back(static_cast<float>(deltax_));
-	d_deltaY_.push_back(static_cast<float>(deltay_));
-}
-
-void QLB::write_spread_cuda()
-{
-	WARNING("this is highly inefficient");
-//	std::size_t N = std::size_t(t_);
-
-//	std::vector<float> deltaX(N);
-//	std::vector<float> deltaY(N);
-
-//	copy_from_device_to_host(d_deltaX_, deltaX);
-//	copy_from_device_to_host(d_deltaY_, deltaY);
-	
-	fout.open("spread.dat");
-	
-	fout << std::left << std::setprecision(6);
-
-	for(std::size_t i = 0; i < d_deltaX_.size(); ++i)
-	{
-		fout << std::setw(15) << i*dt_;
-		fout << std::setw(15) << d_deltaX_[i];
-		fout << std::setw(15) << d_deltaY_[i];
-	
-		if(V_indx_ == 0) // no potential
-		{
-			float_t deltax_t = std::sqrt( delta0_*delta0_ + i*dt_*i*dt_ /
-			                            (4.0*mass_*mass_*delta0_*delta0_) );
-			fout << std::setw(15) << deltax_t;
-		}
-
-		fout << std::endl;
-	}
-		
-	fout.close();
-}
-

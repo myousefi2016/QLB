@@ -104,6 +104,7 @@ public:
 	 *	@param 	dx      Spatial discretization
 	 *	@param	mass    Mass of the particles
 	 *	@param 	dt      Temporal discretization
+	 *	@param  tmax    Maximum time (only needed if spreads are recoreded)
 	 *	@param 	V_indx  Index of the potential function V
 	 *	                0: no potential
 	 *	                1: harmonic potential
@@ -112,7 +113,8 @@ public:
 	 *	                (see at QLBopt (QLBopt.hpp) for further information)
 	 *	@file 	QLB.cpp
 	 */
-	QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt);
+	QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax, int V_indx, 
+	    QLBopt opt);
 	
 	/** 
 	 *	Constructor (used by the StaticViewer)
@@ -204,13 +206,6 @@ public:
 	 *	@file 	QLBcpu.cpp 
 	 */
 	void calculate_spread();
-	
-	/**
-	 *	Calculate the spreads (deltaX and deltaY) and store them in 'd_spreadsX_'
-	 *	and 'd_spreadsY_'
-	 *	@file 	QLBcuda.cu 
-	 */
-	void calculate_spread_cuda();
 
 	/**
 	 *	Print the current spreads in the format:
@@ -338,18 +333,10 @@ public:
 	void print_matrix(const c4mat_t& m, std::size_t k) const;
 	
 	/** 
-	 *	Write the current spreads to 'spread.dat'.
-	 *	If dt*t == 0 the file will newly created, otherwise
-	 *	consecutive calls of this function will append to the file.
+	 *	Write the all spreads [0, dt*t_] to 'spread.dat'.
 	 *	@file 	QLB.cpp 
 	 */
 	void write_spread();
-	
-	/** 
-	 *	Write all the spreads stored in 'd_time_' and 'd_spread_' to 'spread.dat'
-	 *	@file 	QLBcuda.cu 
-	 */
-	void write_spread_cuda();
 	
 	/** 
  	 *	Write the current content of all specified quantities (given by 
@@ -389,8 +376,6 @@ public:
 	inline float_t t() const { return t_; }
 	inline float_t dt() const { return dt_; }
 	inline int V() const { return V_indx_; }
-	inline float_t deltax() const { return deltax_; }
-	inline float_t deltay() const { return deltay_; }
 	inline float_t scaling() const { return scaling_;}
 	inline scene_t current_scene() const { return current_scene_; }
 	inline render_t current_render() const { return current_render_; }
@@ -408,11 +393,11 @@ private:
 	float_t dx_;
 	float_t mass_;
 	
-	float_t t_;
+	unsigned t_;
 	float_t dt_;
 
-	float_t deltax_;
-	float_t deltay_;
+	std::vector<float_t> deltax_;
+	std::vector<float_t> deltay_;
 	float_t delta0_;
 	
 	int V_indx_;
@@ -438,9 +423,6 @@ private:
 	cuFloatComplex* d_spinoraux_;
 	cuFloatComplex* d_spinorrot_;
 	float* d_V_;
-	
-	std::vector<float> d_deltaX_;
-	std::vector<float> d_deltaY_;
 	
 	dim3 block1_;
 	dim3 block4_;

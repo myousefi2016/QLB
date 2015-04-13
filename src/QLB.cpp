@@ -10,7 +10,8 @@
 
 // ==== CONSTRUCTOR ==== 
 
-QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt opt)
+QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax, 
+         int V_indx, QLBopt opt)
 	:	
 		// === Simulation variables ===
 		L_(L),
@@ -18,8 +19,8 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, int V_indx, QLBopt op
 		mass_(mass),
 		t_(0),
 		dt_(dt),
-		deltax_(0),
-		deltay_(0),
+		deltax_(tmax),
+		deltay_(tmax),
 		delta0_(14.0),
 		V_indx_(V_indx),
 		barrier(opt.nthreads()),
@@ -200,7 +201,6 @@ void QLB::change_scaling(int change_scaling)
 #endif
 }
 
-
 // ==== PRINTING ====
 
 void QLB::print_spread()
@@ -209,7 +209,7 @@ void QLB::print_spread()
 	
 	// Schrödinger solution
 	float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ / 
-		                         (4.0*mass_*mass_*delta0_*delta0_) );
+		                          (4.0*mass_*mass_*delta0_*delta0_) );
 
 	std::cout << std::left << std::setprecision(6);
 
@@ -220,31 +220,32 @@ void QLB::print_spread()
 	std::cout << std::endl;
 
 	std::cout << std::setw(15) << t_*dt_;
-	std::cout << std::setw(15) << deltax_;
-	std::cout << std::setw(15) << deltay_;
+	std::cout << std::setw(15) << deltax_[t_];
+	std::cout << std::setw(15) << deltay_[t_];
 	if(V_indx_ == 0) std::cout << std::setw(15) << deltax_t;	
 	std::cout << std::endl;
 }
 
 void QLB::write_spread()
 {
-	if(t_*dt_ == 0) // Delete the old content of the file
-		fout.open("spread.dat");
-	else
-		fout.open("spread.dat", std::ios::app);
-	
-	fout << std::left << std::setprecision(6);
-	fout << std::setw(15) << t_*dt_;
-	fout << std::setw(15) << deltax_;
-	fout << std::setw(15) << deltay_;
-		
-	if(V_indx_ == 0) // no potential
+	fout.open("spread.dat");
+
+	for(std::size_t t=0; t < t_; ++t)
 	{
-		float_t deltax_t = std::sqrt( delta0_*delta0_ + t_*dt_*t_*dt_ /
-			                            (4.0*mass_*mass_*delta0_*delta0_) );
-		fout << std::setw(15) << deltax_t;
+		fout << std::left << std::setprecision(6);
+		fout << std::setw(15) << t*dt_;
+		fout << std::setw(15) << deltax_[t];
+		fout << std::setw(15) << deltay_[t];
+	
+		if(V_indx_ == 0) // no potential
+		{
+			float_t deltax_t = std::sqrt( delta0_*delta0_ + t*dt_*t*dt_ /
+						                  (4.0*mass_*mass_*delta0_*delta0_) );
+			fout << std::setw(15) << deltax_t;
+		}
+		fout << std::endl;	
 	}
-	fout << std::endl;	
+
 	fout.close();
 }
 
@@ -346,6 +347,13 @@ static inline void verbose_write_to_file(msg_t filename)
 void QLB::write_content_to_file()
 {
 	calculate_macroscopic_vars();
+	
+	// spread
+	if((opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all))
+	{
+		verbose_write_to_file("spread.dat");
+		write_spread();
+	} 
 
 	// spinor1
 	if((opt_.plot() & QLBopt::spinor1) >> 2 || (opt_.plot() & QLBopt::all))
@@ -432,11 +440,6 @@ void QLB::write_content_to_file()
 // Stubs
 #ifndef QLB_HAS_CUDA
 void QLB::evolution_GPU()
-{
-	FATAL_ERROR("QLB was compiled without CUDA support");
-}
-
-void QLB::write_spread_cuda()
 {
 	FATAL_ERROR("QLB was compiled without CUDA support");
 }

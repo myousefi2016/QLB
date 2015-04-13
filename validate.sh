@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#! /bin/sh
 #	
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich

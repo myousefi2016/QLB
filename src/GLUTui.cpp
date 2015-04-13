@@ -305,7 +305,8 @@ QLB* UserInterface::reset(QLB* qlb_old)
 	QLB* new_qlb = new QLB(qlb_old->L(), 
 	                       qlb_old->dx(), 
 	                       qlb_old->mass(), 
-	                       qlb_old->dt(), 
+	                       qlb_old->dt(),
+	                       0, 
 	                       qlb_old->V(),
 	                       qlb_old->opt());
 	delete qlb_old;

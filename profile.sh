@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#! /bin/sh
 #	
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich
@@ -26,7 +26,7 @@ print_help()
 	echo "   --valgrind        Run the program in valgrind to detect memory management"
 	echo "                     and threading bugs"
 	echo ""
-	echo "   --CUDA=S          Compile against CUDA if S=true [default S=false]"
+	echo "   --CUDA=S          Compile against CUDA if S=true [default S=true]"
 	echo "   --args=Args       The follwing arguments are passed to the executing"
 	echo "                     program while multiple arguments are delimited with ','" 
 	echo "                     (e.g '--args=--L=128,--dx=1.5')"
@@ -50,7 +50,7 @@ nvprof=false
 pgo=false
 llvm_sanatizer=false
 valgrind=false
-CUDA=false
+CUDA=true
 
 GCC=g++
 CLANG=clang++
@@ -153,7 +153,7 @@ fi
 # =============================== nvprof =======================================
 if [ "$nvprof" = "true" ]; then
 	
-	# Check for gprof
+	# Check for nvprof
 	nvprof --version > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
 		exit_after_error "$0 : error : cannot find 'nvprof'"
@@ -197,7 +197,7 @@ if [ "$pgo" = "true" ]; then
 		exit_after_error "$0 : error : PGO is only supported on Linux"
 	fi
 	
-	# Check for prof
+	# Check for perf
 	perf --version > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
 		exit_after_error "$0 : error : cannot find 'perf'"

@@ -257,13 +257,10 @@ void QLB::evolution_CPU_serial()
 	
 	// Write to spread.dat (if requested)
 	if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
-	{
 		calculate_spread();
-		write_spread();
-	}
 	
 	// Update time;
-	t_ += 1.0;
+	t_ += 1;
 }
 
 void QLB::calculate_spread()
@@ -290,8 +287,8 @@ void QLB::calculate_spread()
 		}
 
 	// Update global variables
-	deltax_ = std::sqrt(deltax_nom/deltax_den);
-	deltay_ = std::sqrt(deltay_nom/deltay_den);
+	deltax_[t_] = std::sqrt(deltax_nom/deltax_den);
+	deltay_[t_] = std::sqrt(deltay_nom/deltay_den);
 }
 
 
@@ -487,11 +484,8 @@ void QLB::evolution_CPU_thread(int tid)
 	if(std::atomic_fetch_sub(&flag_, 1) == 1)
 	{
 		if( (opt_.plot() & QLBopt::spread) >> 1 || (opt_.plot() & QLBopt::all) )
-		{
 			calculate_spread();
-			write_spread();
-		}
 		
-		t_ += 1.0;
+		t_ += 1;
 	}
 }

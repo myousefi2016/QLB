@@ -30,7 +30,7 @@
 #   make help
 #
 
-CXX        = g++
+CXX        = clang++
 CXX_NV     = g++
 NVCC       = nvcc
  
@@ -150,8 +150,8 @@ libGLEW :
 	$(info === Building OpenGL Extension Wrangler Library === )
 	rm -rf $(GLEW_BUILD_DIR)
 	git clone $(GLEW_GIT_URL) $(GLEW_BUILD_DIR)
-	cd $(GLEW_BUILD_DIR)/auto && $(MAKE)
-	cd $(GLEW_BUILD_DIR) && $(MAKE)
+	$(MAKE) -C $(GLEW_BUILD_DIR)/auto
+	$(MAKE) -C $(GLEW_BUILD_DIR)
 	mkdir -p lib/$(OS)/
 	mkdir -p include/$(OS)/GL/
 	cp $(GLEW_BUILD_DIR)/lib/libGLEW.a lib/$(OS)/

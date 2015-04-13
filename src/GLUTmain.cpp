@@ -36,7 +36,7 @@ void QLB_run_glut(int argc, char* argv[])
 	
 	// Setup QLB or StaticViewer
 	if(!cmd->static_viewer())
-		QLB_system = new QLB(L, dx, mass, dt, cmd->V(), opt);
+		QLB_system = new QLB(L, dx, mass, dt, 0, cmd->V(), opt);
 	else
 	{
 		QLB_system = StaticViewerLoader(cmd);
