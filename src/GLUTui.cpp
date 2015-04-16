@@ -75,7 +75,6 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	                               false, false, false, false, 1.0f);
 	text_boxes_[BOX_HELP_ASK].add_text(text.begin(), text.end());
 	
-	
 	// BOX_PERFORMANCE
 	text.resize(5);	
 	text[0] = "FPS           59    ";
@@ -261,7 +260,7 @@ void UserInterface::update_performance_counter()
 	int time_interval = cur_time - time_;
 
 	// Update all PerformanceCounter variables and calculate fps after 
-	// FPS_UPDATE_FRQ (ms) passed
+	// FPS_UPDATE_FRQ (ms) passed. Counter's are disabled for Mac OSX.
 	if(time_interval > FPS_UPDATE_FRQ)
 	{
 		fps_  = frame_count_ /(time_interval / 1000.0f);
@@ -274,11 +273,19 @@ void UserInterface::update_performance_counter()
 		text_boxes_[BOX_PERFORMANCE].add_text(0, entry);
 		
 		// Update CPU memory
+#if defined (__APPLE__) || defined(MACOSX)
+		SPRINTF(entry, "CPU memory     %s   ", "N/A");
+#else
 		SPRINTF(entry, "CPU memory    %4.0f MB ", pc_.cpu_memory()*1e-6);
+#endif
 		text_boxes_[BOX_PERFORMANCE].add_text(1, entry);
 		
 		// Update CPU usage
+#if defined (__APPLE__) || defined(MACOSX)
+		SPRINTF(entry, "CPU usage      %s   ", "N/A");
+#else
 		SPRINTF(entry, "CPU usage       %2.0f %% ", pc_.cpu_usage());
+#endif
 		text_boxes_[BOX_PERFORMANCE].add_text(2, entry);
 	
 		// Update GPU memory

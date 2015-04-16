@@ -13,6 +13,7 @@
 
 // System includes
 #include <iostream>
+#include <algorithm>
 
 // Local includes
 #ifndef NO_COLOR_TERMINAL
@@ -29,6 +30,34 @@
 #define FATAL_ERROR(msg) { fatal_error((msg), __FILE__, __LINE__); }
 #define WARNING(msg)     { warning((msg), __FILE__, __LINE__); }
 
+#ifdef _WIN32
+
+struct MatchPathSeparator
+{
+    bool operator()(char ch) const
+    {
+        return ch == '\\' || ch == '/';
+    }
+};
+
+#else
+
+struct MatchPathSeparator
+{
+    bool operator()(char ch) const
+    {
+        return ch == '/';
+    }
+};
+
+#endif
+
+static inline std::string get_base_name(std::string pathname)
+{
+    return std::string(std::find_if(pathname.rbegin(), pathname.rend(),
+                       MatchPathSeparator()).base(), pathname.end());
+}
+
 #ifndef NO_COLOR_TERMINAL
 
 template< typename msg_t >
@@ -36,7 +65,7 @@ NO_RETURN static inline void fatal_error(const msg_t errmsg , const char *file, 
 {
 	ConsoleColor cc;
 	cc.set_color(ConsoleColor::COLOR_WHITE);
-	std::cerr << file << ":" << line;
+	std::cerr << get_base_name(file).c_str() << ":" << line;
 	cc.set_color(ConsoleColor::COLOR_RED);
 	std::cerr << " error: ";
 	cc.reset_color();
@@ -49,7 +78,7 @@ static inline void warning(const msg_t warnmsg , const char *file, int line)
 {
 	ConsoleColor cc;
 	cc.set_color(ConsoleColor::COLOR_WHITE);
-	std::cerr << file << ":" << line;
+	std::cerr << get_base_name(file).c_str() << ":" << line;
 	cc.set_color(ConsoleColor::COLOR_MAGENTA);
 	std::cerr << " warning: ";
 	cc.reset_color();
@@ -61,7 +90,7 @@ static inline void warning(const msg_t warnmsg , const char *file, int line)
 template< typename msg_t >
 NO_RETURN static inline void fatal_error(const msg_t errmsg , const char *file, int line)
 {
-	std::cerr << file << ":" << line;
+	std::cerr << get_base_name(file).c_str() << ":" << line;
 	std::cerr << " error: ";
 	std::cerr << errmsg << std::endl;
 	exit(EXIT_FAILURE);
@@ -70,7 +99,7 @@ NO_RETURN static inline void fatal_error(const msg_t errmsg , const char *file, 
 template< typename msg_t >
 static inline void warning(const msg_t warnmsg , const char *file, int line)
 {
-	std::cerr << file << ":" << line;
+	std::cerr << get_base_name(file).c_str() << ":" << line;
 	std::cerr << " warning: ";
 	std::cerr << warnmsg << std::endl;
 }

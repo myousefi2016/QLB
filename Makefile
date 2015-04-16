@@ -30,13 +30,19 @@
 #   make help
 #
 
+# Compiler
 CXX        = clang++
 CXX_NV     = g++
 NVCC       = nvcc
- 
-CUDA      ?= true
-CUDA_DIR   = /usr/local/cuda
 
+# Use CUDA ? 
+CUDA      ?= true
+
+# Location of the CUDA Toolkit (uncomment/modify if necessary)
+CUDA_DIR  = /usr/local/cuda
+#CUDA_DIR  = /Developer/NVIDIA/CUDA-6.0
+
+# Enable fast-math ?
 FAST_MATH ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
@@ -51,70 +57,83 @@ ifeq ($(OS), )
 endif
 
 # === Find the CUDA libraries ===
-CUDA_DIR   ?= /usr/local/cuda
-NVCC       ?= $(CUDA_DIR)/bin/nvcc
-CUDA_LIB    = -L$(CUDA_DIR)/lib64/ -lcudart
+
+ifeq ($(OS),Darwin)
+ CUDA_DIR   ?= /Developer/NVIDIA/CUDA-7.0
+else
+ CUDA_DIR   ?= /usr/local/cuda
+endif
+
+NVCC        ?= $(CUDA_DIR)/bin/nvcc
+CUDA_INCLUDE = -I$(CUDA_DIR)/include
+
+ifeq ($(OS),Darwin)
+ CUDA_LIB    = -L$(CUDA_DIR)/lib/ -lcudart
+else
+ CUDA_LIB    = -L$(CUDA_DIR)/lib64/ -lcudart
+endif
 
 # === Sources ===
-EXE         = QLB
-SRC_CU      = $(wildcard src/*.cu)
-SRC_CXX     = $(wildcard src/*.cpp)
-OBJECTS_CU  = $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
-OBJECTS_CXX = $(patsubst src/%.cpp,objects/%.o,$(SRC_CXX))
-OBJECTS     = $(OBJECTS_CXX)
+EXE          = QLB
+SRC_CU       = $(wildcard src/*.cu)
+SRC_CXX      = $(wildcard src/*.cpp)
+OBJECTS_CU   = $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
+OBJECTS_CXX  = $(patsubst src/%.cpp,objects/%.o,$(SRC_CXX))
+OBJECTS      = $(OBJECTS_CXX)
 
-BIN_PATH    = ./bin/$(OS)
-EXE_BIN     = $(BIN_PATH)/$(EXE)
+BIN_PATH     = ./bin/$(OS)
+EXE_BIN      = $(BIN_PATH)/$(EXE)
 
 # === Compiler Flags ===
-WARNINGS    = -Wall
-DEFINES     = 
-DEBUG       =
-PROFILING   = 
-INCLUDE     = -I./include/$(OS)
-OPT         = -O2 -march=native
-CUDAOPT     = -O2
-CXXSTD      = -std=c++11
-CUDAFLAGS   = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(CUDAOPT)
-CXXFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(OPT) $(WARNINGS) $(PROFILING)
-LDFLAGS     = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
+WARNINGS     = -Wall
+DEFINES      = 
+DEBUG        =
+PROFILING    = 
+INCLUDE      = -I./include/$(OS)
+OPT          = -O2 -march=native
+CUDAOPT      = -O2
+CXXSTD       = -std=c++11
+CUDAFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(CUDAOPT)
+CXXFLAGS     = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(OPT) $(WARNINGS) $(PROFILING)
+LDFLAGS      = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 
 # === Build adjustments ===
 
-# Adjust to build on Mac OS X
+# Adjust to build on Mac OS X (link against OpenGL framework)
 ifeq ($(OS),Darwin)
- LDFLAGS   = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
- WARNINGS += -Wno-deprecated-declarations -Wno-deprecated-register
+ LDFLAGS    = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
+ WARNINGS  += -Wno-deprecated-declarations -Wno-deprecated-register
 endif
 
 ifeq ($(FAST_MATH),true)
- OPT      += -ffast-math
- CUDAOPT  += --use_fast_math
+ OPT       += -ffast-math
+ CUDAOPT   += --use_fast_math
 endif
 
 # Clang specific flags
 ifeq ($(CXX),clang++)
- WARNINGS += -Wno-deprecated-register
+ WARNINGS  += -Wno-deprecated-register
 endif
 
 # Adjust the build to use CUDA
 ifeq ($(CUDA),true)
- DEFINES    += -DQLB_HAS_CUDA
- OBJECTS    += $(OBJECTS_CU)
- LDFLAGS    += $(CUDA_LIB)
+ DEFINES   += -DQLB_HAS_CUDA
+ OBJECTS   += $(OBJECTS_CU)
+ LDFLAGS   += $(CUDA_LIB)
+ INCLUDE   += $(CUDA_INCLUDE)
 endif
 
 # Adjust the build to not use the GPU PerformanceCounter
 ifneq ($(GPUCOUNTER),false)
  ifeq ($(CUDA),true)
-  DEFINES    += -DQLB_HAS_GPU_COUNTER
+  DEFINES  += -DQLB_HAS_GPU_COUNTER
  endif
 endif
 
 # Detect multi display environment in Linux
 ifeq ($(OS),Linux)
  ifeq ($(shell xrandr -q 2>/dev/null | grep ' connected' | wc -l),2)
-  CXXFLAGS  += -DQLB_MULTI_DISPLAY
+  CXXFLAGS += -DQLB_MULTI_DISPLAY
  endif
 endif
 
