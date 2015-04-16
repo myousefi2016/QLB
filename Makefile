@@ -31,7 +31,7 @@
 #
 
 # Compiler
-CXX        = clang++
+CXX        = g++
 CXX_NV     = g++
 NVCC       = nvcc
 
@@ -39,7 +39,7 @@ NVCC       = nvcc
 CUDA      ?= true
 
 # Location of the CUDA Toolkit (uncomment/modify if necessary)
-CUDA_DIR  = /usr/local/cuda
+#CUDA_DIR  = /usr/local/cuda
 #CUDA_DIR  = /Developer/NVIDIA/CUDA-6.0
 
 # Enable fast-math ?
