@@ -235,7 +235,6 @@ public:
 		cuassert(cudaGraphicsGLRegisterBuffer(&id_cuda_, id_, 
 		                                      cudaGraphicsMapFlagsWriteDiscard));
 		bind();
-		
 	}
 
 	/**

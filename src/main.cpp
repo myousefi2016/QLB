@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 			break;
 	}	
 	
-#if defined(QLB_HAS_CUDA) && ( !defined (__APPLE__) && !defined(MACOSX) )
+#ifdef QLB_HAS_CUDA
 	cudaDeviceReset();
 #endif
 	return 0;

@@ -54,11 +54,6 @@ void QLB::free_device_arrays()
 	cuassert(cudaFree((void*) d_spinoraux_));
 	cuassert(cudaFree((void*) d_spinorrot_));
 	cuassert(cudaFree((void*) d_V_));
-	
-#ifdef QLB_CUDA_GL_WORKAROUND
-	cuassert(cudaFreeHost(spinor_helper1_));
-	cuassert(cudaFreeHost(spinor_helper2_));
-#endif
 }
 
 /**
@@ -196,26 +191,17 @@ void QLB::init_device()
 	block4_.z = 4;
 	
 	grid4_  = dim3( L_ % block4_.x == 0 ? L_ / block4_.x : L_ / block4_.x + 1,
-	                L_ % block4_.y == 0 ? L_ / block4_.y : L_ / block4_.y + 1, 1);
+	                L_ % block4_.x == 0 ? L_ / block4_.y : L_ / block4_.y + 1, 1);
 
 	block1_.x = 1;
 	block1_.y = deviceProp.warpSize;
 	block1_.z = 1;
 	
 	grid1_  = dim3( L_ % block1_.x == 0 ? L_ / block1_.x : L_ / block1_.x + 1,
-	                L_ % block1_.y == 0 ? L_ / block1_.y : L_ / block1_.y + 1, 1);
+	                L_ % block1_.x == 0 ? L_ / block1_.y : L_ / block1_.y + 1, 1);
 
 	if(opt_.verbose())
 		print_version_information(grid1_, grid4_, block1_, block4_);
-
-
-#ifdef QLB_CUDA_GL_WORKAROUND
-	cudaMallocHost(&spinor_helper1_, sizeof(cuFloatComplex)*spinor_.size());
-	cudaMallocHost(&spinor_helper2_, sizeof(cuFloatComplex)*spinor_.size());
-	
-	for(std::size_t i = 0; i < spinor_.size(); ++i)
-		spinor_helper2_[i] = make_cuFloatComplex(spinor_[i].real(), spinor_[i].imag());
-#endif
 	
 	cuassert(cudaDeviceSynchronize());
 }
@@ -467,13 +453,7 @@ void QLB::evolution_GPU()
 		cudaDeviceSynchronize();
 		calculate_spread();
 	}
-	
-#ifdef QLB_CUDA_GL_WORKAROUND
-	std::size_t num_bytes = sizeof(cuFloatComplex) * spinor_.size();
-	cuassert(cudaMemcpy(spinor_helper1_, d_spinor_, num_bytes, cudaMemcpyDeviceToHost));
-	cudaDeviceSynchronize();
-#endif
-
+		
 	// Update time;
 	t_ += 1;
 }
@@ -497,11 +477,8 @@ __global__ void kernel_calculate_vertex_spinor(float3* vbo_ptr, cuFloatComplex* 
 		vbo_ptr[d_L*i + j].y = d_scaling * cuCnormf( d_ptr[at(i,j,k)] );
 }
 
-#define y(i,j)  3*((i)*L_ + (j)) + 1
-
 void QLB::calculate_vertex_spinor_cuda()
 {
-#ifndef QLB_CUDA_GL_WORKAROUND
 	vbo_vertex.map();
 	
 	float3* vbo_ptr = vbo_vertex.get_device_pointer();
@@ -510,31 +487,7 @@ void QLB::calculate_vertex_spinor_cuda()
 	CUDA_CHECK_KERNEL
 	
 	vbo_vertex.unmap();
-	
-#else
-	const float scaling = float(scaling_); 
-	for(unsigned i = 0; i < L_; ++i)
-		for(unsigned j = 0; j < L_; ++j)
-			array_vertex_[y(i,j)] = scaling * 
-			           cuCnormf(spinor_helper2_[4*(L_*i + j) + current_scene_]);
-	
-	calculate_normal(0, 1);
-		
-	// Copy vertex array to vertex VBO
-	vbo_vertex.bind();
-	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
-		                     &array_vertex_[0]);
-	vbo_vertex.unbind();
-
-	// Copy normal array to normal VBO
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-		                     &array_normal_[0]);
-	vbo_normal.unbind();
-#endif
 }
-
-#undef y
 
 /** 
  *	Calculate the vertices (by taking the abs of the potential V) and copy them 
@@ -551,12 +504,8 @@ __global__ void kernel_calculate_vertex_V(float3* vbo_ptr, float* d_ptr)
 		vbo_ptr[d_L*i + j].y = d_scaling * fabsf( d_ptr[i*d_L +j] ) - 0.005f*d_L;
 }
 
-
-#define y(i,j)  3*((i)*L_ + (j)) + 1
-
 void QLB::calculate_vertex_V_cuda()
 {
-#ifndef QLB_CUDA_GL_WORKAROUND
 	vbo_vertex.map();
 	
 	float3* vbo_ptr = vbo_vertex.get_device_pointer();
@@ -565,26 +514,7 @@ void QLB::calculate_vertex_V_cuda()
 	CUDA_CHECK_KERNEL
 	
 	vbo_vertex.unmap();
-#else
-	for(unsigned i = 0; i < L_; ++i)
-		for(unsigned j = 0; j < L_; ++j)
-			array_vertex_[y(i,j)] = float(scaling_*std::abs(V_(i,j))) - 0.005f*L_;
-
-	calculate_normal(0, 1); 
-
-	vbo_vertex.bind();
-	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
-				             &array_vertex_[0]);
-	vbo_vertex.unbind();
-
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-				             &array_normal_[0]);
-	vbo_normal.unbind();
-#endif
 }
-
-#undef y
 
 /** 
  *  Calculate the normals of the spinors and copy them to the normal VBO

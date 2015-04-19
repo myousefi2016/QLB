@@ -20,29 +20,21 @@ void QLB_run_glut(int argc, char* argv[])
 	// Reparse command-line arguments
 	cmd = new CmdArgParser(argc, argv);
 	
+	// Setup threadpool
+	threadpool.resize(cmd->nthreads_value());
+
 	const unsigned L = cmd->L() ? cmd->L_value() : 128;
 	const QLB::float_t dx   = cmd->dx()   ? cmd->dx_value() : 1.5625;
 	const QLB::float_t mass = cmd->mass() ? cmd->mass_value() : 0.1;
 	const QLB::float_t dt   = cmd->dt()   ? cmd->dt_value() : 1.5625;
 	
-	// Setup threadpool
-	threadpool.resize(cmd->nthreads_value());
-	
-	// Setup UserInterface engine
-	int width = 800, height = 800;
-	UI = new UserInterface(width, height, "QLB - v1.0", 
-	                       float(-1.5f * L * dx), cmd->static_viewer() ); 
-	
-	// Setup OpenGL & GLUT	
-	init_GL(argc, argv);
-	
-	// Setup QLB
 	QLBopt opt;
 	opt.set_plot(cmd->plot()); 
 	opt.set_verbose(cmd->verbose());
 	opt.set_device(cmd->device());
 	opt.set_nthreads(cmd->nthreads_value());
 	
+	// Setup QLB or StaticViewer
 	if(!cmd->static_viewer())
 		QLB_system = new QLB(L, dx, mass, dt, 0, cmd->V(), opt);
 	else
@@ -51,6 +43,14 @@ void QLB_run_glut(int argc, char* argv[])
 		threadpool.resize(cmd->max_threads());
 	}
 	
+	// Setup UserInterface engine
+	int width = 800, height = 800;
+	UI = new UserInterface(width, height, "QLB - v1.0", 
+	                       float(-1.5f * QLB_system->L() * QLB_system->dx()), 
+	                       cmd->static_viewer() ); 
+
+	// Setup OpenGL & GLUT	
+	init_GL(argc, argv);
 	QLB_system->init_GL(cmd->static_viewer());
 	
 	glutMainLoop();
@@ -104,12 +104,8 @@ void init_GL(int argc, char* argv[])
 	}
 
 	// Initialize necessary OpenGL extensions
-	GLenum glew_error = glewInit();
-	if(glew_error != GLEW_OK)
-	{ 
-		std::string err_msg((const char*)(glewGetErrorString(glew_error)));	
-		FATAL_ERROR("glew failed to initialize : " + err_msg);
-	}
+	if(glewInit() != GLEW_OK) 
+		FATAL_ERROR("glewInit() failed, something is seriously wrong.")
 	
 	if(!glewIsSupported("GL_VERSION_2_0"))
 		FATAL_ERROR("Support for necessary OpenGL 2.0 extensions is missing.");
@@ -120,29 +116,6 @@ void init_GL(int argc, char* argv[])
 		std::printf("Version : %s\n", glGetString(GL_VERSION));
 		std::printf("Device  : %s\n\n", glGetString(GL_RENDERER));
 	}
-	
-	// Initialize CUDA context (ontop of the GL context). This is especially 
-	// needed for systems with multiple GPU's.
-#ifdef QLB_HAS_CUDA
-	if(cmd->device() == 2)
-	{
-		int dev_id = 0, device_count = 1;
-		cuassert(cudaGetDeviceCount(&device_count));
-		cudaDeviceProp device_properties;
-	
-		for(int i = 0; i < device_count; ++i) 
-			cuassert(cudaGetDeviceProperties(&device_properties, dev_id));
-
-		if(device_count >= 2) 
-		{
-			std::printf("Found %i CUDA Capable Devices\n", device_count);
-			std::printf("Selecting device : %i [%s]\n\n", dev_id, 
-			            device_properties.name);
-		}
-	
-		cuassert(cudaGLSetGLDevice(dev_id));
-	}
-#endif
 
 	// GLUT callback registration
 	if(!cmd->static_viewer())
@@ -155,7 +128,9 @@ void init_GL(int argc, char* argv[])
 	glutKeyboardFunc(callback_keyboard);
 	glutSpecialFunc(callback_keyboard_2);
 
-#if !defined (__APPLE__) && !defined(MACOSX)
+#if defined (__APPLE__) || defined(MACOSX)
+	atexit(cleanup_and_exit);
+#else
 	glutCloseFunc(cleanup_and_exit);
 #endif
 
@@ -178,8 +153,7 @@ void init_GL(int argc, char* argv[])
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
 
-	if(cmd->light())
-		UI->init_light();
+	UI->init_light();
 
 	if(cmd->start_rotating())
 		UI->set_rotatating(true);
@@ -187,8 +161,7 @@ void init_GL(int argc, char* argv[])
 	if(cmd->start_paused())
 		UI->set_paused(true);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
 /****************************
@@ -216,7 +189,7 @@ void callback_display()
 		UI->reset_param_has_changed();
 	}
 		
-	// Reset colors and clear bits	
+	// Reset color's and clear bits	
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -227,7 +200,6 @@ void callback_display()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	if( UI->rotating() ) UI->set_rotate_y(UI->rotate_y() - 0.15f);
-	
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
@@ -284,27 +256,10 @@ void callback_display()
 		}
 		case 2: // GPU CUDA
 		{
-#ifdef QLB_CUDA_GL_WORKAROUND
-			
-			// Overlap computation and drawing in case we cannot use CUDA to 
-			// update the VBO's
 			if(!UI->paused())
-				threadpool[0] = std::thread( &QLB::evolution_GPU, QLB_system );
-			
-			QLB_system->render();
-			
-			if(!UI->paused())
-			{
-				threadpool[0].join();
-				QLB_system->swap_spinor_helper();
-			}
-			break;
-#else
-			if(!UI->paused())
-				QLB_system->QLB::evolution_GPU();
+				QLB_system->evolution_GPU();
 			QLB_system->render();
 			break;
-#endif
 		}
 	}
 	
@@ -332,13 +287,13 @@ void callback_display_SV()
 			QLB_system->scale_vertex(UI->change_scaling());
 
 			for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
-				threadpool[tid] = std::thread( &QLB::calculate_normal, 
-				                               QLB_system, 
-				                               int(tid), 
-				                               int(threadpool.size()) );
+					threadpool[tid] = std::thread( &QLB::calculate_normal, 
+					                               QLB_system, 
+					                               int(tid), 
+					                               int(threadpool.size()) );
 			
 			for(std::thread& t : threadpool)
-				t.join(); 		
+					t.join(); 		
 			
 			VBO_changed = true;
 		}
@@ -403,9 +358,7 @@ void callback_reshape(int width, int height)
 	glTranslatef(0.0f, 0.0f, UI->translate_z());
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
-	
-	if(cmd->light())
-		UI->init_light();
+	UI->init_light();
 }
 
 /****************************
@@ -479,7 +432,7 @@ void cleanup_and_exit()
 	
 #ifdef QLB_HAS_CUDA
 	cudaDeviceReset();
-#endif
+#endif 
 	
 	// We exit now
 	exit(EXIT_SUCCESS);

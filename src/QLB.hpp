@@ -369,12 +369,6 @@ public:
 	 */
 	void update_device_constants(); 
 	
-	/** 
-	 *	Swap the pointers 'spinor_helper1_' and 'spinor_helper2_'
-	 *	@file	QLB.cpp 
-	 */
-	void swap_spinor_helper();
-	
 	// === Getter ===
 	inline unsigned L() const { return L_;  }
 	inline float_t dx() const { return dx_; }
@@ -434,9 +428,6 @@ private:
 	dim3 block4_;
 	dim3 grid1_;
 	dim3 grid4_;
-	
-	cuFloatComplex* spinor_helper1_;
-	cuFloatComplex* spinor_helper2_;
 #endif 
 
 	// === OpenGL context ===

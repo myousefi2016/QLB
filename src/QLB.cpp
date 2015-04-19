@@ -48,7 +48,6 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax,
 		array_normal_(3*L*L, 0), 
 		// === IO ===
 		opt_(opt)
-		
 {
 	// Set initial condition
 	if( V_indx_ == 2 ) // barrier
@@ -440,7 +439,6 @@ void QLB::write_content_to_file()
 
 // Stubs
 #ifndef QLB_HAS_CUDA
-
 void QLB::evolution_GPU()
 {
 	FATAL_ERROR("QLB was compiled without CUDA support");
@@ -450,19 +448,6 @@ void QLB::get_device_arrays()
 {
 	FATAL_ERROR("QLB was compiled without CUDA support");
 }
-
-void QLB::swap_spinor_helper()
-{
-	FATAL_ERROR("QLB was compiled without CUDA support");
-}
-
-#else
-
-void QLB::swap_spinor_helper()
-{
-	std::swap(spinor_helper1_, spinor_helper2_); 
-}
-
 #endif
 
 
