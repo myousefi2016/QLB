@@ -318,6 +318,9 @@ public:
 			
 			// --disable-progressbar
 			progressbar_ = !find("--disable-progressbar").is_present();
+			
+			// --disable-light
+			light_ = !find("--disable-light").is_present();
 		
 			// Throw if we have unparsed arguments
 			if(argv_.size())
@@ -363,6 +366,7 @@ public:
 	inline bool start_rotating() const { return start_rotating_; }
 	inline bool start_paused() const { return start_paused_; }
 	inline bool progressbar() const { return progressbar_; }
+	inline bool light() { return light_; }
 	inline int device() const { return device_; }
 
 private:
@@ -760,6 +764,7 @@ private:
 	bool start_rotating_;
 	bool start_paused_;
 	bool progressbar_;
+	bool light_;
 	
 	// === IO ===
 	std::size_t width_cmd;

@@ -73,8 +73,8 @@ PerformanceCounter::PerformanceCounter()
 	CopyMemory(&ul_sys_user  , &ft_sys_user  , sizeof(FILETIME));
 
 	CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
-    CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
-    CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
+	CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
+	CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
 	
 	// === GPU ===
 	try
@@ -156,30 +156,30 @@ std::size_t PerformanceCounter::gpu_memory()
 double PerformanceCounter::cpu_usage()
 {
 	// We query the filetime and calculate the usage
-    FILETIME ft_sys_idle;
-    FILETIME ft_sys_kernel;
-    FILETIME ft_sys_user;
+	FILETIME ft_sys_idle;
+	FILETIME ft_sys_kernel;
+	FILETIME ft_sys_user;
 
-    ULARGE_INTEGER ul_sys_idle;
-    ULARGE_INTEGER ul_sys_kernel;
-    ULARGE_INTEGER ul_sys_user;
+	ULARGE_INTEGER ul_sys_idle;
+	ULARGE_INTEGER ul_sys_kernel;
+	ULARGE_INTEGER ul_sys_user;
 
-    GetSystemTimes(&ft_sys_idle, &ft_sys_kernel, &ft_sys_user);
+	GetSystemTimes(&ft_sys_idle, &ft_sys_kernel, &ft_sys_user);
 	ULONGLONG usage = 0;
 
-    CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME));
-    CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME));
-    CopyMemory(&ul_sys_user  , &ft_sys_user  , sizeof(FILETIME));
+	CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME));
+	CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME));
+	CopyMemory(&ul_sys_user  , &ft_sys_user  , sizeof(FILETIME));
 
-    usage  = ( ( ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
-		           (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) )
-			     - (ul_sys_idle.QuadPart   - CPU->ul_sys_idle_old.QuadPart) ) * (100) ) /
-             ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
+	usage  = ( ( ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
+			       (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) )
+				 - (ul_sys_idle.QuadPart   - CPU->ul_sys_idle_old.QuadPart) ) * (100) ) /
+		     ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
 			   (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) );
 
-    CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
-    CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
-    CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
+	CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
+	CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;
+	CPU->ul_sys_kernel_old.QuadPart = ul_sys_kernel.QuadPart;
 	
 	return double(usage);
 }

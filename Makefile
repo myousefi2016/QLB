@@ -35,14 +35,13 @@ CXX        = clang++
 CXX_NV     = g++
 NVCC       = nvcc
 
-# Use CUDA ? 
+# Use CUDA? 
 CUDA      ?= true
 
-# Location of the CUDA Toolkit (uncomment/modify if necessary)
+# Location of the CUDA Toolkit (modify if necessary)
 CUDA_DIR  = /usr/local/cuda
-#CUDA_DIR  = /Developer/NVIDIA/CUDA-6.0
 
-# Enable fast-math ?
+# Enable fast-math?
 FAST_MATH ?= false
 
 # ======================= FINDING LIBRARIES/HEADERS ============================
@@ -57,12 +56,7 @@ ifeq ($(OS), )
 endif
 
 # === Find the CUDA libraries ===
-
-ifeq ($(OS),Darwin)
- CUDA_DIR   ?= /Developer/NVIDIA/CUDA-7.0
-else
- CUDA_DIR   ?= /usr/local/cuda
-endif
+CUDA_DIR    ?= /usr/local/cuda
 
 NVCC        ?= $(CUDA_DIR)/bin/nvcc
 CUDA_INCLUDE = -I$(CUDA_DIR)/include
@@ -87,7 +81,7 @@ EXE_BIN      = $(BIN_PATH)/$(EXE)
 # === Compiler Flags ===
 WARNINGS     = -Wall
 DEFINES      = 
-DEBUG        =
+DEBUG        = -g
 PROFILING    = 
 INCLUDE      = -I./include/$(OS)
 OPT          = -O2 -march=native
@@ -103,6 +97,7 @@ LDFLAGS      = -L./lib/$(OS) -lGL -lGLU -lglut -lGLEW -lpthread
 ifeq ($(OS),Darwin)
  LDFLAGS    = -framework GLUT -framework OpenGL -L./lib/$(OS) -lGLEW -lpthread
  WARNINGS  += -Wno-deprecated-declarations -Wno-deprecated-register
+ DEFINES   += -DQLB_CUDA_GL_WORKAROUND
 endif
 
 ifeq ($(FAST_MATH),true)
