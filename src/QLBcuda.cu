@@ -37,6 +37,11 @@ void QLB::allocate_device_arrays()
 	cuassert(cudaMalloc(&d_spinorrot_, spinorrot_.size()*sizeof(d_spinorrot_[0])));
 	cuassert(cudaMalloc(&d_V_, V_.size() * sizeof(d_V_[0])));
 	
+#ifdef QLB_CUDA_GL_WORKAROUND
+	cuassert(cudaMalloc(&d_vertex_ptr_, array_vertex_.size() * sizeof(float)));
+	cuassert(cudaMalloc(&d_normal_ptr_, array_normal_.size() * sizeof(float)));
+#endif	
+	
 	cuassert(cudaDeviceSynchronize());
 }	
 
@@ -56,8 +61,8 @@ void QLB::free_device_arrays()
 	cuassert(cudaFree((void*) d_V_));
 	
 #ifdef QLB_CUDA_GL_WORKAROUND
-	cuassert(cudaFreeHost(spinor_helper1_));
-	cuassert(cudaFreeHost(spinor_helper2_));
+	cuassert(cudaFree((void*) d_vertex_ptr_));
+	cuassert(cudaFree((void*) d_normal_ptr_));
 #endif
 }
 
@@ -207,15 +212,6 @@ void QLB::init_device()
 
 	if(opt_.verbose())
 		print_version_information(grid1_, grid4_, block1_, block4_);
-
-
-#ifdef QLB_CUDA_GL_WORKAROUND
-	cudaMallocHost(&spinor_helper1_, sizeof(cuFloatComplex)*spinor_.size());
-	cudaMallocHost(&spinor_helper2_, sizeof(cuFloatComplex)*spinor_.size());
-	
-	for(std::size_t i = 0; i < spinor_.size(); ++i)
-		spinor_helper2_[i] = make_cuFloatComplex(spinor_[i].real(), spinor_[i].imag());
-#endif
 	
 	cuassert(cudaDeviceSynchronize());
 }
@@ -467,12 +463,6 @@ void QLB::evolution_GPU()
 		cudaDeviceSynchronize();
 		calculate_spread();
 	}
-	
-#ifdef QLB_CUDA_GL_WORKAROUND
-	std::size_t num_bytes = sizeof(cuFloatComplex) * spinor_.size();
-	cuassert(cudaMemcpy(spinor_helper1_, d_spinor_, num_bytes, cudaMemcpyDeviceToHost));
-	cudaDeviceSynchronize();
-#endif
 
 	// Update time;
 	t_ += 1;
@@ -481,56 +471,91 @@ void QLB::evolution_GPU()
 
 // ================================= GRAPHICS ==================================
 
+// Unrolled loop for the current
+#define CURRENT_UNROLLED_LOOP(i,j) (CURRENT((i),(j),0)+CURRENT((i),(j),1)+\
+                                    CURRENT((i),(j),2)+CURRENT((i),(j),3))
+
+#define CURRENT(i,j,is) (CURRENT_1((i),(j),(is),0)+CURRENT_1((i),(j),(is),1)+\
+                         CURRENT_1((i),(j),(is),2)+CURRENT_1((i),(j),(is),3))
+                    
+#define CURRENT_1(i,j,is,js) (cuCabsf(cuConjf(\
+                d_ptr[at((i),(j),(is))])*alpha[(is)*4 + (js)]*d_ptr[at((i),(j),(js))]))
+
+
 /** 
- *	Calculate the vertices (by taking the norm of the spinors) and copy them to 
- *	the	vertex VBO
+ *	Calculate the vertices (spinors,density or current) and copy them to the 
+ *	vertex VBO.
  *	@param vbo_ptr   pointer to the VBO
  *	@param d_ptr     pointer to the spinors
+ *	@param alpha     pointer to the alpha matrix (unused if we don't calculate
+ *	                 the current)
  */
-__global__ void kernel_calculate_vertex_spinor(float3* vbo_ptr, cuFloatComplex* d_ptr) 
+__global__ void kernel_calculate_vertex_scene(float3* vbo_ptr, 
+                                               cuFloatComplex* d_ptr,
+                                               cuFloatComplex* alpha) 
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
-	int k = d_current_scene;
 	
 	if(i < d_L && j < d_L)
-		vbo_ptr[d_L*i + j].y = d_scaling * cuCnormf( d_ptr[at(i,j,k)] );
+	{
+		// Select the right scene (all warps always do the same)
+		if(d_current_scene < 4)
+		{
+			int k = d_current_scene;
+			vbo_ptr[d_L*i + j].y = d_scaling * cuCnormf( d_ptr[at(i,j,k)] );
+		}
+		else if(d_current_scene == 4)
+		{
+			vbo_ptr[d_L*i + j].y = d_scaling * ( 
+			        cuCnormf( d_ptr[at(i,j,0)]) + cuCnormf( d_ptr[at(i,j,1)]) +
+			        cuCnormf( d_ptr[at(i,j,2)]) + cuCnormf( d_ptr[at(i,j,3)]) );
+		}
+		else
+		{
+			vbo_ptr[d_L*i + j].y = d_scaling*( CURRENT_UNROLLED_LOOP(i,j) );
+		}
+	}
 }
 
 #define y(i,j)  3*((i)*L_ + (j)) + 1
 
-void QLB::calculate_vertex_spinor_cuda()
+void QLB::calculate_vertex_cuda()
 {
+
 #ifndef QLB_CUDA_GL_WORKAROUND
 	vbo_vertex.map();
-	
+
 	float3* vbo_ptr = vbo_vertex.get_device_pointer();
 
-	kernel_calculate_vertex_spinor<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_);
+	if(current_scene_ < 5)
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL);
+	else if(current_scene_ == 5)
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX);
+	else
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY);
 	CUDA_CHECK_KERNEL
-	
+
 	vbo_vertex.unmap();
-	
 #else
-	const float scaling = float(scaling_); 
-	for(unsigned i = 0; i < L_; ++i)
-		for(unsigned j = 0; j < L_; ++j)
-			array_vertex_[y(i,j)] = scaling * 
-			           cuCnormf(spinor_helper2_[4*(L_*i + j) + current_scene_]);
-	
-	calculate_normal(0, 1);
-		
+
+	if(current_scene_ < 5)
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, NULL);
+	else if(current_scene_ == 5)
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaX);
+	else
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaY);
+	CUDA_CHECK_KERNEL
+
+	cuassert(cudaMemcpy(array_vertex_.data(), d_vertex_ptr_, 
+		                sizeof(float) * array_vertex_.size(), 
+	                    cudaMemcpyDeviceToHost));
+			
 	// Copy vertex array to vertex VBO
 	vbo_vertex.bind();
 	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
 		                     &array_vertex_[0]);
 	vbo_vertex.unbind();
-
-	// Copy normal array to normal VBO
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-		                     &array_normal_[0]);
-	vbo_normal.unbind();
 #endif
 }
 
@@ -566,21 +591,18 @@ void QLB::calculate_vertex_V_cuda()
 	
 	vbo_vertex.unmap();
 #else
-	for(unsigned i = 0; i < L_; ++i)
-		for(unsigned j = 0; j < L_; ++j)
-			array_vertex_[y(i,j)] = float(scaling_*std::abs(V_(i,j))) - 0.005f*L_;
-
-	calculate_normal(0, 1); 
-
+	kernel_calculate_vertex_V<<< grid1_, block1_ >>>(d_vertex_ptr_, d_V_);
+	CUDA_CHECK_KERNEL
+	
+	cuassert(cudaMemcpy(array_vertex_.data(), d_vertex_ptr_, 
+		                sizeof(float) * array_vertex_.size(), 
+	                    cudaMemcpyDeviceToHost));
+			
+	// Copy vertex array to vertex VBO
 	vbo_vertex.bind();
 	vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
-				             &array_vertex_[0]);
+		                     &array_vertex_[0]);
 	vbo_vertex.unbind();
-
-	vbo_normal.bind();
-	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
-				             &array_normal_[0]);
-	vbo_normal.unbind();
 #endif
 }
 
@@ -590,27 +612,58 @@ void QLB::calculate_vertex_V_cuda()
  *  Calculate the normals of the spinors and copy them to the normal VBO
  *	@param vbo_ptr   pointer to the VBO
  *	@param d_ptr     pointer to the spinors
+ *	@param alpha     pointer to the alpha matrix (unused if we don't calculate
+ *	                 the current)
  */
-__global__ void kernel_calculate_normal_spinor(float3* vbo_ptr, cuFloatComplex* d_ptr)
+__global__ void kernel_calculate_normal_scene(float3* vbo_ptr, 
+                                              cuFloatComplex* d_ptr,
+                                              cuFloatComplex* alpha)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
-	int k = d_current_scene;
 
 	if(i < d_L && j < d_L)
 	{
 		int ik = (i + 1) % d_L;
 		int jk = (d_L - 1 + j) % d_L;
 		
+		float vertex_i_j, vertex_ik_j, vertex_i_jk;
+		
+		// Select the right scene (all warps always do the same)
+		if(d_current_scene < 4)
+		{
+			int k = d_current_scene;
+			vertex_i_j  = cuCnormf( d_ptr[at(i ,j ,k)] );
+			vertex_ik_j = cuCnormf( d_ptr[at(ik,j ,k)] );
+			vertex_i_jk = cuCnormf( d_ptr[at(i ,jk,k)] );
+		}
+		else if(d_current_scene == 4)
+		{
+			vertex_i_j  = cuCnormf(d_ptr[at(i,j,0)]) + cuCnormf(d_ptr[at(i,j,1)]) +
+		                  cuCnormf(d_ptr[at(i,j,2)]) + cuCnormf(d_ptr[at(i,j,3)]);
+		
+			vertex_ik_j = cuCnormf(d_ptr[at(ik,j,0)]) + cuCnormf(d_ptr[at(ik,j,1)]) +
+		                  cuCnormf(d_ptr[at(ik,j,2)]) + cuCnormf(d_ptr[at(ik,j,3)]);
+		
+			vertex_i_jk = cuCnormf(d_ptr[at(i,jk,0)]) + cuCnormf(d_ptr[at(i,jk,1)]) +
+		                  cuCnormf(d_ptr[at(i,jk,2)]) + cuCnormf(d_ptr[at(i,jk,3)]);
+		}
+		else
+		{
+			vertex_i_j  = CURRENT_UNROLLED_LOOP(i ,j);
+			vertex_ik_j = CURRENT_UNROLLED_LOOP(ik ,j);
+			vertex_i_jk = CURRENT_UNROLLED_LOOP(i ,jk);
+		}
+		
 		// x		
-		float x2 =  d_scaling * cuCnormf( d_ptr[at(i,j,k)] );
+		float x2 =  d_scaling * vertex_i_j;
 		
 		// a
 		float a1 =  d_dx;
-		float a2 =  d_scaling * cuCnormf( d_ptr[at(ik,j,k)] ) - x2;
+		float a2 =  d_scaling * vertex_ik_j - x2;
 	
 		// b
-		float b2 =  d_scaling * cuCnormf( d_ptr[at(i,jk,k)] ) - x2;
+		float b2 =  d_scaling * vertex_i_jk - x2;
 		float b3 = -d_dx;
 		
 		// n = a x b
@@ -629,16 +682,41 @@ __global__ void kernel_calculate_normal_spinor(float3* vbo_ptr, cuFloatComplex* 
 }
 
 
-void QLB::calculate_normal_spinor_cuda()
+void QLB::calculate_normal_cuda()
 {
+#ifndef QLB_CUDA_GL_WORKAROUND
 	vbo_normal.map();
 	
 	float3* vbo_ptr = vbo_normal.get_device_pointer();
 
-	kernel_calculate_normal_spinor<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_);
+	if(current_scene_ < 5)
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL);
+	else if(current_scene_ == 5)
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX);
+	else
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY);
 	CUDA_CHECK_KERNEL
 
 	vbo_normal.unmap();
+
+#else
+	if(current_scene_ < 5)
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, NULL);
+	else if(current_scene_ == 5)
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaX);
+	else
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaY);
+	CUDA_CHECK_KERNEL
+
+	cuassert(cudaMemcpy(array_normal_.data(), d_normal_ptr_, 
+		                sizeof(float) * array_normal_.size(), 
+	                    cudaMemcpyDeviceToHost));
+
+	vbo_normal.bind();
+	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float),
+		                     &array_normal_[0]);
+	vbo_normal.unbind();
+#endif
 }
 
 /** 
@@ -684,6 +762,7 @@ __global__ void kernel_calculate_normal_V(float3* vbo_ptr, float* d_ptr)
 
 void QLB::calculate_normal_V_cuda()
 {
+#ifndef QLB_CUDA_GL_WORKAROUND
 	vbo_normal.map();
 	
 	float3* vbo_ptr = vbo_normal.get_device_pointer();
@@ -692,4 +771,18 @@ void QLB::calculate_normal_V_cuda()
 	CUDA_CHECK_KERNEL
 
 	vbo_normal.unmap();
+	
+#else
+	kernel_calculate_normal_V<<< grid1_, block1_ >>>(d_normal_ptr_, d_V_);
+	CUDA_CHECK_KERNEL
+	
+	cuassert(cudaMemcpy(array_normal_.data(), d_normal_ptr_, 
+		                sizeof(float) * array_normal_.size(), 
+	                    cudaMemcpyDeviceToHost));
+			
+	vbo_normal.bind();
+	vbo_normal.BufferSubData(0, array_normal_.size()*sizeof(float), 
+		                     &array_normal_[0]);
+	vbo_normal.unbind();
+#endif
 }

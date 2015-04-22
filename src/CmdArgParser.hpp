@@ -76,6 +76,7 @@ public:
 	CmdArg(bool is_present) : is_present_(is_present) {}
 
 	inline bool is_present() const { return is_present_; }
+	inline void set_is_present(bool is_present) { is_present_ = is_present; }
 
 private:
 	bool is_present_;
@@ -97,6 +98,7 @@ public:
 	{}
 
 	inline value_t value() const { return value_; }
+	inline void set_value(value_t value) { value_ = value; }
 	
 private:
 	value_t value_;
@@ -117,6 +119,7 @@ public:
 	{}
 
 	inline std::string str() const { return str_; }
+	inline void set_str(std::string str) { str_ = str; }
 	
 private:
 	std::string str_;
@@ -200,6 +203,14 @@ public:
 				throw CmdArgException("'X' must be > 0 in command-line argument"
 				                      " '--dt=X'");
 			dt_value_ = dt.value();
+			
+			// --delta0=X
+			auto delta0 = find_numeric<float>("--delta0");
+			delta0_ = delta0.is_present();
+			if(delta0_ && delta0.value() < 0) 
+				throw CmdArgException("'X' must be > 0 in command-line argument"
+				                      " '--delta0=X'");
+			delta0_value_ = delta0.value();
 			
 			// --mass=X
 			auto mass = find_numeric<float>("--mass");
@@ -335,7 +346,7 @@ public:
 		}
 		catch(std::exception& e)
 		{	
-			std::cerr << argv[0] << " : error : " <<  e.what() << std::endl;
+			std::cerr <<"QLB: error: " <<  e.what() << std::endl;
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -352,6 +363,8 @@ public:
 	inline float dx_value() const { return dx_value_; }
 	inline bool dt() const { return dt_; }
 	inline float dt_value() const { return dt_value_; }
+	inline bool delta0() const { return delta0_; }
+	inline float delta0_value() const { return delta0_value_; }
 	inline bool mass() const { return mass_; }
 	inline float mass_value() const { return mass_value_; }
 	inline bool tmax() const { return tmax_; }
@@ -379,15 +392,20 @@ private:
 	inline CmdArg find(std::string command)
 	{
 		args_looked_for_.push_back(command);
+		CmdArg foundArg(false);
 		
 		// Loop over the array and look for the string
-		for(iterator_t it = argv_.begin(); it != argv_.end(); ++it)
+		for(iterator_t it = argv_.begin(); it != argv_.end(); )
+		{
 			if(it->compare(command) == 0) 
 			{
 				it = argv_.erase(it);
-				return CmdArg(true);
+				foundArg.set_is_present(true);
 			}
-		return CmdArg(false);		 
+			else 
+				++it;
+		}
+		return foundArg;		 
 	}
 
 	/**
@@ -402,8 +420,10 @@ private:
 	{
 		args_looked_for_.push_back(command+"=X");
 		
+		CmdArgNumeric<numeric_t> foundArg(false,0);
+		
 		// Loop over the array and look for "command"
-		for(iterator_t it = argv_.begin(); it != argv_.end(); ++it)
+		for(iterator_t it = argv_.begin(); it != argv_.end(); )
 		{
 			if(compare(command, *it)) 
 			{
@@ -436,10 +456,13 @@ private:
 				numeric_t value;
 				value_str >> value;
 										
-				return CmdArgNumeric<numeric_t>(true,value);
+				foundArg.set_is_present(true);
+				foundArg.set_value(value);					
 			}
+			else
+				++it;
 		}
-		return CmdArgNumeric<numeric_t>(false,0);
+		return foundArg;
 	}
 
 	/**
@@ -451,9 +474,10 @@ private:
 	inline CmdArgString find_string(std::string command)
 	{
 		args_looked_for_.push_back(command+"=S");
+		CmdArgString foundArg(false,"");
 		
 		// Loop over the array and look for "command"
-		for(iterator_t it = argv_.begin(); it != argv_.end(); ++it)
+		for(iterator_t it = argv_.begin(); it != argv_.end(); )
 		{
 			if(compare(command, *it)) 
 			{
@@ -481,10 +505,13 @@ private:
 				// Extract S from cmd as a string
 				std::string S(cmd,delimiter_pos+1,cmd.size());
 										
-				return CmdArgString(true,S);
+				foundArg.set_is_present(true);
+				foundArg.set_str(S);					
 			}
+			else
+				++it;
 		}
-		return CmdArgString(false,"");
+		return foundArg;
 	}
 
 	
@@ -560,6 +587,7 @@ private:
 		print_help_line("--L=X","Set the grid size to X where X > 1");
 		print_help_line("--dx=X","Set spatial discretization to X where X > 0");
 		print_help_line("--dt=X","Set temporal discretization to X where X > 0");
+		print_help_line("--delta0=X","Set initial spread to X where X > 0");
 		print_help_line("--mass=X","Set mass of the particles to X where X > 0");
 		std::string expl_plot[4] = {"Specify which quantities are written to a file,"
 		                           " where S","can be a combination of the following"
@@ -570,7 +598,7 @@ private:
 		std::string expl_device[2] = {"Set the device the simulation will run on, S must be",
 		                              "one of [cpu-serial|cpu-thread|gpu]"};
 		print_help_line("--device=S",svec_t(expl_device, expl_device+2));
-		print_help_line("--nthreads=X","Exectue CPU verison with X threads");
+		print_help_line("--nthreads=X","Execute CPU verison with X threads");
 		print_help_line("--dump-at=X","Dump the state of the simulation at time X*dt to "
 		                "a file" );
 		print_help_line("--dump-load=S","Load the dump file S to be used with the static viewer");
@@ -749,6 +777,8 @@ private:
 	float dx_value_;
 	bool dt_;
 	float dt_value_;
+	bool delta0_;
+	float delta0_value_;
 	bool mass_;
 	float mass_value_;
 	bool tmax_;

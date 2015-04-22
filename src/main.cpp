@@ -51,9 +51,10 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 {
 	// We set some default value if nothing was passed
 	const unsigned L = cmd.L() ? cmd.L_value() : 128;
-	const QLB::float_t dx = cmd.dx() ? cmd.dx_value() : 1.5625;
-	const QLB::float_t mass = cmd.mass() ? cmd.mass_value() : 0.1;
-	const QLB::float_t dt = cmd.dt() ? cmd.dt_value() : 1.5625;
+	const QLB::float_t dx     = cmd.dx()     ? cmd.dx_value() : 1.5625;
+	const QLB::float_t mass   = cmd.mass()   ? cmd.mass_value() : 0.1;
+	const QLB::float_t dt     = cmd.dt()     ? cmd.dt_value() : 1.5625;
+	const QLB::float_t delta0 = cmd.delta0() ? cmd.delta0_value() : 14.0;
 	unsigned tmax = cmd.tmax() ? cmd.tmax_value() : 100;
 	
 	// Setup threadpool 
@@ -67,7 +68,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	opt.set_nthreads(cmd.nthreads_value());
 	
 	// Setup the system
-	QLB QLB_system(L, dx, mass, dt, tmax, cmd.V(), opt);
+	QLB QLB_system(L, dx, mass, dt, delta0, tmax, cmd.V(), opt);
 
 	Progressbar p(tmax);
 	

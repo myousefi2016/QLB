@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #	
 # Quantum Lattice Boltzmann 
 # (c) 2015 Fabian Thüring, ETH Zürich
@@ -159,5 +159,5 @@ if [ "$plot" = "true" ]; then
 		python_flags="$python_flags --cuda=$FILE_cuda"
 	fi
 	
-	python plot/plot_benchmark.py $python_flags
+	python python/plot_benchmark.py $python_flags
 fi

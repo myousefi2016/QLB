@@ -15,7 +15,7 @@ To build QLB on Linux the following libraries are required:
 - [libglut][libglut]
 
 All those libraries should be present in the repositories of your distribution. Alternatively [libGLEW][libGLEW] can be built directly within this project with `make libGLEW` (git required).
-If you want to built QLB with CUDA you have to install the [CUDA SDK 7.0][cudasdk] and make sure the environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly. (Versions older than CUDA 6.5 might not work as the code makes use of C++11 which is only partially supported in prior versions)
+If you want to built QLB with CUDA you have to install the [CUDA SDK 7.0][cudasdk] and make sure the environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly. (Versions older than CUDA 6.5 might not work as the code makes use of C++11 which is only partially supported in prior versions).
 
 To compile the project:
 
@@ -29,7 +29,7 @@ To build QLB on Mac OS X the following libraries are required:
 - [libGLEW][libGLEW]
 
 You can build [libGLEW][libGLEW] directly within this project with `make libGLEW` (git required).
-If you want to built QLB with CUDA you have to install the [CUDA SDK 7.0][cudasdk] and make sure the environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly. (Versions older than CUDA 6.5 might not work as the code makes use of C++11 which is only partially supported in prior versions)
+If you want to built QLB with CUDA you have to install the [CUDA SDK 7.0][cudasdk] and make sure the environment variables `LD_LIBRARY_PATH`, `LIBRARY_PATH` and `PATH` are set accordingly. (Versions older than CUDA 6.5 might not work as the code makes use of C++11 which is only partially supported in prior versions).
 
 To compile the project:
 

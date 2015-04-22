@@ -45,24 +45,30 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text_boxes_.resize(4);		
 
 	// BOX_HELP_DETAIL
-	TextBox::svec_t text(15);
+	TextBox::svec_t text(18);
 	text[0] = "Esc    - Exit program      ";
 	text[1] = "Space  - Pause/unpause     ";
 	text[2] = "+/-    - Change scaling    ";
 	text[3] = "R      - Restart           ";
 	text[4] = "W      - Activate Wireframe";
-	text[5] = "1    - Draw spinor 1 "; 
-	text[6] = "2    - Draw spinor 2 ";
-	text[7] = "3    - Draw spinor 3 ";
-	text[8] = "4    - Draw spinor 4 ";
-	text[9] = "V    - Draw potential";
-	text[10] = "S    - Show Performance   "; 
-	text[11] = "C    - Rotating camera    ";
-	text[12] = "D    - Dump the simulation";
-	text[13] = "                          ";
-	text[14] = "                          ";
+	text[5] = "C      - Rotating camera   ";
 	
-	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 5, 3, 
+	text[6]  = "1    - Draw spinor 1    "; 
+	text[7]  = "2    - Draw spinor 2    ";
+	text[8]  = "3    - Draw spinor 3    ";
+	text[9]  = "4    - Draw spinor 4    ";
+	text[10] = "5    - Draw full density";
+	text[11] = "6    - Draw current in X";
+
+	text[12] = "7    - Draw current in Y  ";
+	text[13] = "V    - Draw potential     ";
+	text[14] = "S    - Show Performance   "; 
+	text[15] = "C    - Rotating camera    ";
+	text[16] = "D    - Dump the simulation";
+	text[17] = "                          ";
+	
+	
+	text_boxes_[BOX_HELP_DETAIL].init(-0.985f, -0.975f, 1.90f, 0.25f, 6, 3, 
 	                                  true, true, true, true, 1.0f);
 	text_boxes_[BOX_HELP_DETAIL].add_text(text.begin(), text.end());
 	text_boxes_[BOX_HELP_DETAIL].deactivate();
@@ -112,10 +118,11 @@ void UserInterface::keyboard(int key, int x, int y)
 		case 8:     // Backspace
 			restart_ = !restart_;
 			break;
-		case 114:   // r
+		case 'R':
+		case 'r':
 			restart_ = !restart_;
 			break;
-		case 32:    // Space
+		case ' ':    // Space
 			paused_ = !paused_;
 			break;
 		case 43:    // +
@@ -126,11 +133,13 @@ void UserInterface::keyboard(int key, int x, int y)
 			param_has_changed_ = true;
 			change_scaling_ = -1;
 			break;
-		case 100:   // d
+		case 'D':
+		case 'd':
 			param_has_changed_ = true;
 			dump_simulation_ = true;
 			break;
-		case 99:    // c
+		case 'C':
+		case 'c':
 			rotating_ = !rotating_;
 			break;
 		case 49:    // 1
@@ -149,18 +158,33 @@ void UserInterface::keyboard(int key, int x, int y)
 			param_has_changed_ = true;
 			current_scene_ = QLB::spinor3;
 			break;
-		case 118:   // v
+		case 53:    // 5
+			param_has_changed_ = true;
+			current_scene_ = QLB::density;
+			break;
+		case 54:    // 6
+			param_has_changed_ = true;
+			current_scene_ = QLB::currentX;
+			break;
+		case 55:    // 7
+			param_has_changed_ = true;
+			current_scene_ = QLB::currentY;
+			break;
+		case 'V':
+		case 'v':
 			param_has_changed_ = true;
 			draw_potential_ = !draw_potential_;
 			break;
-		case 119:   // w
+		case 'W':
+		case 'w':
 			param_has_changed_ = true;
 			if(current_render_ == QLB::SOLID)
 				current_render_ = QLB::WIRE;
 			else
 				current_render_ = QLB::SOLID;
 			break;
-		case 104:   // h
+		case 'H':
+		case 'h':
 			if(text_boxes_[BOX_HELP_ASK].is_active())
 			{
 				text_boxes_[BOX_HELP_ASK].deactivate();
@@ -172,7 +196,8 @@ void UserInterface::keyboard(int key, int x, int y)
 				text_boxes_[BOX_HELP_DETAIL].deactivate();
 			}
 			break;
-		case 115:   // s
+		case 'S':
+		case 's':
 			if(text_boxes_[BOX_PERFORMANCE].is_active())
 				text_boxes_[BOX_PERFORMANCE].deactivate();
 			else
@@ -313,6 +338,7 @@ QLB* UserInterface::reset(QLB* qlb_old)
 	                       qlb_old->dx(), 
 	                       qlb_old->mass(), 
 	                       qlb_old->dt(),
+	                       qlb_old->delta0(),
 	                       0, 
 	                       qlb_old->V(),
 	                       qlb_old->opt());

@@ -191,7 +191,7 @@ void TextBox::draw(int width, int height) const
 				glutBitmapCharacter(GLUT_BITMAP_8_BY_13, int(text_[j*nrow_+i][c]));
 		}
 		num_char_in_row  = text_[j*ncol_+nrow_-1].size();
-		line_width = (num_char_in_row + (j+1)*TB_WHITESPACES)*font_width; 
+		line_width = (num_char_in_row + (j+0.7f)*TB_WHITESPACES)*font_width; 
 	}
 	
 	glPopMatrix();

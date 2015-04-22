@@ -31,7 +31,7 @@
 #
 
 # Compiler
-CXX        = g++
+CXX        = clang++
 CXX_NV     = g++
 NVCC       = nvcc
 
@@ -80,7 +80,7 @@ EXE_BIN      = $(BIN_PATH)/$(EXE)
 
 # === Compiler Flags ===
 WARNINGS     = -Wall
-DEFINES      = 
+DEFINES      =
 DEBUG        =
 PROFILING    = 
 INCLUDE      = -I./include/$(OS)

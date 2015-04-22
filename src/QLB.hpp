@@ -65,7 +65,8 @@ public:
 	typedef matN4D<complex_t>      c4mat_t;
 	typedef SpinBarrier            barrier_t;
 	
-	enum scene_t  { spinor0 = 0, spinor1 = 1, spinor2 = 2, spinor3 = 3 };
+	enum scene_t  { spinor0 = 0, spinor1  = 1, spinor2  = 2, spinor3 = 3,
+	                density = 4, currentX = 5, currentY = 6 };
 	enum render_t { SOLID = GL_TRIANGLES, WIRE = GL_LINE_STRIP };
 
 	// === Constants ===
@@ -104,7 +105,8 @@ public:
 	 *	@param 	dx      Spatial discretization
 	 *	@param	mass    Mass of the particles
 	 *	@param 	dt      Temporal discretization
-	 *	@param  tmax    Maximum time (only needed if spreads are recoreded)
+	 *	@param  delta0  Initial spread
+	 *	@param  tmax    Maximum time (only used if spreads are recoreded)
 	 *	@param 	V_indx  Index of the potential function V
 	 *	                0: no potential
 	 *	                1: harmonic potential
@@ -113,8 +115,8 @@ public:
 	 *	                (see at QLBopt (QLBopt.hpp) for further information)
 	 *	@file 	QLB.cpp
 	 */
-	QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax, int V_indx, 
-	    QLBopt opt);
+	QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0, 
+	    unsigned tmax, int V_indx, QLBopt opt);
 	
 	/** 
 	 *	Constructor (used by the StaticViewer)
@@ -264,7 +266,7 @@ public:
 	 *	or the potential directly to the vertex VBO by a CUDA kernel
 	 *	@file QLBcuda.cu 
 	 */	
-	void calculate_vertex_spinor_cuda();
+	void calculate_vertex_cuda();
 	void calculate_vertex_V_cuda();
 
 	/**
@@ -282,7 +284,7 @@ public:
 	 *	can be overlapped with 'calculate_vertex_*_cuda()' calls)
 	 *	@file QLBcuda.cu 
 	 */	
-	void calculate_normal_spinor_cuda();
+	void calculate_normal_cuda();
 	void calculate_normal_V_cuda();
 
 	/**
@@ -369,18 +371,13 @@ public:
 	 */
 	void update_device_constants(); 
 	
-	/** 
-	 *	Swap the pointers 'spinor_helper1_' and 'spinor_helper2_'
-	 *	@file	QLB.cpp 
-	 */
-	void swap_spinor_helper();
-	
 	// === Getter ===
 	inline unsigned L() const { return L_;  }
 	inline float_t dx() const { return dx_; }
 	inline float_t mass() const { return mass_; }
 	inline float_t t() const { return t_; }
 	inline float_t dt() const { return dt_; }
+	inline float_t delta0() const { return delta0_; }
 	inline int V() const { return V_indx_; }
 	inline float_t scaling() const { return scaling_;}
 	inline scene_t current_scene() const { return current_scene_; }
@@ -435,8 +432,8 @@ private:
 	dim3 grid1_;
 	dim3 grid4_;
 	
-	cuFloatComplex* spinor_helper1_;
-	cuFloatComplex* spinor_helper2_;
+	float3* d_vertex_ptr_;
+	float3* d_normal_ptr_;
 #endif 
 
 	// === OpenGL context ===

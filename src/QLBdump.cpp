@@ -9,7 +9,7 @@
  *  -  L_              ( int )
  *  -  V_indx_         ( int )
  *  -  scaling_        ( float )
- *	-  dx_             ( float )
+ *  -  dx_             ( float )
  *  -  mass_           ( float )
  *  -  array_vertex_   ( float[3*L_*L_] )
  *  -  array_normal_   ( float[3*L_*L_] )

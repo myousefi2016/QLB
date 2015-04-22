@@ -6,25 +6,12 @@
 # 
 #  This script will plot the runtime against system sizes. The script
 #  makes use of Python's Matplotlib and NumPy.
-#
-#  Usage:  python plot_benchmark.py [Options]
-#	
-#  Options:
-#     --cpu-serial=FILE    File with the cpu-serial data stored as (N x 2)
-#     --cpu-thread=FILE    File with the cpu-thread data stored as (N x 2)
-#     --gpu=FILE           File with the cuda data stored as (N x 2)
-#     --timings            Plot system size vs. runtime [default]
-#     --speedup            Plot system size vs. speedup 
-#     --save               Save the plot as a pdf
-#     --help               Print this help statement
-#
 
 # General imports
 import numpy as np
 import sys
 import time
 import matplotlib.pyplot as plt
-
 
 def Usage():
 	""" Print the usage of this program """

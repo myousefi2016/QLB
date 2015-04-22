@@ -21,9 +21,10 @@ void QLB_run_glut(int argc, char* argv[])
 	cmd = new CmdArgParser(argc, argv);
 	
 	const unsigned L = cmd->L() ? cmd->L_value() : 128;
-	const QLB::float_t dx   = cmd->dx()   ? cmd->dx_value() : 1.5625;
-	const QLB::float_t mass = cmd->mass() ? cmd->mass_value() : 0.1;
-	const QLB::float_t dt   = cmd->dt()   ? cmd->dt_value() : 1.5625;
+	const QLB::float_t dx     = cmd->dx()     ? cmd->dx_value()     : 1.5625;
+	const QLB::float_t mass   = cmd->mass()   ? cmd->mass_value()   : 0.1;
+	const QLB::float_t dt     = cmd->dt()     ? cmd->dt_value()     : 1.5625;
+	const QLB::float_t delta0 = cmd->delta0() ? cmd->delta0_value() : 14.0;
 	
 	// Setup threadpool
 	threadpool.resize(cmd->nthreads_value());
@@ -44,7 +45,7 @@ void QLB_run_glut(int argc, char* argv[])
 	opt.set_nthreads(cmd->nthreads_value());
 	
 	if(!cmd->static_viewer())
-		QLB_system = new QLB(L, dx, mass, dt, 0, cmd->V(), opt);
+		QLB_system = new QLB(L, dx, mass, dt, delta0, 0, cmd->V(), opt);
 	else
 	{
 		QLB_system = StaticViewerLoader(cmd);
@@ -53,6 +54,7 @@ void QLB_run_glut(int argc, char* argv[])
 	
 	QLB_system->init_GL(cmd->static_viewer());
 	
+	// Run the simulation
 	glutMainLoop();
 	cleanup_and_exit();
 }
@@ -284,27 +286,10 @@ void callback_display()
 		}
 		case 2: // GPU CUDA
 		{
-#ifdef QLB_CUDA_GL_WORKAROUND
-			
-			// Overlap computation and drawing in case we cannot use CUDA to 
-			// update the VBO's
-			if(!UI->paused())
-				threadpool[0] = std::thread( &QLB::evolution_GPU, QLB_system );
-			
-			QLB_system->render();
-			
-			if(!UI->paused())
-			{
-				threadpool[0].join();
-				QLB_system->swap_spinor_helper();
-			}
-			break;
-#else
 			if(!UI->paused())
 				QLB_system->QLB::evolution_GPU();
 			QLB_system->render();
 			break;
-#endif
 		}
 	}
 	

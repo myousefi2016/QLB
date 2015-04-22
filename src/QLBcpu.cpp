@@ -291,7 +291,6 @@ void QLB::calculate_spread()
 	deltay_[t_] = std::sqrt(deltay_nom/deltay_den);
 }
 
-
 void QLB::calculate_macroscopic_vars()
 {
 	for(unsigned i = 0; i < L_; ++i)

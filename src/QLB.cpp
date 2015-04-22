@@ -10,8 +10,8 @@
 
 // ==== CONSTRUCTOR ==== 
 
-QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax, 
-         int V_indx, QLBopt opt)
+QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0, 
+         unsigned tmax, int V_indx, QLBopt opt)
 	:	
 		// === Simulation variables ===
 		L_(L),
@@ -19,9 +19,9 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, unsigned tmax,
 		mass_(mass),
 		t_(0),
 		dt_(dt),
-		deltax_(tmax),
-		deltay_(tmax),
-		delta0_(14.0),
+		deltax_(tmax+1),
+		deltay_(tmax+1),
+		delta0_(delta0),
 		V_indx_(V_indx),
 		barrier(opt.nthreads()),
 		flag_(1),
@@ -449,18 +449,6 @@ void QLB::evolution_GPU()
 void QLB::get_device_arrays()
 {
 	FATAL_ERROR("QLB was compiled without CUDA support");
-}
-
-void QLB::swap_spinor_helper()
-{
-	FATAL_ERROR("QLB was compiled without CUDA support");
-}
-
-#else
-
-void QLB::swap_spinor_helper()
-{
-	std::swap(spinor_helper1_, spinor_helper2_); 
 }
 
 #endif

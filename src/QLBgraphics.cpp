@@ -147,6 +147,12 @@ void QLB::init_GL(bool static_viewer)
 		vbo_vertex.BufferSubData(0, array_vertex_.size()*sizeof(float), 
 	    	                     &array_vertex_[0]);
 		vbo_vertex.unbind();
+
+#if defined(QLB_HAS_CUDA) && defined(QLB_CUDA_GL_WORKAROUND)
+		cuassert(cudaMemcpy(d_vertex_ptr_, array_vertex_.data(), 
+		                    sizeof(float) * array_vertex_.size(), 
+                            cudaMemcpyHostToDevice));
+#endif
 	}
 	
 	GL_is_initialzed_ = true;
@@ -162,10 +168,50 @@ void QLB::calculate_vertex(int tid, int nthreads)
 	const int upper = (tid + 1) != nthreads ? (tid+1)*L_per_thread : L_;
 	const int L = L_;
 
-	for(int i = lower; i < upper; ++i)
-		for(int j = 0; j < L; ++j)
-			array_vertex_[y(i,j)] = float(scaling_*std::norm(spinor_(i,j,current_scene_)));
-}
+	switch(current_scene_)
+	{
+		case spinor0:
+		case spinor1:
+		case spinor2:
+		case spinor3:
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
+					array_vertex_[y(i,j)] = float(scaling_ * 
+					                        std::norm(spinor_(i,j,current_scene_)));
+			break;
+		case density:
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
+					array_vertex_[y(i,j)] = float(scaling_* ( 
+					                              std::norm(spinor_(i,j,0)) +
+					                              std::norm(spinor_(i,j,1)) +
+					                              std::norm(spinor_(i,j,2)) +
+					                              std::norm(spinor_(i,j,3)) ));
+			break;			
+		case currentX:
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
+				{
+					array_vertex_[y(i,j)] = 0.0;
+					for(int is = 0; is < 4; ++is)
+						for(int js = 0; js < 4; ++js)
+							array_vertex_[y(i,j)] += float(scaling_*std::abs(
+							std::conj(spinor_(i,j,is))*alphaX(is,js)*spinor_(i,j,js)));
+				}
+			break;
+		case currentY:
+			for(int i = lower; i < upper; ++i)
+				for(int j = 0; j < L; ++j)
+				{
+					array_vertex_[y(i,j)] = 0.0;
+					for(int is = 0; is < 4; ++is)
+						for(int js = 0; js < 4; ++js)
+							array_vertex_[y(i,j)] += float(scaling_*std::abs(
+							std::conj(spinor_(i,j,is))*alphaY(is,js)*spinor_(i,j,js)));
+				}
+			break;
+	}
+}	 
 
 void QLB::scale_vertex(int change_scaling)
 {
@@ -250,8 +296,8 @@ void QLB::render()
 #ifdef QLB_HAS_CUDA
 	else
 	{
-		calculate_vertex_spinor_cuda();
-		calculate_normal_spinor_cuda();
+		calculate_vertex_cuda();
+		calculate_normal_cuda();
 		cudaDeviceSynchronize();
 	}
 #endif

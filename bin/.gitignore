@@ -1,3 +1,2 @@
-# Ignore Debug builds
-Windows/32-bit/Debug/
-Windows/64-bit/Debug/
+# Ignore Linux binaries
+Linux/
