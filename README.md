@@ -3,7 +3,7 @@
 QLB is a Dirac Solver using the Quantum Lattice Boltzmann scheme. The goal of this project is to provide an efficient implementation which allows to visualize the solution of the Dirac equation in real-time. To achieve this goal QLB relies heavily on multi-threading and GPU acceleration through CUDA.
 
 <p align="center">
-  <img src="https://github.com/thfabian/QLB/blob/master/data/QLBtest.png?raw=true" alt="QLB"/>
+  <img src="https://github.com/thfabian/QLB/blob/master/misc/QLBtest.png?raw=true" alt="QLB"/>
 </p>
 
 # Building #

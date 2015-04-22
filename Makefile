@@ -31,7 +31,7 @@
 #
 
 # Compiler
-CXX        = clang++
+CXX        = g++
 CXX_NV     = g++
 NVCC       = nvcc
 
