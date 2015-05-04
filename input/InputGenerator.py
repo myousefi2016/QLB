@@ -31,12 +31,12 @@ except ImportError:
 
 class InputGenerator:
 	"""InputGenerator library
-	
+
 	This library provides the functionality to generate initial conditions and 
 	potentials for the program QLB.
-    
-    Examples
-    --------
+
+	Examples
+	--------
 	>>> import InputGenerator as ig
 	>>> L = 128
 	>>> InputObj = ig.InputGenerator(L)
@@ -45,7 +45,7 @@ class InputGenerator:
 	>>> InputObj.writePotential('potential-example-%i.dat' % L)
 
 	For further examples take a look at '<QLB-dir>/input/examples/'
-    """
+	"""
 	L      = 128
 	dx     = 1.5
 	mass   = 0.1
@@ -65,24 +65,24 @@ class InputGenerator:
 		""" Initialize the library
 
 		Initialize the library by calculating the underlyning grid.
-		
+
 			x = dx * (i - 0.5*(L - 1))
 			y = dx * (j - 0.5*(L - 1))
 
 		Parameters
-    	----------
-    	L : int
-        	The system will be of size L x L. The system size must hold (L >= 2)
-        	
-        dx : scalar
-        	The spatial discretization (dx > 0). [default: 1.5625]
-        	
-        mass : scalar
-        	The mass of each particle (mass > 0). [default: 0.1]
-        	
-        delta0 : scalar
-        	The initial spread (delta0 > 0). [default: 14.0]
-        
+		----------
+		L : int
+			The system will be of size L x L. The system size must hold (L >= 2)
+			
+		dx : scalar
+			The spatial discretization (dx > 0). [default: 1.5625]
+			
+		mass : scalar
+			The mass of each particle (mass > 0). [default: 0.1]
+			
+		delta0 : scalar
+			The initial spread (delta0 > 0). [default: 14.0]
+
 		"""
 		if L <= 1:
 			self.exitAfterError("system size 'L' must be >= 2")
@@ -115,7 +115,7 @@ class InputGenerator:
 
 		Set the potential array by providing an evaluation function	'Vfunc(x,y)'
 		where x and y are calculated the following:
-	
+
 			x = dx * (i - 0.5*(L - 1))
 			y = dx * (j - 0.5*(L - 1))
 
