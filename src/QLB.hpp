@@ -21,7 +21,7 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
-#include <cmath>
+#include <cmath>		
 #include <atomic>
 
 // Local includes
@@ -31,7 +31,9 @@
 #include "barrier.hpp"
 #include "VBO.hpp"
 #include "matrix.hpp"
+
 #include "QLBopt.hpp"
+#include "QLBparser.hpp"
 
 #ifdef QLB_HAS_CUDA
  #include <cuda.h>
@@ -107,16 +109,19 @@ public:
 	 *	@param 	dt      Temporal discretization
 	 *	@param  delta0  Initial spread
 	 *	@param  tmax    Maximum time (only used if spreads are recoreded)
-	 *	@param 	V_indx  Index of the potential function V
+	 *	@param 	V_indx  Index of the potential function V (if no potential file
+	 *	                is provided)
 	 *	                0: no potential
 	 *	                1: harmonic potential
 	 *	                2: barrier potential
+	 *	@param  parser  Class handling input files for potential and initial
+	 *	                conditions (see at QLBparser 'QLBparser.hpp' )
 	 *	@param  opt     Class defining options concerning plotting etc. 
-	 *	                (see at QLBopt (QLBopt.hpp) for further information)
+	 *	                (see at QLBopt 'QLBopt.hpp' for further information)
 	 *	@file 	QLB.cpp
 	 */
 	QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0, 
-	    unsigned tmax, int V_indx, QLBopt opt);
+	    unsigned tmax, int V_indx, QLBparser parser, QLBopt opt);
 	
 	/** 
 	 *	Constructor (used by the StaticViewer)
@@ -384,6 +389,7 @@ public:
 	inline render_t current_render() const { return current_render_; }
 	inline bool draw_potential() const { return draw_potential_; }
 	inline QLBopt opt() const { return opt_; }
+	inline QLBparser parser() const { return parser_; }
 	
 	// === Setter ===
 	inline void set_draw_potential(bool dp)     { draw_potential_ = dp; }
@@ -454,6 +460,7 @@ private:
 	VBO vbo_index_wire;
 	
 	// === IO ===
+	QLBparser parser_;
 	QLBopt opt_;
 	std::ofstream fout;
 };

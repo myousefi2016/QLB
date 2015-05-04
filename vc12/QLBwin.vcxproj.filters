@@ -66,6 +66,9 @@
     <ClInclude Include="..\src\cudaComplex.hpp">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\QLBparser.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -99,6 +102,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\src\QLBdump.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\QLBparser.cpp">
       <Filter>QLB</Filter>
     </ClCompile>
   </ItemGroup>

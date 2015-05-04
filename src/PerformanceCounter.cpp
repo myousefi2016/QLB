@@ -175,7 +175,7 @@ double PerformanceCounter::cpu_usage()
 			       (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) )
 				 - (ul_sys_idle.QuadPart   - CPU->ul_sys_idle_old.QuadPart) ) * (100) ) /
 		     ( (ul_sys_kernel.QuadPart - CPU->ul_sys_kernel_old.QuadPart) + 
-			   (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) );
+			   (ul_sys_user.QuadPart   - CPU->ul_sys_user_old.QuadPart) + 1);
 
 	CPU->ul_sys_idle_old.QuadPart   = ul_sys_idle.QuadPart;
 	CPU->ul_sys_user_old.QuadPart   = ul_sys_user.QuadPart;

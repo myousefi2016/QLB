@@ -29,7 +29,7 @@ QLB* StaticViewerLoader(CmdArgParser* cmd)
 	std::string filename(cmd->static_viewer_file());
 	std::cout << "Loading '" << filename << "' ... " << std::flush;
 
-	// === Setup filestreams ===
+	// Setup filestreams
 	std::ifstream fin(filename, std::ios::out | std::ios::binary);
 	
 	if(!fin.is_open() && !fin.good())
@@ -47,7 +47,7 @@ QLB* StaticViewerLoader(CmdArgParser* cmd)
 		FATAL_ERROR("'"+filename+"' is not a valid input file");
 	}
 
-	// === Read-in the file ===
+	// Read the file
 	fin.read(reinterpret_cast<char*>(int_args.data()),   
 	         int_args.size() * sizeof(int_args[0]));
 
@@ -77,7 +77,7 @@ QLB* StaticViewerLoader(CmdArgParser* cmd)
 	opt.set_plot(0); 
 	opt.set_verbose(cmd->verbose());
 	opt.set_device(1);
-	if(cmd->device() == 2) WARNING("ignoring flag '--device=gpu'");
+	if(cmd->device() == 2) WARNING("ignoring option '--device=gpu'");
 	opt.set_nthreads(cmd->max_threads());
 	
 	// Setup QLB

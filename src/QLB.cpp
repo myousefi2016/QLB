@@ -11,7 +11,7 @@
 // ==== CONSTRUCTOR ==== 
 
 QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0, 
-         unsigned tmax, int V_indx, QLBopt opt)
+         unsigned tmax, int V_indx, QLBparser parser, QLBopt opt)
 	:	
 		// === Simulation variables ===
 		L_(L),
@@ -47,36 +47,73 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		array_vertex_(3*L*L, 0),
 		array_normal_(3*L*L, 0), 
 		// === IO ===
+		parser_(parser),
 		opt_(opt)
-		
 {
-	// Set initial condition
-	if( V_indx_ == 2 ) // barrier
-		initial_condition_gaussian(2*L_/3 , L_/2);
-	else
-		initial_condition_gaussian(L_/2 , L_/2);
-		
-	calculate_macroscopic_vars();
-	
-	// Setup potential
+	// Setup potential && initial conditions
 	switch( V_indx_ )
 	{
+		// free
 		case 0:
 			for(unsigned i = 0; i < L_; ++i)
 				for(unsigned j = 0; j < L_; ++j)
 					V_(i,j) = V_free(i,j);
+			
+			if(!parser_.initial_is_present())
+				initial_condition_gaussian(L_/2 , L_/2);
+			else
+				for(unsigned i = 0; i < L_; ++i)
+					for(unsigned j = 0; j < L_; ++j)
+						for(unsigned k = 0; k < 4; ++k)
+							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
 			break; 
+		// harmonic
 		case 1:
 			for(unsigned i = 0; i < L_; ++i)
 				for(unsigned j = 0; j < L_; ++j)
 					V_(i,j) = V_harmonic(i,j);
+			
+			if(!parser_.initial_is_present())
+				initial_condition_gaussian(L_/2 , L_/2);
+			else
+				for(unsigned i = 0; i < L_; ++i)
+					for(unsigned j = 0; j < L_; ++j)
+						for(unsigned k = 0; k < 4; ++k)
+							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
+			
 			break;
+		// barrier
 		case 2:
 			for(unsigned i = 0; i < L_; ++i)
 				for(unsigned j = 0; j < L_; ++j)
 					V_(i,j) = V_barrier(i,j);
+					
+			if(!parser_.initial_is_present())
+				initial_condition_gaussian(2*L_/3 , L_/2);
+			else
+				for(unsigned i = 0; i < L_; ++i)
+					for(unsigned j = 0; j < L_; ++j)
+						for(unsigned k = 0; k < 4; ++k)
+							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
+			
+			break;
+		// use an input file
+		case 3:
+			for(unsigned i = 0; i < L_; ++i)
+				for(unsigned j = 0; j < L_; ++j)
+					V_(i,j) = float_t(parser_.potential_[i*L_ + j]);
+
+			if(!parser_.initial_is_present())
+				initial_condition_gaussian(L_/2 , L_/2);
+			else
+				for(unsigned i = 0; i < L_; ++i)
+					for(unsigned j = 0; j < L_; ++j)
+						for(unsigned k = 0; k < 4; ++k)
+							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
 			break;
 	}
+	
+	calculate_macroscopic_vars();
 	
 	// Copy arrays to device
 #ifdef QLB_HAS_CUDA
@@ -97,7 +134,6 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		init_device();
 	}
 #endif
-
 }
 
 QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling, 
@@ -138,6 +174,7 @@ QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling,
 		array_vertex_(array_vertex),
 		array_normal_(array_normal), 
 		// === IO ===
+		parser_("",""),
 		opt_(opt)
 {}
 
@@ -159,8 +196,8 @@ void QLB::initial_condition_gaussian(int i0, int j0)
 	float_t x, y;
 	const float_t x0 = dx_*(i0 - 0.5*(L_-1));
 	const float_t y0 = dx_*(j0 - 0.5*(L_-1));
+	
 	const float_t stddev = 2*delta0_*delta0_;
-//	const float_t C = 1.0 / (2*M_PI * stddev);
 	
 	for(unsigned i = 0; i < L_; ++i)
 	{
@@ -249,7 +286,6 @@ void QLB::write_spread()
 
 	fout.close();
 }
-
 
 /**
  *	Generic matrix print function (use with wrapper functions)

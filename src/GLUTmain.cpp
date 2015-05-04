@@ -20,11 +20,11 @@ void QLB_run_glut(int argc, char* argv[])
 	// Reparse command-line arguments
 	cmd = new CmdArgParser(argc, argv);
 	
-	const unsigned L = cmd->L() ? cmd->L_value() : 128;
-	const QLB::float_t dx     = cmd->dx()     ? cmd->dx_value()     : 1.5625;
-	const QLB::float_t mass   = cmd->mass()   ? cmd->mass_value()   : 0.1;
-	const QLB::float_t dt     = cmd->dt()     ? cmd->dt_value()     : 1.5625;
-	const QLB::float_t delta0 = cmd->delta0() ? cmd->delta0_value() : 14.0;
+	unsigned L = cmd->L() ? cmd->L_value() : 128;
+	QLB::float_t dx     = cmd->dx()     ? cmd->dx_value()     : 1.5625;
+	QLB::float_t mass   = cmd->mass()   ? cmd->mass_value()   : 0.1;
+	QLB::float_t dt     = cmd->dt()     ? cmd->dt_value()     : 1.5625;
+	QLB::float_t delta0 = cmd->delta0() ? cmd->delta0_value() : 14.0;
 	
 	// Setup threadpool
 	threadpool.resize(cmd->nthreads_value());
@@ -34,18 +34,34 @@ void QLB_run_glut(int argc, char* argv[])
 	UI = new UserInterface(width, height, "QLB - v1.0", 
 	                       float(-1.5f * L * dx), cmd->static_viewer() ); 
 	
-	// Setup OpenGL & GLUT	
-	init_GL(argc, argv);
-	
-	// Setup QLB
+	// Setup QLB options
 	QLBopt opt;
 	opt.set_plot(cmd->plot()); 
 	opt.set_verbose(cmd->verbose());
 	opt.set_device(cmd->device());
 	opt.set_nthreads(cmd->nthreads_value());
 	
+	// Setup QLBparser
+	QLBparser parser(cmd->potential_file(), cmd->initial_file());
+	parser.parse_input(cmd);
+	
+	// Adjust arguments
+	if(parser.is_valid())
+	{
+		L      = parser.L();
+		dx     = parser.dx(); 
+		mass   = parser.mass_is_present() ? parser.mass() : mass;
+		delta0 = parser.delta0_is_present() ? parser.delta0() : delta0;
+		UI->set_translate_z(float(-1.5f * L * dx));
+	}
+	
+	// Setup OpenGL & GLUT	
+	init_GL(argc, argv);
+	
+	// Setup the system
 	if(!cmd->static_viewer())
-		QLB_system = new QLB(L, dx, mass, dt, delta0, 0, cmd->V(), opt);
+		QLB_system = new QLB(L, dx, mass, dt, delta0, 0, cmd->potential(), 
+		                     parser, opt);
 	else
 	{
 		QLB_system = StaticViewerLoader(cmd);

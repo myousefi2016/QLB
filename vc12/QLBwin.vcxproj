@@ -34,6 +34,7 @@
     <ClInclude Include="..\src\PerformanceCounter.hpp" />
     <ClInclude Include="..\src\QLB.hpp" />
     <ClInclude Include="..\src\QLBopt.hpp" />
+    <ClInclude Include="..\src\QLBparser.hpp" />
     <ClInclude Include="..\src\StaticViewer.hpp" />
     <ClInclude Include="..\src\utility.hpp" />
     <ClInclude Include="..\src\VBO.hpp" />
@@ -49,6 +50,7 @@
     <ClCompile Include="..\src\QLBcpu.cpp" />
     <ClCompile Include="..\src\QLBdump.cpp" />
     <ClCompile Include="..\src\QLBgraphics.cpp" />
+    <ClCompile Include="..\src\QLBparser.cpp" />
     <ClCompile Include="..\src\StaticViewer.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -77,11 +77,11 @@ fi
 
 # Set the appropriate command-line arguments
 if [ "$print_fig_1" = "true" ]; then
-	QLB_args="--dx=0.78125 --dt=0.78125 --mass=0.35 --V=free --delta0=14.0 \
-              --gui=none $tmax_arg $plot_arg $mt_arg"
+	QLB_args="--dx=0.78125 --dt=0.78125 --mass=0.35 --potential=free --delta0=14.0 \
+              --no-gui $tmax_arg $plot_arg $mt_arg"
 elif [ "$print_fig_4" = "true" ]; then
-	QLB_args="--dx=1.5625 --dt=1.5625 --mass=0.1 --V=harmonic --delta0=14.0 \
-	          --gui=none $tmax_arg $plot_arg $mt_arg"
+	QLB_args="--dx=1.5625 --dt=1.5625 --mass=0.1 --potential=harmonic --delta0=14.0 \
+	          --no-gui $tmax_arg $plot_arg $mt_arg"
 else
 	exit_after_error "$0 : error : no figure specified try '$0 --help'"
 fi

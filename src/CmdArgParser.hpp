@@ -228,29 +228,28 @@ public:
 				                      " '--tmax=X'");
 			tmax_value_ = tmax.value();
 			
-			// --gui=[glut|none]
-			auto gui = find_string("--gui");
-			gui_ = 0;
-			if(gui.is_present() && compare(gui.str(),"glut"))
-				gui_ = 1;
-			else if(gui.is_present() && compare(gui.str(),"none"))
-				gui_ = 0;
-			else if(gui.is_present())
-				throw CmdArgException("'S' in '--gui=S' must be one of "
-				                      "[glut|none]");
+			// --no-gui
+			gui_ = !find("--no-gui").is_present();
 				
-			// --V=[harmonic|free|barrier]
-			auto V = find_string("--V");
-			V_ = 0;
-			if(V.is_present() && compare(V.str(),"free"))
-				V_ = 0;
-			else if(V.is_present() && compare(V.str(),"harmonic"))
-				V_ = 1;
-			else if(V.is_present() && compare(V.str(),"barrier"))
-				V_ = 2;
-			else if(V.is_present())
-				throw CmdArgException("'S' in '--V=S' must be one of "
-				                      "[free|harmonic|barrier]");
+			// --potential=FILE or [harmonic|free|barrier]
+			auto potential = find_string("--potential");
+			potential_ = 0;
+			potential_file_ = "";
+			if(potential.is_present() && compare(potential.str(),"free"))
+				potential_ = 0;
+			else if(potential.is_present() && compare(potential.str(),"harmonic"))
+				potential_ = 1;
+			else if(potential.is_present() && compare(potential.str(),"barrier"))
+				potential_ = 2;
+			else if(potential.is_present())
+			{
+				potential_ = 3;
+				potential_file_ = potential.str();
+			}
+			
+			// --initial=S
+			auto initial = find_string("--initial");
+			initial_file_ = initial.is_present() ? initial.str() : "";
 				                     
 			// --device=[cpu-serial|cpu-thread|gpu]
 			auto device = find_string("--device");                      
@@ -303,8 +302,8 @@ public:
 											
 			// --fullscreen
 			fullscreen_ = find("--fullscreen").is_present();
-			if(fullscreen_ && !gui.is_present())
-				gui_ = 1;
+			if(fullscreen_ && !gui_)
+				gui_ = true;
 				
 			// --dump-at=X
 			auto dump = find_numeric<int>("--dump-at");
@@ -319,7 +318,7 @@ public:
 			static_viewer_ = static_viewer.is_present();
 			static_viewer_file_ = static_viewer.str();
 			if(static_viewer_)
-				gui_ = 1;
+				gui_ = true;
 		
 			// --start-rotating
 			start_rotating_ = find("--start-rotating").is_present();
@@ -373,8 +372,10 @@ public:
 	inline unsigned dump_value() const { return dump_value_; }
 	inline bool static_viewer() const { return static_viewer_; }
 	inline std::string static_viewer_file() const { return static_viewer_file_; }
-	inline int V() const { return V_; }     //   V = [0:harmonic, 1:free]
-	inline int gui() const { return gui_; } // gui = [1:glut, 0:none]
+	inline int potential() const { return potential_; }
+	inline std::string potential_file() const { return potential_file_; }
+	inline std::string initial_file() const { return initial_file_; }
+	inline bool gui() const { return gui_; } 
 	inline unsigned int plot() const { return plot_; }
 	inline bool start_rotating() const { return start_rotating_; }
 	inline bool start_paused() const { return start_paused_; }
@@ -576,19 +577,23 @@ private:
 		print_help_line("--help","Display this information");
 		print_help_line("--version","Display version information");
 		print_help_line("--verbose","Enable verbose mode");
-		std::string expl_gui[2] = {"Visualize the output by selecting the window system",
-		                           "to run the simulation, where S is one of [glut|none]"}; 
-		print_help_line("--gui=S",svec_t(expl_gui, expl_gui+2));
+		print_help_line("--no-gui","Turn off visualization");
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
-		std::string expl_V[2] = {"Set the potential to S, where S is one of ",
-                                      "[free|harmonic|barrier]"};
-		print_help_line("--V=S", svec_t(expl_V, expl_V+2));
+		std::string expl_potential[2] = {
+		             "Set the potential to S, where S is either an input file",
+                     "(see InputGenerator.py) or one of [free|harmonic|barrier]"};
+		print_help_line("--potential=S", svec_t(expl_potential, expl_potential+2));
+		std::string expl_intial[3] = {
+		            "Set the initial condition to S, where S an input file",
+                    "(see InputGenerator.py) by default a gaussian with spread",
+                    "delta0 is being used which can be controlled by '--delta0=X'"};
+		print_help_line("--initial=S", svec_t(expl_intial, expl_intial+3));
 		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
-		print_help_line("--L=X","Set the grid size to X where X > 1");
-		print_help_line("--dx=X","Set spatial discretization to X where X > 0");
-		print_help_line("--dt=X","Set temporal discretization to X where X > 0");
-		print_help_line("--delta0=X","Set initial spread to X where X > 0");
-		print_help_line("--mass=X","Set mass of the particles to X where X > 0");
+		print_help_line("--L=X","Set the grid size to X [default: 128]");
+		print_help_line("--dx=X","Set spatial discretization to X [default: 1.5625]");
+		print_help_line("--dt=X","Set temporal discretization to X [default: 1.5625]");
+		print_help_line("--delta0=X","Set initial spread to X [default: 14.0]");
+		print_help_line("--mass=X","Set mass of the particles to X [default: 0.1]");
 		std::string expl_plot[4] = {"Specify which quantities are written to a file,"
 		                           " where S","can be a combination of the following"
 		                           " (delimited with ',')",
@@ -722,7 +727,6 @@ private:
 			if(str_after_delimiter.size() != 0)
 				str_suggest = std::string(str_suggest, 0, str_suggest.size()-2);
 			suggestion = " did you mean '"+str_suggest+str_after_delimiter+"' ?";
-		
 		}
 		else
 			suggestion = " try '--help' for help";
@@ -787,8 +791,10 @@ private:
 	unsigned dump_value_;
 	bool static_viewer_;
 	std::string static_viewer_file_;
-	int gui_;
-	int V_;
+	bool gui_;
+	int potential_;
+	std::string potential_file_;
+	std::string initial_file_;
 	unsigned int plot_;
 	int device_;
 	bool start_rotating_;

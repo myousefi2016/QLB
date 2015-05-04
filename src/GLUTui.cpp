@@ -63,8 +63,8 @@ UserInterface::UserInterface(int width, int height, const char* title,
 	text[12] = "7    - Draw current in Y  ";
 	text[13] = "V    - Draw potential     ";
 	text[14] = "S    - Show Performance   "; 
-	text[15] = "C    - Rotating camera    ";
-	text[16] = "D    - Dump the simulation";
+	text[15] = "D    - Dump the simulation";
+	text[16] = "                          ";
 	text[17] = "                          ";
 	
 	
@@ -341,6 +341,7 @@ QLB* UserInterface::reset(QLB* qlb_old)
 	                       qlb_old->delta0(),
 	                       0, 
 	                       qlb_old->V(),
+	                       qlb_old->parser(),
 	                       qlb_old->opt());
 	delete qlb_old;
 	new_qlb->init_GL(static_viewer_);	

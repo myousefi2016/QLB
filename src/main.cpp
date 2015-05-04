@@ -31,15 +31,10 @@ int main(int argc, char* argv[])
 	// Parse command-line arguments
 	CmdArgParser cmd(argc, argv);
 
-	switch(cmd.gui())
-	{
-		case 0: // none
-			QLB_run_no_gui(cmd);
-			break;
-		case 1:  // glut
-			QLB_run_glut(argc, argv);
-			break;
-	}	
+	if(cmd.gui())
+		QLB_run_glut(argc, argv);
+	else
+		QLB_run_no_gui(cmd);
 	
 #if defined(QLB_HAS_CUDA) && ( !defined (__APPLE__) && !defined(MACOSX) )
 	cudaDeviceReset();
@@ -50,26 +45,40 @@ int main(int argc, char* argv[])
 void QLB_run_no_gui(const CmdArgParser& cmd)
 {
 	// We set some default value if nothing was passed
-	const unsigned L = cmd.L() ? cmd.L_value() : 128;
-	const QLB::float_t dx     = cmd.dx()     ? cmd.dx_value() : 1.5625;
-	const QLB::float_t mass   = cmd.mass()   ? cmd.mass_value() : 0.1;
-	const QLB::float_t dt     = cmd.dt()     ? cmd.dt_value() : 1.5625;
-	const QLB::float_t delta0 = cmd.delta0() ? cmd.delta0_value() : 14.0;
+	unsigned L = cmd.L() ? cmd.L_value() : 128;
+	QLB::float_t dx     = cmd.dx()     ? cmd.dx_value() : 1.5625;
+	QLB::float_t mass   = cmd.mass()   ? cmd.mass_value() : 0.1;
+	QLB::float_t dt     = cmd.dt()     ? cmd.dt_value() : 1.5625;
+	QLB::float_t delta0 = cmd.delta0() ? cmd.delta0_value() : 14.0;
 	unsigned tmax = cmd.tmax() ? cmd.tmax_value() : 100;
 	
 	// Setup threadpool 
 	std::vector<std::thread> threadpool(cmd.nthreads_value());
 
-	// Set QLB options
+	// Setup QLB options
 	QLBopt opt;
 	opt.set_plot(cmd.plot()); 
 	opt.set_verbose(cmd.verbose());
 	opt.set_device(cmd.device());
 	opt.set_nthreads(cmd.nthreads_value());
 	
+	// Setup QLBparser
+	QLBparser parser(cmd.potential_file(), cmd.initial_file());
+	parser.parse_input(&cmd);
+	
+	// Adjust arguments
+	if(parser.is_valid())
+	{
+		L      = parser.L();
+		dx     = parser.dx(); 
+		mass   = parser.mass_is_present() ? parser.mass() : mass;
+		delta0 = parser.delta0_is_present() ? parser.delta0() : delta0;
+	}
+	
 	// Setup the system
-	QLB QLB_system(L, dx, mass, dt, delta0, tmax, cmd.V(), opt);
+	QLB QLB_system(L, dx, mass, dt, delta0, tmax, cmd.potential(), parser, opt);
 
+	// Setup utility classes
 	Progressbar p(tmax);
 	
 	Timer t;

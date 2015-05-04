@@ -105,7 +105,7 @@ if [ "$valgrind" != "false" ]; then
 		exit_after_error "$0 : error : cannot find 'valgrind'"
 	fi
 	echo " === VALGRIND ==="
-	EXEargs="$EXEargs --tmax=1"
+	EXEargs="$EXEargs --tmax=1 --no-gui"
 	valgrind $EXE $EXEargs
 	exit 0
 fi
@@ -117,7 +117,7 @@ if [ "$llvm_sanatizer" = "true" ]; then
 		 PROFILING='-fsanitize=undefined -fsanitize=address' CXX=$CXX CUDA=$CUDA
 	
 	echo " === LLVM SANATIZER === "
-	EXEargs="$EXEargs --tmax=1"
+	EXEargs="$EXEargs --tmax=1 --no-gui"
 	$EXE $EXEargs
 	exit 0
 fi

@@ -23,6 +23,8 @@ To compile the project:
 2. Change into the QLB folder `cd QLB/`
 3. Compile with `make` which builds QLB by default with CUDA and assumes your CUDA installation is residing in `/usr/local/cuda/`. To disable CUDA run `make CUDA=false` instead.
 
+<span style="color:red">Note:</span> Ubuntu 14.04/14.10 might suffer from a linker regression that is exposed when linking against the system OpenGL library (Mesa) but running the application against the NVIDIA one. The bug can be fixed by directly linking against the OpenGL library from NVIDIA by adding `-L/usr/lib/nvidia-346/` to beginning of the `LDFLAGS` in the Makefile. See [here][bug1248642] for further information.
+
 ### Mac OS X ###
 
 To build QLB on Mac OS X the following libraries are required:
@@ -48,3 +50,4 @@ There are precompiled binaries in `bin/Windows/32-bit` and `bin/Windows/64-bit`.
 [libGLEW]: http://glew.sourceforge.net/
 [libglut]: http://freeglut.sourceforge.net/
 [cudasdk]: https://developer.nvidia.com/cuda-downloads
+[bug1248642]: https://bugs.launchpad.net/ubuntu/+source/nvidia-graphics-drivers-319/+bug/1248642

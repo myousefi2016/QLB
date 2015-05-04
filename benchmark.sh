@@ -28,7 +28,7 @@ exit_after_error()
 }
 
 QLB_exe=./QLB
-QLB_args="--disable-progressbar --gui=none"
+QLB_args="--disable-progressbar --no-gui"
 
 FILE_cpu_serial=data_cpu_serial.dat
 FILE_cpu_thread=data_cpu_thread.dat

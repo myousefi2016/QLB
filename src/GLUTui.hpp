@@ -145,6 +145,7 @@ public:
 	inline void set_width(int width)   { width_  = width;  }
 	inline void set_rotate_x(float rotate_x) { rotate_x_ = rotate_x; }
 	inline void set_rotate_y(float rotate_y) { rotate_y_ = rotate_y; }
+	inline void set_translate_z(float translate_z) { translate_z_ = translate_z;}
 	inline void set_rotatating(bool rotating) { rotating_ = rotating; }
 	inline void set_paused(bool paused) { paused_ = paused; }
 	inline void set_static_viewer(bool sv) { static_viewer_ = sv; }
