@@ -479,7 +479,7 @@ void QLB::evolution_GPU()
                          CURRENT_1((i),(j),(is),2)+CURRENT_1((i),(j),(is),3))
                     
 #define CURRENT_1(i,j,is,js) (cuCabsf(cuConjf(\
-                d_ptr[at((i),(j),(is))])*alpha[(is)*4 + (js)]*d_ptr[at((i),(j),(js))]))
+ d_ptr[at((i),(j),(is))])*beta[(is)*4 + (js)]*alpha[(is)*4 + (js)]*d_ptr[at((i),(j),(js))]))
 
 
 /** 
@@ -489,10 +489,13 @@ void QLB::evolution_GPU()
  *	@param d_ptr     pointer to the spinors
  *	@param alpha     pointer to the alpha matrix (unused if we don't calculate
  *	                 the current)
+ *	@param alpha     pointer to the beta matrix (unused if we don't calculate
+ *	                 the current)
  */
 __global__ void kernel_calculate_vertex_scene(float3* vbo_ptr, 
                                                cuFloatComplex* d_ptr,
-                                               cuFloatComplex* alpha) 
+                                               cuFloatComplex* alpha,
+                                               cuFloatComplex* beta) 
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -529,22 +532,22 @@ void QLB::calculate_vertex_cuda()
 	float3* vbo_ptr = vbo_vertex.get_device_pointer();
 
 	if(current_scene_ < 5)
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL, NULL);
 	else if(current_scene_ == 5)
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX, d_beta);
 	else
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY, d_beta);
 	CUDA_CHECK_KERNEL
 
 	vbo_vertex.unmap();
 #else
 
 	if(current_scene_ < 5)
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, NULL);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, NULL, NULL);
 	else if(current_scene_ == 5)
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaX);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaX, d_beta);
 	else
-		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaY);
+		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, d_alphaY, d_beta);
 	CUDA_CHECK_KERNEL
 
 	cuassert(cudaMemcpy(array_vertex_.data(), d_vertex_ptr_, 
@@ -617,7 +620,8 @@ void QLB::calculate_vertex_V_cuda()
  */
 __global__ void kernel_calculate_normal_scene(float3* vbo_ptr, 
                                               cuFloatComplex* d_ptr,
-                                              cuFloatComplex* alpha)
+                                              cuFloatComplex* alpha,
+                                              cuFloatComplex* beta)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -690,22 +694,22 @@ void QLB::calculate_normal_cuda()
 	float3* vbo_ptr = vbo_normal.get_device_pointer();
 
 	if(current_scene_ < 5)
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, NULL, NULL);
 	else if(current_scene_ == 5)
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaX, d_beta);
 	else
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(vbo_ptr, d_spinor_, d_alphaY, d_beta);
 	CUDA_CHECK_KERNEL
 
 	vbo_normal.unmap();
 
 #else
 	if(current_scene_ < 5)
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, NULL);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, NULL, NULL);
 	else if(current_scene_ == 5)
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaX);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaX, d_beta);
 	else
-		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaY);
+		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, d_alphaY, d_beta);
 	CUDA_CHECK_KERNEL
 
 	cuassert(cudaMemcpy(array_normal_.data(), d_normal_ptr_, 

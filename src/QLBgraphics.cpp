@@ -195,8 +195,10 @@ void QLB::calculate_vertex(int tid, int nthreads)
 					array_vertex_[y(i,j)] = 0.0;
 					for(int is = 0; is < 4; ++is)
 						for(int js = 0; js < 4; ++js)
-							array_vertex_[y(i,j)] += float(scaling_*std::abs(
-							std::conj(spinor_(i,j,is))*alphaX(is,js)*spinor_(i,j,js)));
+							array_vertex_[y(i,j)] += float(scaling_*std::real(
+							          std::conj(spinor_(i,j,is)) * beta(is,js) * 
+							          alphaX(is,js) * 
+							          spinor_(i,j,js)));
 				}
 			break;
 		case currentY:
@@ -206,8 +208,10 @@ void QLB::calculate_vertex(int tid, int nthreads)
 					array_vertex_[y(i,j)] = 0.0;
 					for(int is = 0; is < 4; ++is)
 						for(int js = 0; js < 4; ++js)
-							array_vertex_[y(i,j)] += float(scaling_*std::abs(
-							std::conj(spinor_(i,j,is))*alphaY(is,js)*spinor_(i,j,js)));
+							array_vertex_[y(i,j)] += float(scaling_*std::real(
+							          std::conj(spinor_(i,j,is)) * beta(is,js) * 
+							          alphaY(is,js) * 
+							          spinor_(i,j,js)));
 				}
 			break;
 	}

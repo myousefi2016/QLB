@@ -122,7 +122,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		// Check available memory
 		std::size_t free, total;
 		cudaMemGetInfo(&free, &total);
-		if( (total - free) < 14 * L_*L_* sizeof(float))
+		if( (total - free) < 26 * L_*L_* sizeof(float))
 		{
 			cudaDeviceProp deviceProp; 
 			cuassert(cudaGetDeviceProperties(&deviceProp, 0));
@@ -301,7 +301,7 @@ static void print_mat(const mat_t& m, const std::size_t N, const std::size_t M,
                       const std::size_t d, const std::size_t k, stream_t& out)
 {
 	out << std::fixed;
-	out << std::setprecision(5);
+	out << std::setprecision(8);
 	out << std::left << std::endl;
 	for(std::size_t i = 0; i < N; ++i)
 	{
@@ -336,7 +336,7 @@ static void print_mat_eval(const mat_t& m, const std::size_t N, const std::size_
 {
 	const int eval_flag = eval; 
 	out << std::fixed;
-	out << std::setprecision(5);
+	out << std::setprecision(8);
 	out << std::left << std::endl;
 	for(std::size_t i = 0; i < N; ++i)
 	{
