@@ -94,7 +94,7 @@ if timings:
 
 	# Plot timings
 	fig = plt.figure()
-	fig.suptitle('Quantum Lattice Boltzmann - Benchmark',fontsize=13)
+#	fig.suptitle('Quantum Lattice Boltzmann - Benchmark',fontsize=13)
 	ax = fig.add_subplot(111)
 
 	if cpuSerialArg[0]:
@@ -106,7 +106,7 @@ if timings:
 	if cudaArg[0]:
 		ax.plot(cudaData[:,0],cudaData[:,1],'-o',label=r'CUDA',markersize=markerSize)
 
-	ax.set_xlabel('system size $L$')
+	ax.set_xlabel('system size $N$')
 	ax.set_ylabel('time $s$')
 	plt.legend(loc='upper left',fontsize=11)
 	plt.grid()

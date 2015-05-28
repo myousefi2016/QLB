@@ -9,7 +9,7 @@
 
 #include "QLB.hpp"
 
-// === Potential ===
+// === POTENTIAL ===
 
 QLB::float_t QLB::V_harmonic(int i, int j) const 
 {
@@ -28,23 +28,12 @@ QLB::float_t QLB::V_free(int i, int j) const
 QLB::float_t QLB::V_barrier(int i, int j) const
 {
 	const float_t delta0_2 = delta0_ * delta0_;
-	const float_t V0 = L_*L_ / ( 32.0 * delta0_2 * delta0_2 * mass_);
+	const float_t V0 = L_*L_ / (32.0 * mass_ * delta0_2);
 	
 	return float_t(i < 1./3.*L_ && i > 1./6. * L_) * V0;
 }
 
-// === Simulation ===
-
-/**
- *	The RHS of the equation is (rotated collision matrices):
- *
- *	X * ( i*g*I + i*wc*Beta ) * Xinv
- *
- *	   =      i*g           0           0       wc*i
- *	            0         i*g      2*wc*i       wc*i
- *	    -0.5*wc*i    0.5*wc*i         i*g          0
- *	         wc*i           0           0        i*g
- */
+// === SIMULATION ===
 
 void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
 {
@@ -61,19 +50,19 @@ void QLB::Qhat_X(int i, int j, QLB::cmat_t& Q) const
 	Q(0,0) =  a;
 	Q(0,1) =  0;
 	Q(0,2) =  0;
-	Q(0,3) =  b*img;
+	Q(0,3) = -b*img;
 
 	Q(1,0) =  0;
 	Q(1,1) =  a;
-	Q(1,2) =  float_t(2.0)*b*img;
-	Q(1,3) =  b*img;
+	Q(1,2) =  b*img;
+	Q(1,3) =  0;
 
-	Q(2,0) = -float_t(0.5)*b*img;
-	Q(2,1) =  float_t(0.5)*b*img;
+	Q(2,0) =  0;
+	Q(2,1) =  b*img;
 	Q(2,2) =  a;
 	Q(2,3) =  0;
 
-	Q(3,0) =  b*img;
+	Q(3,0) = -b*img;
 	Q(3,1) =  0;
 	Q(3,2) =  0;
 	Q(3,3) =  a;
@@ -95,19 +84,19 @@ void QLB::Qhat_Y(int i, int j, QLB::cmat_t& Q) const
 	Q(0,0) =  a;
 	Q(0,1) =  0;
 	Q(0,2) =  0;
-	Q(0,3) =  b*img;
+	Q(0,3) = -b*img;
 
 	Q(1,0) =  0;
 	Q(1,1) =  a;
-	Q(1,2) =  float_t(2.0)*b*img;
-	Q(1,3) =  b*img;
+	Q(1,2) = -b*img;
+	Q(1,3) =  0;
 
-	Q(2,0) = -float_t(0.5)*b*img;
-	Q(2,1) =  float_t(0.5)*b*img;
+	Q(2,0) =  0;
+	Q(2,1) = -b*img;
 	Q(2,2) =  a;
 	Q(2,3) =  0;
 
-	Q(3,0) =  b*img;
+	Q(3,0) = -b*img;
 	Q(3,1) =  0;
 	Q(3,2) =  0;
 	Q(3,3) =  a;
@@ -123,7 +112,7 @@ void QLB::evolution_CPU_serial()
 	int ia, ja;
 	int ik, jk;
 
-	// Rotate with X
+	// Rotate with X^(-1)
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j=0; j < L; ++j)
@@ -134,7 +123,7 @@ void QLB::evolution_CPU_serial()
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinorrot_(i,j,mk) += X(mk,nk) * spinor_(i,j,nk);
+					spinorrot_(i,j,mk) += Xinv(mk,nk) * spinor_(i,j,nk);
 		}
 	}
 
@@ -175,7 +164,7 @@ void QLB::evolution_CPU_serial()
 		}
 	}
 	
-	// Rotate back with Xinv
+	// Rotate back with X
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -186,11 +175,11 @@ void QLB::evolution_CPU_serial()
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinor_(i,j,mk) += Xinv(mk,nk)*spinorrot_(i,j,nk);
+					spinor_(i,j,mk) += X(mk,nk)*spinorrot_(i,j,nk);
 		}
 	}
 
-	// Rotate with Y
+	// Rotate with Y^(-1)
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -200,7 +189,7 @@ void QLB::evolution_CPU_serial()
 
 			for(int mk=0; mk < 4; ++mk)
 				for(int nk=0; nk < 4; ++nk)
-					spinorrot_(i,j,mk) += Y(mk,nk) * spinor_(i,j,nk);
+					spinorrot_(i,j,mk) += Yinv(mk,nk) * spinor_(i,j,nk);
 		}
 	}
 	
@@ -241,7 +230,7 @@ void QLB::evolution_CPU_serial()
 		}
 	}
 	
-	// Rotate back with Yinv
+	// Rotate back with Y
 	for(int i = 0; i < L; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -251,7 +240,7 @@ void QLB::evolution_CPU_serial()
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinor_(i,j,mk) += Yinv(mk,nk)*spinorrot_(i,j,nk);
+					spinor_(i,j,mk) += Y(mk,nk)*spinorrot_(i,j,nk);
 		}
 	}
 	
@@ -338,7 +327,7 @@ void QLB::evolution_CPU_thread(int tid)
 	int ia, ja;
 	int ik, jk;
 
-	// Rotate with X
+	// Rotate with X^(-1)
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -349,7 +338,7 @@ void QLB::evolution_CPU_thread(int tid)
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinorrot_(i,j,mk) += X(mk,nk) * spinor_(i,j,nk);
+					spinorrot_(i,j,mk) += Xinv(mk,nk) * spinor_(i,j,nk);
 		}
 	}
 
@@ -367,7 +356,7 @@ void QLB::evolution_CPU_thread(int tid)
 	// Sync threads
 	barrier.wait();
 
-	// collide & stream with Q 
+	// collide & stream with Q_X
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -396,7 +385,7 @@ void QLB::evolution_CPU_thread(int tid)
 	// Sync threads
 	barrier.wait();
 
-	// Rotate back with Xinv
+	// Rotate back with X
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -407,11 +396,11 @@ void QLB::evolution_CPU_thread(int tid)
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinor_(i,j,mk) += Xinv(mk,nk)*spinorrot_(i,j,nk);
+					spinor_(i,j,mk) += X(mk,nk)*spinorrot_(i,j,nk);
 		}
 	}
 
-	// Rotate with Y
+	// Rotate with Y^(-1)
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -421,7 +410,7 @@ void QLB::evolution_CPU_thread(int tid)
 
 			for(int mk=0; mk < 4; ++mk)
 				for(int nk=0; nk < 4; ++nk)
-					spinorrot_(i,j,mk) += Y(mk,nk) * spinor_(i,j,nk);
+					spinorrot_(i,j,mk) += Yinv(mk,nk) * spinor_(i,j,nk);
 		}
 	}
 	
@@ -436,7 +425,7 @@ void QLB::evolution_CPU_thread(int tid)
 		}
 	}
 		
-	// collide & stream with Q
+	// collide & stream with Q_Y
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -462,7 +451,7 @@ void QLB::evolution_CPU_thread(int tid)
 		}
 	}
 	
-	// Rotate back with Yinv
+	// Rotate back with Y
 	for(int i = lower; i < upper; ++i)
 	{
 		for(int j = 0; j < L; ++j)
@@ -472,7 +461,7 @@ void QLB::evolution_CPU_thread(int tid)
 
 			for(int mk = 0; mk < 4; ++mk)
 				for(int nk = 0; nk < 4; ++nk)
-					spinor_(i,j,mk) += Yinv(mk,nk)*spinorrot_(i,j,nk);
+					spinor_(i,j,mk) += Y(mk,nk)*spinorrot_(i,j,nk);
 		}
 	}
 

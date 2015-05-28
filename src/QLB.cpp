@@ -41,7 +41,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		current_scene_(spinor0),
 		current_render_(SOLID),
 		draw_potential_(false),
-		scaling_(L/2.0),
+		scaling_(L_/2.0),
 		array_index_solid_(6*(L-1)*(L-1), 0),
 		array_index_wire_(2*L*(L-1), 0),
 		array_vertex_(3*L*L, 0),
@@ -50,6 +50,26 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		parser_(parser),
 		opt_(opt)
 {
+	// Set the scaling (this is highly dependant on the initial condition)
+	if(L_ <= 8)
+		scaling_ = 1.0/(128.0*L_);
+	else if(L_ <= 16)
+		scaling_ = 1.0/(16.0*L_);
+	else if(L_ <= 32)
+		scaling_ = 1.0/(4.0*L_);
+	else if(L_ <= 64)
+		scaling_ = 2.0/(L_);
+	else if(L_ <= 128)
+		scaling_ = 8.0/L_;
+	else if(L_ <= 256)
+		scaling_ = 32.0/L_;
+	else if(L_ <= 512)
+		scaling_ = 128.0/L_;
+	else if(L_ <= 1024)
+		scaling_ = 256.0/L_;
+	else
+		scaling_ = 512.0/L_;
+
 	// Setup potential && initial conditions
 	switch( V_indx_ )
 	{
@@ -198,6 +218,7 @@ void QLB::initial_condition_gaussian(int i0, int j0)
 	const float_t y0 = dx_*(j0 - 0.5*(L_-1));
 	
 	const float_t stddev = 2*delta0_*delta0_;
+	const float_t C      = std::sqrt(stddev*M_PI);
 	
 	for(unsigned i = 0; i < L_; ++i)
 	{
@@ -205,7 +226,7 @@ void QLB::initial_condition_gaussian(int i0, int j0)
 		{
 			x = dx_*(i-0.5*(L_-1));
 			y = dx_*(j-0.5*(L_-1));	
-			gaussian = std::exp( -( (x-x0)*(x-x0) + (y-y0)*(y-y0) )/(2*stddev) );
+			gaussian = C*std::exp( -( (x-x0)*(x-x0) + (y-y0)*(y-y0) )/(2*stddev) );
 			                           
 			spinor_(i,j,0) = gaussian;
 			spinor_(i,j,1) = 0;
@@ -489,65 +510,50 @@ void QLB::get_device_arrays()
 
 #endif
 
-
 // === CONSTANTS === 
 
 const QLB::complex_t QLB::one(1.0,0.0);
 const QLB::complex_t QLB::img(0.0,1.0);
 
+// Note: If you change the matrices X, X^(-1) or Y, Y^(-1) you also have to update the
+//       the rotated collision matrices in the functions 'QLB::Qhat_X' and 'QLB::Qhat_Y', 
+//       as well as the corresponding Cuda kernels 'kernel_collide_Q_X' and 
+//       'kernel_collide_Q_Y'.
+
+#define SQRT_1 QLB::complex_t(0.70710678118654752440, 0)
+#define SQRT_i QLB::complex_t(0, 0.70710678118654752440)
+
 // X
 static const QLB::complex_t X_[] =  
-{-QLB::one, -QLB::one, -QLB::one, -QLB::one, 
-  QLB::one, -QLB::one, -QLB::one,  QLB::one, 
- -QLB::one,         0,         0,  QLB::one, 
-  QLB::one,  QLB::one, -QLB::one, -QLB::one};
+{ SQRT_1,       0,       0,  SQRT_1, 
+       0,  SQRT_1, -SQRT_1,       0,
+       0,  SQRT_1,  SQRT_1,       0,
+  SQRT_1,       0,       0, -SQRT_1}; 
 const QLB::cmat_t QLB::X(4, X_, X_+16);
+
+// Xinv
+static const QLB::complex_t Xinv_[] =  
+{ SQRT_1,       0,       0,  SQRT_1, 
+       0,  SQRT_1,  SQRT_1,       0,
+       0, -SQRT_1,  SQRT_1,       0,
+  SQRT_1,       0,       0, -SQRT_1}; 
+const QLB::cmat_t QLB::Xinv(4, Xinv_, Xinv_+16);
 
 // Y
 static const QLB::complex_t Y_[] =  
-{-QLB::one, -QLB::one, -QLB::img,  QLB::img, 
-  QLB::one, -QLB::one, -QLB::img, -QLB::img, 
- -QLB::one,         0,         0, -QLB::img, 
-  QLB::one,  QLB::one, -QLB::img,  QLB::img};
+{-SQRT_i,       0,       0, -SQRT_i, 
+       0,  SQRT_1,  SQRT_1,       0,
+       0, -SQRT_i,  SQRT_i,       0,
+  SQRT_1,       0,       0, -SQRT_1}; 
 const QLB::cmat_t QLB::Y(4, Y_, Y_+16);
 
-#ifndef QLB_SINGLE_PRECISION 
-
-// Xinv
-static const QLB::complex_t Xinv_[] =   
-{-QLB::one/4.0,  QLB::one/4.0, -QLB::one/2.0,             0, 
- -QLB::one/4.0, -QLB::one/4.0,  QLB::one/2.0,  QLB::one/2.0, 
- -QLB::one/4.0, -QLB::one/4.0, -QLB::one/2.0, -QLB::one/2.0, 
- -QLB::one/4.0,  QLB::one/4.0,  QLB::one/2.0,             0};
-const QLB::cmat_t QLB::Xinv(4, Xinv_, Xinv_+16);
-
 // Yinv
-static const QLB::complex_t Yinv_[] =   
-{-QLB::one/4.0,  QLB::one/4.0, -QLB::one/2.0,             0, 
- -QLB::one/4.0, -QLB::one/4.0,  QLB::one/2.0,  QLB::one/2.0, 
-  QLB::img/4.0,  QLB::img/4.0,  QLB::img/2.0,  QLB::img/2.0, 
- -QLB::img/4.0,  QLB::img/4.0,  QLB::img/2.0,             0};
+static const QLB::complex_t Yinv_[] =  
+{ SQRT_i,       0,       0,   SQRT_1, 
+       0,  SQRT_1,  SQRT_i,        0,
+       0,  SQRT_1, -SQRT_1,        0,
+  SQRT_i,       0,       0,  -SQRT_1}; 
 const QLB::cmat_t QLB::Yinv(4, Yinv_, Yinv_+16);
-
-#else
-
-// Xinv
-static const QLB::complex_t Xinv_[] =   
-{-QLB::one/4.0f,  QLB::one/4.0f, -QLB::one/2.0f,             0, 
- -QLB::one/4.0f, -QLB::one/4.0f,  QLB::one/2.0f,  QLB::one/2.0f, 
- -QLB::one/4.0f, -QLB::one/4.0f, -QLB::one/2.0f, -QLB::one/2.0f, 
- -QLB::one/4.0f,  QLB::one/4.0f,  QLB::one/2.0f,             0};
-const QLB::cmat_t QLB::Xinv(4, Xinv_, Xinv_+16);
-
-// Yinv
-static const QLB::complex_t Yinv_[] =   
-{-QLB::one/4.0f,  QLB::one/4.0f, -QLB::one/2.0f,             0, 
- -QLB::one/4.0f, -QLB::one/4.0f,  QLB::one/2.0f,  QLB::one/2.0f, 
-  QLB::img/4.0f,  QLB::img/4.0f,  QLB::img/2.0f,  QLB::img/2.0f, 
- -QLB::img/4.0f,  QLB::img/4.0f,  QLB::img/2.0f,             0};
-const QLB::cmat_t QLB::Yinv(4, Yinv_, Yinv_+16);
-
-#endif
 
 // alphaX
 static const QLB::complex_t alphaX_[] = 
@@ -572,3 +578,6 @@ static const QLB::complex_t beta_[] =
          0,         0, -QLB::one,         0, 
          0,         0,         0, -QLB::one};
 const QLB::cmat_t QLB::beta(4, beta_, beta_+16);
+
+#undef SQRT_1
+#undef SQRT_i

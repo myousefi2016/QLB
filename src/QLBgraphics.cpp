@@ -251,7 +251,7 @@ void QLB::calculate_normal(int tid, int nthreads)
 
 		for(unsigned j = 0; j < L_; ++j)
 		{
-			jk = (L_ - 1 + j) % L_;
+			jk = (j - 1 + L_) % L_;
 
 			// a
 			a1 = dx;
@@ -281,7 +281,7 @@ void QLB::render()
 {
 	if(!GL_is_initialzed_)
 		FATAL_ERROR("QLB::OpenGL context is not initialized");
-	
+		
 	// Setup VBO's
 	if(opt_.device() != 2)
 	{

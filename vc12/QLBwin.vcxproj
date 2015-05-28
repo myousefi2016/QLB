@@ -190,6 +190,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include\Windows;$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/DQLB_HAS_CUDA %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -219,6 +220,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

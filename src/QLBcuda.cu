@@ -241,12 +241,12 @@ void QLB::update_device_constants()
  *	@param spinor  device pointer spinors
  *	@param spinor  device pointer spinorrot
  *	@param spinor  device pointer spinoraux
- *	@param M       rotation matrix
+ *	@param Rinv    inverse rotation matrix (4 x 4)
  */
 __global__ void kernel_rotate(cuFloatComplex* spinor, 
                               cuFloatComplex* spinorrot,
                               cuFloatComplex* spinoraux,
-                              cuFloatComplex* M)
+                              cuFloatComplex* Rinv)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -256,10 +256,10 @@ __global__ void kernel_rotate(cuFloatComplex* spinor,
 	{
 		spinorrot[at(i,j,k)] = make_cuFloatComplex(0.0f, 0.0f);
 		
-		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + M[4*k + 0] * spinor[at(i,j,0)];
-		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + M[4*k + 1] * spinor[at(i,j,1)];		
-		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + M[4*k + 2] * spinor[at(i,j,2)];
-		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + M[4*k + 3] * spinor[at(i,j,3)];
+		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + Rinv[4*k + 0] * spinor[at(i,j,0)];
+		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + Rinv[4*k + 1] * spinor[at(i,j,1)];		
+		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + Rinv[4*k + 2] * spinor[at(i,j,2)];
+		spinorrot[at(i,j,k)] = spinorrot[at(i,j,k)] + Rinv[4*k + 3] * spinor[at(i,j,3)];
 				
 		spinoraux[at(i,j,k)] = spinorrot[at(i,j,k)];
 	}
@@ -270,11 +270,11 @@ __global__ void kernel_rotate(cuFloatComplex* spinor,
  *	Rotate spinorrot back and store the result in spinor
  *	@param spinor  device pointer spinor
  *	@param spinor  device pointer spinorrot
- *	@param Minv    inverse rotation matrix
+ *	@param R       rotation matrix (4 x 4)
  */
 __global__ void kernel_rotate_back(cuFloatComplex* spinor, 
                                    cuFloatComplex* spinorrot,
-                                   cuFloatComplex* Minv)
+                                   cuFloatComplex* R)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -284,10 +284,10 @@ __global__ void kernel_rotate_back(cuFloatComplex* spinor,
 	{
 		spinor[at(i,j,k)] = make_cuFloatComplex(0.0f, 0.0f);
 		
-		spinor[at(i,j,k)] = spinor[at(i,j,k)] + Minv[4*k + 0] * spinorrot[at(i,j,0)];
-		spinor[at(i,j,k)] = spinor[at(i,j,k)] + Minv[4*k + 1] * spinorrot[at(i,j,1)];		
-		spinor[at(i,j,k)] = spinor[at(i,j,k)] + Minv[4*k + 2] * spinorrot[at(i,j,2)];
-		spinor[at(i,j,k)] = spinor[at(i,j,k)] + Minv[4*k + 3] * spinorrot[at(i,j,3)];
+		spinor[at(i,j,k)] = spinor[at(i,j,k)] + R[4*k + 0] * spinorrot[at(i,j,0)];
+		spinor[at(i,j,k)] = spinor[at(i,j,k)] + R[4*k + 1] * spinorrot[at(i,j,1)];		
+		spinor[at(i,j,k)] = spinor[at(i,j,k)] + R[4*k + 2] * spinorrot[at(i,j,2)];
+		spinor[at(i,j,k)] = spinor[at(i,j,k)] + R[4*k + 3] * spinorrot[at(i,j,3)];
 	}
 } 
 
@@ -297,9 +297,9 @@ __global__ void kernel_rotate_back(cuFloatComplex* spinor,
  *	@param spinor  device pointer spinoraux
  *	@param V       device pointer potential
  */
-__global__ void kernel_collide_X(cuFloatComplex* spinorrot,
-								 cuFloatComplex* spinoraux,
-                                 float* V)
+__global__ void kernel_collide_Q_X(cuFloatComplex* spinorrot,
+							       cuFloatComplex* spinoraux,
+                                   float* V)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -318,31 +318,29 @@ __global__ void kernel_collide_X(cuFloatComplex* spinorrot,
 		float g = 0.5f *  V[i*d_L +j] * d_dt;
 		float omega = m*m - g*g;
 
-		cuFloatComplex img = make_cuFloatComplex(0.0f, 1.0f);
-		
 		cuFloatComplex a_nom = make_cuFloatComplex(1.0f - 0.25f*omega, 0.0f);
 		cuFloatComplex a_den = make_cuFloatComplex(1.0f + 0.25f*omega, -1.0f*g);
 		cuFloatComplex b_nom = make_cuFloatComplex(m, 0.0f);
 
-		cuFloatComplex a = a_nom / a_den;
-		cuFloatComplex b = b_nom / a_den;
+		cuFloatComplex a      = a_nom / a_den;
+		cuFloatComplex b      = b_nom / a_den;
+		cuFloatComplex neg_bi = b * make_cuFloatComplex( 0.0f, -1.0f);
+		cuFloatComplex pos_bi = b * make_cuFloatComplex( 0.0f,  1.0f);
 
+		// Qhat = X^(-1) * Q * X
 		cuFloatComplex Q_00 =  a;
-		cuFloatComplex Q_03 =  b * img;
- 
-		cuFloatComplex Q_11 =  a;
-		cuFloatComplex Q_12 =  make_cuFloatComplex( 0.0f,  2.0f) * b;
-		cuFloatComplex Q_13 =  b * img;
+		cuFloatComplex Q_03 =  neg_bi;
 
-		cuFloatComplex Q_20 =  make_cuFloatComplex( 0.0f, -0.5f) * b;
-		cuFloatComplex Q_21 =  make_cuFloatComplex( 0.0f,  0.5f) * b;
+		cuFloatComplex Q_11 =  a;
+		cuFloatComplex Q_12 =  pos_bi;
+
+		cuFloatComplex Q_21 =  pos_bi;
 		cuFloatComplex Q_22 =  a;
 
-		cuFloatComplex Q_30 =  b * img;
+		cuFloatComplex Q_30 =  neg_bi;
 		cuFloatComplex Q_33 =  a;
 
 		spinorrot[at(ia,j,0)] = spinorrot[at(ia,j,0)] + Q_00 * spinoraux[at(i,j,0)];
-		spinorrot[at(ik,j,2)] = spinorrot[at(ik,j,2)] + Q_20 * spinoraux[at(i,j,0)];
 		spinorrot[at(ik,j,3)] = spinorrot[at(ik,j,3)] + Q_30 * spinoraux[at(i,j,0)];
 		
 		spinorrot[at(ia,j,1)] = spinorrot[at(ia,j,1)] + Q_11 * spinoraux[at(i,j,1)];
@@ -352,7 +350,6 @@ __global__ void kernel_collide_X(cuFloatComplex* spinorrot,
 		spinorrot[at(ik,j,2)] = spinorrot[at(ik,j,2)] + Q_22 * spinoraux[at(i,j,2)];
 		
 		spinorrot[at(ia,j,0)] = spinorrot[at(ia,j,0)] + Q_03 * spinoraux[at(i,j,3)];
-		spinorrot[at(ia,j,1)] = spinorrot[at(ia,j,1)] + Q_13 * spinoraux[at(i,j,3)];
 		spinorrot[at(ik,j,3)] = spinorrot[at(ik,j,3)] + Q_33 * spinoraux[at(i,j,3)];
 	}
 }
@@ -363,9 +360,9 @@ __global__ void kernel_collide_X(cuFloatComplex* spinorrot,
  *	@param spinor  device pointer spinoraux
  *	@param V       device pointer potential
  */
-__global__ void kernel_collide_Y(cuFloatComplex* spinorrot,
-								 cuFloatComplex* spinoraux,
-                                 float* V)
+__global__ void kernel_collide_Q_Y(cuFloatComplex* spinorrot,
+								   cuFloatComplex* spinoraux,
+                                   float* V)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 	int j = blockIdx.y*blockDim.y + threadIdx.y;
@@ -383,32 +380,29 @@ __global__ void kernel_collide_Y(cuFloatComplex* spinorrot,
 		float m = 0.5f * d_mass* d_dt;
 		float g = 0.5f *  V[i*d_L +j] * d_dt;
 		float omega = m*m - g*g;
-
-		cuFloatComplex img = make_cuFloatComplex(0.0f, 1.0f);
 		
 		cuFloatComplex a_nom = make_cuFloatComplex(1.0f - 0.25f*omega, 0.0f);
 		cuFloatComplex b_nom = make_cuFloatComplex(m, 0.0f);
 		cuFloatComplex a_den = make_cuFloatComplex(1.0f + 0.25f*omega, -1.0f*g);
 
-		cuFloatComplex a = a_nom / a_den;
-		cuFloatComplex b = b_nom / a_den;
+		cuFloatComplex a      = a_nom / a_den;
+		cuFloatComplex b      = b_nom / a_den;
+		cuFloatComplex neg_bi = b * make_cuFloatComplex( 0.0f, -1.0f);
 
+		// Qhat = Y^(-1) * Q * Y
 		cuFloatComplex Q_00 =  a;
-		cuFloatComplex Q_03 =  b*img;
+		cuFloatComplex Q_03 =  neg_bi;
 
 		cuFloatComplex Q_11 =  a;
-		cuFloatComplex Q_12 =  make_cuFloatComplex( 0.0f,  2.0f) * b;
-		cuFloatComplex Q_13 =  b * img;
+		cuFloatComplex Q_12 =  neg_bi;
 
-		cuFloatComplex Q_20 =  make_cuFloatComplex( 0.0f, -0.5f) * b;
-		cuFloatComplex Q_21 =  make_cuFloatComplex( 0.0f,  0.5f) * b;
+		cuFloatComplex Q_21 =  neg_bi;
 		cuFloatComplex Q_22 =  a;
 
-		cuFloatComplex Q_30 =  b*img;
+		cuFloatComplex Q_30 =  neg_bi;
 		cuFloatComplex Q_33 =  a;
 
 		spinorrot[at(i,ja,0)] = spinorrot[at(i,ja,0)] + Q_00 * spinoraux[at(i,j,0)];
-		spinorrot[at(i,jk,2)] = spinorrot[at(i,jk,2)] + Q_20 * spinoraux[at(i,j,0)];
 		spinorrot[at(i,jk,3)] = spinorrot[at(i,jk,3)] + Q_30 * spinoraux[at(i,j,0)];
 		
 		spinorrot[at(i,ja,1)] = spinorrot[at(i,ja,1)] + Q_11 * spinoraux[at(i,j,1)];
@@ -418,40 +412,39 @@ __global__ void kernel_collide_Y(cuFloatComplex* spinorrot,
 		spinorrot[at(i,jk,2)] = spinorrot[at(i,jk,2)] + Q_22 * spinoraux[at(i,j,2)];
 		
 		spinorrot[at(i,ja,0)] = spinorrot[at(i,ja,0)] + Q_03 * spinoraux[at(i,j,3)];
-		spinorrot[at(i,ja,1)] = spinorrot[at(i,ja,1)] + Q_13 * spinoraux[at(i,j,3)];
 		spinorrot[at(i,jk,3)] = spinorrot[at(i,jk,3)] + Q_33 * spinoraux[at(i,j,3)];
 	}
 }
 
 void QLB::evolution_GPU()
 {
-	// Rotate with X
-	kernel_rotate<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_spinoraux_, d_X);
+	// Rotate with X^(-1)
+	kernel_rotate<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_spinoraux_, d_Xinv);
 	CUDA_CHECK_KERNEL
 	
 	// Collide & stream with Q_X 
 	cudaDeviceSynchronize();
-	kernel_collide_X<<< grid1_, block1_ >>>(d_spinorrot_, d_spinoraux_, d_V_);
+	kernel_collide_Q_X<<< grid1_, block1_ >>>(d_spinorrot_, d_spinoraux_, d_V_);
 	CUDA_CHECK_KERNEL
 	
-	// Rotate back with Xinv 
+	// Rotate back with X 
 	cudaDeviceSynchronize();
-	kernel_rotate_back<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_Xinv);
+	kernel_rotate_back<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_X);
 	CUDA_CHECK_KERNEL
 	
-	// Rotate with X 
+	// Rotate with Y^(-1) 
 	cudaDeviceSynchronize();
-	kernel_rotate<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_spinoraux_, d_Y);
+	kernel_rotate<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_spinoraux_, d_Yinv);
 	CUDA_CHECK_KERNEL
 	
 	// Collide & stream with Q_Y 
 	cudaDeviceSynchronize();
-	kernel_collide_Y<<< grid1_, block1_ >>>(d_spinorrot_, d_spinoraux_, d_V_);
+	kernel_collide_Q_Y<<< grid1_, block1_ >>>(d_spinorrot_, d_spinoraux_, d_V_);
 	CUDA_CHECK_KERNEL
 
-	// Rotate back with Yinv
+	// Rotate back with Y
 	cudaDeviceSynchronize();
-	kernel_rotate_back<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_Yinv);
+	kernel_rotate_back<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_Y);
 	CUDA_CHECK_KERNEL
 	
 	cudaDeviceSynchronize();

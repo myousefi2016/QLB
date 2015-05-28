@@ -24,7 +24,7 @@ ig = InputGenerator(L, dx, mass, delta0);
 % Set the spinor0 component (the others are initialzed with 0 by default) 
 x0 = dx/2.0;
 y0 = dx/2.0;
-Ifunc = @(x,y) exp( -( (x-x0)^2 + (y-y0)^2 )/(4*delta0*delta0) );
+Ifunc = @(x,y) sqrt(2*pi*delta0*delta0)*exp( -( (x-x0)^2 + (y-y0)^2 )/(4*delta0*delta0) );
 ig = setInitial(ig, Ifunc, 0);
 
 % Write the potential to an output-file. Optionally one can also specify a 

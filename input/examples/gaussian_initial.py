@@ -35,8 +35,7 @@ InputObj = ig.InputGenerator(L, dx, mass, delta0)
 # not explicitly set)
 x0 = dx/2.0
 y0 = dx/2.0
-print x0, y0
-Ifunc = lambda x,y: np.exp( -( ((x-x0)**2 + (y-y0)**2 )/(4*delta0*delta0) ) )
+Ifunc = lambda x,y: np.sqrt(2*np.pi*delta0*delta0)*np.exp( -( ((x-x0)**2 + (y-y0)**2 )/(4*delta0*delta0) ) )
 InputObj.setInitial(Ifunc, 0)
 
 # Write the initial condition to an output-file.

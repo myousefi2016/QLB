@@ -252,8 +252,12 @@ public:
 			initial_file_ = initial.is_present() ? initial.str() : "";
 				                     
 			// --device=[cpu-serial|cpu-thread|gpu]
-			auto device = find_string("--device");                      
-			device_ = 0;
+			auto device = find_string("--device");
+#ifdef QLB_HAS_CUDA
+			device_ = 2;
+#else
+			device_ = 1;
+#endif
 			if(device.is_present() && compare(device.str(),"cpu-serial"))
 				device_ = 0;
 			else if(device.is_present() && compare(device.str(),"cpu-thread"))
@@ -276,9 +280,12 @@ public:
 		 	{
 		 		nthreads_ = true;	
 		 		if(gui_ == 1)
-					nthreads_value_ =  L_value_ > 200 ? max_threads_ - 1 : max_threads_ / 2 - 1;
+		 		{
+					nthreads_value_ =  L_value_ > 256 ? max_threads_ - 1 : 
+					                                    max_threads_/2;
+				}
 				else
-					nthreads_value_ =  L_value_ > 256 ? max_threads_ : max_threads_ / 2;
+					nthreads_value_ =  max_threads_ / 2;
 			}
 			else if(nthreads_ && nthreads.value() == 1)
 			{
@@ -292,7 +299,7 @@ public:
 			}
 			else
 				nthreads_value_ = 1;
-		
+			
 			// --plot=[all,spread,spinor1,spinor2,spinor3,spinor4,density,
 			//         currentX,currentY,veloX,veloY]
 			auto plot = find_string("--plot");
@@ -589,7 +596,7 @@ private:
                     "delta0 is being used which can be controlled by '--delta0=X'"};
 		print_help_line("--initial=S", svec_t(expl_intial, expl_intial+3));
 		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
-		print_help_line("--L=X","Set the grid size to X [default: 128]");
+		print_help_line("--L=X","Set the length of the grid to X [default: 128]");
 		print_help_line("--dx=X","Set spatial discretization to X [default: 1.5625]");
 		print_help_line("--dt=X","Set temporal discretization to X [default: 1.5625]");
 		print_help_line("--delta0=X","Set initial spread to X [default: 14.0]");
