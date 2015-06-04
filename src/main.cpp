@@ -61,6 +61,7 @@ void QLB_run_no_gui(const CmdArgParser& cmd)
 	opt.set_verbose(cmd.verbose());
 	opt.set_device(cmd.device());
 	opt.set_nthreads(cmd.nthreads_value());
+	opt.set_config_file(cmd.config_file());
 	
 	// Setup QLBparser
 	QLBparser parser(cmd.potential_file(), cmd.initial_file());

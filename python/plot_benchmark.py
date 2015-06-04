@@ -20,8 +20,10 @@ def Usage():
 	print "Options:"
 	print "     --cpu-serial=FILE    File with the cpu-serial data stored as (N x 2)"
 	print "     --cpu-thread=FILE    File with the cpu-thread data stored as (N x 2)"
-	print "     --gpu=FILE           File with the cuda data stored as (N x 2)"
+	print "     --cuda=FILE          File with the cuda data stored as (N x 2)"
 	print "     --save               Save the plot as a pdf"
+	print "     --timings            Plot the timings vs. system size [default]"
+	print "     --speedup            Plot the speedup vs. system size"
 	print "     --help               Print this help statement"
 	sys.exit(1)
 
@@ -125,7 +127,7 @@ if speedup:
 	print 'Plotting speedup ...',
 
 	fig = plt.figure()
-	fig.suptitle('Quantum Lattice Boltzmann - Speedup',fontsize=13)
+#	fig.suptitle('Quantum Lattice Boltzmann - Speedup',fontsize=13)
 	ax = fig.add_subplot(111)
 
 	if cpuSerialArg[0]:

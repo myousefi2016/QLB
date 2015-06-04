@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="QLB">
+      <UniqueIdentifier>{85841fae-8829-4322-9819-b5501657f379}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\QLB.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QLBconfig.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QLBcpu.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QLBparser.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\optimizer\QLBoptimizer.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\QLB.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\QLBopt.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\QLBparser.hpp">
+      <Filter>QLB</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src\QLBcuda.cu">
+      <Filter>QLB</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

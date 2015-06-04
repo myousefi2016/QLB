@@ -2,7 +2,7 @@
  *  Quantum Lattice Boltzmann 
  *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *  This file contains the CPU implementations of the QLB scheme
+ *  This file contains the CPU implementations of the QLB scheme.
  *	
  *  Based on the implementation of M. Mendoza (ETH Zurich)
  */
@@ -290,14 +290,15 @@ void QLB::calculate_macroscopic_vars()
 			currentY_(i,j) = 0;
 
 			// Calculate current:
-			// currentX = [s1, s2, s3, s4].H * beta *  alphaX * [s1, s2, s3, s4]  	
+			// currentX = [s1, s2, s3, s4].H *  alphaX * [s1, s2, s3, s4]  	
 			for(int is = 0; is < 4; ++is)
 				for(int js = 0; js < 4; ++js)
 				{
 					currentX_(i,j) += 
-					  std::conj(spinor_(i,j,is))*beta(is,js)*alphaX(is,js)*spinor_(i,j,js);
+					  std::conj(spinor_(i,j,is))*alphaX(is,js)*spinor_(i,j,js);
+					
 					currentY_(i,j) +=
-					  std::conj(spinor_(i,j,is))*beta(is,js)*alphaY(is,js)*spinor_(i,j,js);
+					  std::conj(spinor_(i,j,is))*alphaY(is,js)*spinor_(i,j,js);
 				}
 		
 			// Calculate density

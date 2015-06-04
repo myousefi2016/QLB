@@ -114,7 +114,7 @@ fi
 if [ "$llvm_sanatizer" = "true" ]; then
 	# Recompile with sanatizer flags
 	make clean && make -j 4 \
-		 PROFILING='-fsanitize=undefined -fsanitize=address' CXX=$CXX CUDA=$CUDA
+		 PROFILING='-fsanitize=undefined -fsanitize=address' CXX=$CXX CUDA=false
 	
 	echo " === LLVM SANATIZER === "
 	EXEargs="$EXEargs --tmax=1 --no-gui"

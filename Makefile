@@ -31,7 +31,7 @@
 #
 
 # Compiler
-CXX        = g++
+CXX        = clang++
 CXX_NV     = g++
 NVCC       = nvcc
 
@@ -75,13 +75,16 @@ OBJECTS_CU   = $(patsubst src/%.cu, objects/%.o,$(SRC_CU))
 OBJECTS_CXX  = $(patsubst src/%.cpp,objects/%.o,$(SRC_CXX))
 OBJECTS      = $(OBJECTS_CXX)
 
+OBJECTS_OPT  = objects/QLBoptimizer.o objects/QLB.o objects/QLBcuda.o \
+               objects/QLBparser.o objects/QLBcpu.o objects/QLBconfig.o
+
 BIN_PATH     = ./bin/$(OS)
-EXE_BIN      = $(BIN_PATH)/$(EXE)
+EXE_BIN      = $(BIN_PATH)/QLB
 
 # === Compiler Flags ===
 WARNINGS     = -Wall
 DEFINES      =
-DEBUG        =  
+DEBUG        =
 PROFILING    = 
 INCLUDE      = -I./include/$(OS)
 OPT          = -O2 -march=native
@@ -110,12 +113,15 @@ ifeq ($(CXX),clang++)
  WARNINGS  += -Wno-deprecated-register
 endif
 
-# Adjust the build to use CUDA
+# Adjust the build to use CUDA & build the QLBoptimizer
 ifeq ($(CUDA),true)
  DEFINES   += -DQLB_HAS_CUDA
  OBJECTS   += $(OBJECTS_CU)
  LDFLAGS   += $(CUDA_LIB)
  INCLUDE   += $(CUDA_INCLUDE)
+ 
+ EXE       += QLBoptimizer
+ EXE_BIN   += $(BIN_PATH)/QLBoptimizer
 endif
 
 # Adjust the build to not use the GPU PerformanceCounter
@@ -135,7 +141,7 @@ endif
 # =============================== COMPILATION ==================================
 
 .PHONY: all
-all: $(EXE_BIN)
+all : $(EXE)
 
 $(OBJECTS) : | objects
 
@@ -146,19 +152,25 @@ objects :
 objects/%.o : src/%.cpp
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 	
+objects/%.o : optimizer/%.cpp
+	$(CXX) -I./src  -c $(CXXFLAGS) -o $@ $<
+	
 # Compile CUDA
 objects/%.o : src/%.cu
 	$(NVCC) -ccbin $(CXX_NV) -c $(CUDAFLAGS) -o $@ $<
 
-# Link
-$(EXE) : $(OBJECTS)
-	$(CXX) -o $(EXE) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-# Copy to bin
-$(EXE_BIN) : $(EXE)
+# Link QLB
+QLB : $(OBJECTS)
+	$(CXX) -o $@ $(CXXFLAGS) $^ $(LDFLAGS)
 	mkdir -p $(BIN_PATH) 
-	cp $< $@
-	
+	cp $@ $(BIN_PATH)
+
+# Link QLBoptimizer	
+QLBoptimizer : $(OBJECTS_OPT)
+	$(CXX) -o $@ $(CXXFLAGS) $^ $(LDFLAGS)
+	mkdir -p $(BIN_PATH) 
+	cp $@ $(BIN_PATH)
+
 # build libGLEW
 libGLEW :
 	$(info === Building OpenGL Extension Wrangler Library === )

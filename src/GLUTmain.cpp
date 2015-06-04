@@ -30,7 +30,7 @@ void QLB_run_glut(int argc, char* argv[])
 	threadpool.resize(cmd->nthreads_value());
 	
 	// Setup UserInterface engine
-	int width = 800, height = 800;
+	int width = 1024, height = 786;
 	UI = new UserInterface(width, height, "QLB - v1.0", 
 	                       float(-1.5f * L * dx), cmd->static_viewer() ); 
 	
@@ -40,6 +40,7 @@ void QLB_run_glut(int argc, char* argv[])
 	opt.set_verbose(cmd->verbose());
 	opt.set_device(cmd->device());
 	opt.set_nthreads(cmd->nthreads_value());
+	opt.set_config_file(cmd->config_file());
 	
 	// Setup QLBparser
 	QLBparser parser(cmd->potential_file(), cmd->initial_file());

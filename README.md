@@ -41,11 +41,10 @@ To compile the project:
 4. Compile with `make` which builds QLB by default with CUDA and assumes your CUDA installation is residing in `/usr/local/cuda/`. To disable CUDA run `make CUDA=false` instead.
 
 ### Windows ###
+To build QLB on Windows you should use the Visual Studio 2012 project (`QLBwinVS2012.sln`). You can either build QLB with/without CUDA depending on the configuration mode. The CUDA build requires the [CUDA SDK 7.0][cudasdk] Visual Studio integration.
 
-To build QLB on Windows you should use the Visual Studio 2012 project (QLBwinVS2012.sln). The current version can only build QLB __with__ CUDA and therefore requires the [CUDA SDK 7.0][cudasdk] Visual Studio integration.
 
-
-There are precompiled binaries in `bin/Windows/32-bit` and `bin/Windows/64-bit`. These binaries are compiled with CUDA 7.0 and therefore require a NVIDIA Driver of version >= 346.
+There are precompiled binaries `QLBwin.exe` and `QLBwin-no-cuda.exe` in `bin/Windows/32-bit` and `bin/Windows/64-bit`. The CUDA binaries are compiled with CUDA 7.0 and therefore require a NVIDIA Driver of version 346 or higher.
 
 [libGLEW]: http://glew.sourceforge.net/
 [libglut]: http://freeglut.sourceforge.net/

@@ -240,6 +240,16 @@ public:
 			std::cout.flush();
 		}
 	}
+	
+	/**
+	 *	Advance progressbar by multiple steps
+	 *	@param n_steps  number of advanced steps
+	 */
+	inline void progress(int n_steps)
+	{
+		for(int i = 0; i < n_steps; ++i)
+			progress();
+	}
 			
 	/**
 	 *	Pause the progressbar to allow other routines to print to std::cout

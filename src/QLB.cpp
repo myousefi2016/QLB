@@ -149,8 +149,9 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 			std::string device(deviceProp.name);
 			WARNING("Device ["+device+"] might run out of memory");
 		}
-		
+
 		allocate_device_arrays();
+		set_block_and_grid_size(opt_.config_file());		
 		init_device();
 	}
 #endif
@@ -364,7 +365,7 @@ static void print_mat_eval(const mat_t& m, const std::size_t N, const std::size_
 		for(std::size_t j = 0; j < M; ++j)
 		{
 			if(eval_flag == 0) 
-				out << std::setw(20) << m[d*(N*i + j) + k];
+				out << std::setw(30) << m[d*(N*i + j) + k];
 			else if(eval_flag == 1)
 				out << std::setw(20) << std::real(m[d*(N*i + j) + k]);
 			else if(eval_flag == 2)

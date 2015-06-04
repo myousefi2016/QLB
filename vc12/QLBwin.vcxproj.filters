@@ -107,6 +107,9 @@
     <ClCompile Include="..\src\QLBparser.cpp">
       <Filter>QLB</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\QLBconfig.cpp">
+      <Filter>QLB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\QLBcuda.cu">

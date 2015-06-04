@@ -250,6 +250,10 @@ public:
 			// --initial=S
 			auto initial = find_string("--initial");
 			initial_file_ = initial.is_present() ? initial.str() : "";
+			
+			// --config=S
+			auto config = find_string("--config");
+			config_file_ = config.is_present() ? config.str() : "QLBconfig.conf";
 				                     
 			// --device=[cpu-serial|cpu-thread|gpu]
 			auto device = find_string("--device");
@@ -382,6 +386,7 @@ public:
 	inline int potential() const { return potential_; }
 	inline std::string potential_file() const { return potential_file_; }
 	inline std::string initial_file() const { return initial_file_; }
+	inline std::string config_file() const { return config_file_; }
 	inline bool gui() const { return gui_; } 
 	inline unsigned int plot() const { return plot_; }
 	inline bool start_rotating() const { return start_rotating_; }
@@ -611,6 +616,7 @@ private:
 		                              "one of [cpu-serial|cpu-thread|gpu]"};
 		print_help_line("--device=S",svec_t(expl_device, expl_device+2));
 		print_help_line("--nthreads=X","Execute CPU verison with X threads");
+		print_help_line("--config=S", "Set the configuration file to S [default: QLBconfig.conf]");
 		print_help_line("--dump-at=X","Dump the state of the simulation at time X*dt to "
 		                "a file" );
 		print_help_line("--dump-load=S","Load the dump file S to be used with the static viewer");
@@ -802,6 +808,7 @@ private:
 	int potential_;
 	std::string potential_file_;
 	std::string initial_file_;
+	std::string config_file_;
 	unsigned int plot_;
 	int device_;
 	bool start_rotating_;

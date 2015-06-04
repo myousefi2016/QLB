@@ -2,7 +2,7 @@
  *  Quantum Lattice Boltzmann 
  *  (c) 2015 Fabian Thüring, ETH Zurich
  *
- *  Dirac Solver with Quantum Lattice Boltzmann scheme.
+ *  Implementation of a Dirac Solver using the Quantum Lattice Boltzmann scheme.
  *  This file contains the class definition of QLB and all other
  *  definitions used in QLB*.cpp files.
  *
@@ -103,7 +103,7 @@ public:
 	
 	/** 
 	 *	Constructor 
-	 *	@param	L       Grid size i.e grid will be L x L
+	 *	@param	L       Lenght of the grid i.e grid will be L x L
 	 *	@param 	dx      Spatial discretization
 	 *	@param	mass    Mass of the particles
 	 *	@param 	dt      Temporal discretization
@@ -374,7 +374,16 @@ public:
 	 *	Update the constants (d_scaling, d_current_scene) on the device
 	 *	@file	QLBcuda.cu 
 	 */
-	void update_device_constants(); 
+	void update_device_constants();
+	
+	/** 
+	 *	Parse a config file given by 'filename' and select the best possible
+	 *	block sizes and grid sizes for the system size L_. If the file is 
+	 *	default values are being used.
+	 *	@param	filename    name of the config file.
+	 *	@file	QLBcuda.cu 
+	 */
+	void set_block_and_grid_size(std::string filename);  
 	
 	// === Getter ===
 	inline unsigned L() const { return L_;  }
@@ -394,6 +403,12 @@ public:
 	// === Setter ===
 	inline void set_draw_potential(bool dp)     { draw_potential_ = dp; }
 	inline void set_current_render(render_t cr) { current_render_ = cr; }
+#ifdef QLB_HAS_CUDA
+	inline void set_block1(dim3 block1) { block1_ = block1; }
+	inline void set_block4(dim3 block4) { block4_ = block4; }
+	inline void set_grid1(dim3 grid1) { grid1_ = grid1; }
+	inline void set_grid4(dim3 grid4) { grid4_ = grid4; }
+#endif
 	void set_current_scene(scene_t current_scene);
 	
 private:
