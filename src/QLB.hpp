@@ -224,7 +224,7 @@ public:
 	// === Potential ===
 	
 	/**
-	 *	Harmonic potential: V(r) = 1/2 * m * w0^2 * r^2
+	 *	Harmonic potential: V(r) = g * -1/2 * m * w0^2 * r^2
 	 *	with w0 = 1 / (2m * delta0^2)
 	 *	@param i        row index
 	 *	@param j        column index 
@@ -239,14 +239,26 @@ public:
 	float_t V_free(int i, int j) const;
 	
 	/**
-	 *	Barrier potential: V(r) = V0  if i >= L/2
+	 *	Barrier potential: V(r) = g * V0  if i >= L/2
 	 *	                        = 0   else
 	 *	where V0 is given by  m * L^2 * w0^2 / 8  with w0 = 1 / (2m * delta0^2)
 	 *	@param i        row index
 	 *	@param j        column index 
 	 */
 	float_t V_barrier(int i, int j) const;
+
+	/**
+	 *	GP potential: V(r) = g * |spinor|^2
+	 *	@param i        row index
+	 *	@param j        column index 
+	 */
+	float_t V_GP(int i, int j) const;
 	
+	/**
+	 *	Set the potential array V according to V_indx
+	 *	@file QLB.cpp
+	 */
+	void set_potential_array();
 
 	// === Rendering ===
 
@@ -425,6 +437,7 @@ private:
 	float_t delta0_;
 	
 	int V_indx_;
+	const float_t g_;
 	
 	barrier_t barrier;
 	std::atomic<int> flag_;

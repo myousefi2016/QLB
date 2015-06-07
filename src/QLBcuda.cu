@@ -15,6 +15,7 @@ __constant__ unsigned int d_L;
 __constant__ float d_dx;
 __constant__ float d_dt;
 __constant__ float d_mass;
+__constant__ float d_g;
 __constant__ unsigned int d_t;
 
 __constant__ float d_scaling;
@@ -183,6 +184,8 @@ void QLB::init_device()
 	cuassert(cudaMemcpyToSymbol(d_dt, &dt, sizeof(dt)));
 	float mass = static_cast<float>(mass_);
 	cuassert(cudaMemcpyToSymbol(d_mass, &mass, sizeof(mass)));
+	float g = static_cast<float>(g_);
+	cuassert(cudaMemcpyToSymbol(d_g, &g, sizeof(g)));
 	
 	int current_scene = current_scene_;
 	cuassert(cudaMemcpyToSymbol(d_current_scene, &current_scene, sizeof(current_scene)));
@@ -293,9 +296,9 @@ __global__ void kernel_rotate_back(cuFloatComplex* spinor,
 
 /** 
  *	Collide and stream with matrix Q_X
- *	@param spinor  device pointer spinorrot
- *	@param spinor  device pointer spinoraux
- *	@param V       device pointer potential
+ *	@param spinorrot  device pointer spinorrot
+ *	@param spinoraux  device pointer spinoraux
+ *	@param V          device pointer potential
  */
 __global__ void kernel_collide_Q_X(cuFloatComplex* spinorrot,
 							       const cuFloatComplex* __restrict spinoraux,
@@ -339,9 +342,9 @@ __global__ void kernel_collide_Q_X(cuFloatComplex* spinorrot,
 
 /** 
  *	Collide and stream with matrix Q_Y
- *	@param spinor  device pointer spinorrot
- *	@param spinor  device pointer spinoraux
- *	@param V       device pointer potential
+ *	@param spinorrot  device pointer spinorrot
+ *	@param spinoraux  device pointer spinoraux
+ *	@param V          device pointer potential
  */
 __global__ void kernel_collide_Q_Y(cuFloatComplex* spinorrot,
 								   const cuFloatComplex* __restrict spinoraux,
@@ -382,8 +385,28 @@ __global__ void kernel_collide_Q_Y(cuFloatComplex* spinorrot,
 	}
 }
 
+/**
+ *	Updat the potential array using the GP potential
+ *	@param V         device pointer potential array
+ *	@param spinor    device pointer spinor
+ */
+__global__ void kernel_set_potential(float* V, 
+                                     const cuFloatComplex* __restrict spinor)
+{
+	int i = blockIdx.x*blockDim.x + threadIdx.x;
+	int j = blockIdx.y*blockDim.y + threadIdx.y;
+	
+	V[d_L*i + j] = d_g * ( 
+			       cuCnormf(spinor[at(i,j,0)]) + cuCnormf(spinor[at(i,j,1)]) +
+			       cuCnormf(spinor[at(i,j,2)]) + cuCnormf(spinor[at(i,j,3)]) );
+
+} 
+
 void QLB::evolution_GPU()
 {
+	// Update potential array if needed
+	if(V_indx_ == 3) kernel_set_potential<<< grid1_, block1_ >>>(d_V_, d_spinor_);
+
 	// Rotate with X^(-1)
 	kernel_rotate<<< grid4_, block4_ >>>(d_spinor_, d_spinorrot_, d_spinoraux_, d_Xinv);
 	CUDA_CHECK_KERNEL

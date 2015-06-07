@@ -100,13 +100,17 @@ T extract_value(std::string s)
  *	@param  arg    name of the argument
  *	@param  val1   parsed value of the first argument
  *	@param  val2   parsed value of the second argument
+ *	@param  file1  name of the first file
+ *	@param  file2  name of the second file
  */
 template < typename T >
-inline void conflict(std::string arg, T val1, T val2)
+inline void conflict(std::string arg, T val1, T val2, 
+                     std::string file1, std::string file2)
 {
 	std::cout << "FAILED" << std::endl;
-	FATAL_ERROR("conflicting arguments in input files for '"+arg+"' : "+
-	            std::to_string(val1)+" != "+std::to_string(val2));
+	FATAL_ERROR("conflicting arguments in input files for '"+arg+"' : ["+
+	            file1+" : "+arg+" = "+std::to_string(val1)+"] and ["+
+	            file2+" : "+arg+" = "+std::to_string(val2)+"]");
 }
 
 void QLBparser::parse_input(const CmdArgParser* cmd)
@@ -306,7 +310,7 @@ void QLBparser::parse_input(const CmdArgParser* cmd)
 						unsigned L = extract_value<unsigned>(value);
 						
 						if(potential_is_present_ && L_ != L)
-							conflict("L", L_, L);
+							conflict("L", L_, L, potential_file_, initial_file_);
 						else
 							L_ = L;
 					}
@@ -322,7 +326,7 @@ void QLBparser::parse_input(const CmdArgParser* cmd)
 						float dx = extract_value<float>(value);
 						
 						if(potential_is_present_ && dx_ != dx)
-							conflict("dx", dx_, dx);
+							conflict("dx", dx_, dx, potential_file_, initial_file_);
 						else
 							dx_ = dx;
 					}
@@ -341,7 +345,8 @@ void QLBparser::parse_input(const CmdArgParser* cmd)
 							             
 							if(potential_is_present_ && mass_is_present_ &&
 							   mass_ != mass)
-								conflict("mass", mass_, mass);
+								conflict("mass", mass_, mass, 
+								         potential_file_, initial_file_);
 							else
 							{
 								mass_is_present_ = true;
@@ -362,7 +367,8 @@ void QLBparser::parse_input(const CmdArgParser* cmd)
 							
 							if(potential_is_present_ && delta0_is_present_ &&
 							   delta0_ != delta0)
-								conflict("delta0", delta0_, delta0);
+								conflict("delta0", delta0_, delta0, 
+								         potential_file_, initial_file_);
 							else
 							{
 								delta0_is_present_ = true;

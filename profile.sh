@@ -193,7 +193,7 @@ fi
 if [ "$pgo" = "true" ]; then
 	
 	# Check if we are on Linux
-	if [ $(uname -s 2>/dev/null) = "Linux" ]; then
+	if [ $(uname -s 2>/dev/null) != "Linux" ]; then
 		exit_after_error "$0 : error : PGO is only supported on Linux"
 	fi
 	

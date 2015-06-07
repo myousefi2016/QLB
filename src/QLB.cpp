@@ -23,6 +23,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 		deltay_(tmax+1),
 		delta0_(delta0),
 		V_indx_(V_indx),
+		g_(opt.g()),
 		barrier(opt.nthreads()),
 		flag_(1),
 		// === Arrays CPU ===
@@ -75,9 +76,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 	{
 		// free
 		case 0:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
-					V_(i,j) = V_free(i,j);
+			set_potential_array();
 			
 			if(!parser_.initial_is_present())
 				initial_condition_gaussian(L_/2 , L_/2);
@@ -89,9 +88,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 			break; 
 		// harmonic
 		case 1:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
-					V_(i,j) = V_harmonic(i,j);
+			set_potential_array();
 			
 			if(!parser_.initial_is_present())
 				initial_condition_gaussian(L_/2 , L_/2);
@@ -104,9 +101,7 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 			break;
 		// barrier
 		case 2:
-			for(unsigned i = 0; i < L_; ++i)
-				for(unsigned j = 0; j < L_; ++j)
-					V_(i,j) = V_barrier(i,j);
+			set_potential_array();
 					
 			if(!parser_.initial_is_present())
 				initial_condition_gaussian(2*L_/3 , L_/2);
@@ -117,8 +112,21 @@ QLB::QLB(unsigned L, float_t dx, float_t mass, float_t dt, float_t delta0,
 							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
 			
 			break;
-		// use an input file
+		// GP
 		case 3:
+			set_potential_array();
+					
+			if(!parser_.initial_is_present())
+				initial_condition_gaussian(L_/2 , L_/2);
+			else
+				for(unsigned i = 0; i < L_; ++i)
+					for(unsigned j = 0; j < L_; ++j)
+						for(unsigned k = 0; k < 4; ++k)
+							spinor_(i,j,k) = parser_.initial_[4*i*L_ + 4*j + k];
+			
+			break;
+		// use an input file
+		case 4:
 			for(unsigned i = 0; i < L_; ++i)
 				for(unsigned j = 0; j < L_; ++j)
 					V_(i,j) = float_t(parser_.potential_[i*L_ + j]);
@@ -171,6 +179,7 @@ QLB::QLB(unsigned L, int V_indx, float_t dx, float_t mass, float_t scaling,
 		deltay_(0),
 		delta0_(0),
 		V_indx_(V_indx),
+		g_(0),
 		barrier(opt.nthreads()),
 		flag_(1),
 		// === Arrays CPU ===
@@ -261,6 +270,33 @@ void QLB::change_scaling(int change_scaling)
 #endif
 }
 
+void QLB::set_potential_array()
+{
+	if(V_indx_ == 3)
+	{
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+				V_(i,j) = V_GP(i,j);
+	}
+	else if(V_indx_ == 0)
+	{
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+				V_(i,j) = V_free(i,j);
+	}
+	else if(V_indx_ == 1)
+	{
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+				V_(i,j) = V_harmonic(i,j);
+	}
+	else if(V_indx_ == 2)
+	{
+		for(unsigned i = 0; i < L_; ++i)
+			for(unsigned j = 0; j < L_; ++j)
+				V_(i,j) = V_barrier(i,j);
+	}
+}
 // ==== PRINTING ====
 
 void QLB::print_spread()

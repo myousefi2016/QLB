@@ -197,7 +197,7 @@ dim3 optimize(unsigned L, unsigned dim_z)
 {
 	// Setup the system
 	QLBparser parser("","");
-	QLBopt opt(0, 0, 2, 1, "__QLBoptimizerTest__"); 
+	QLBopt opt(0, 0, 2, 1, "__QLBoptimizerTest__", 1.0); 
 	
 	QLB QLB_system(L, 1.5, 0.1, 1.5, 14, 100, 0, parser, opt);
 	

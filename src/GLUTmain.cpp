@@ -41,6 +41,7 @@ void QLB_run_glut(int argc, char* argv[])
 	opt.set_device(cmd->device());
 	opt.set_nthreads(cmd->nthreads_value());
 	opt.set_config_file(cmd->config_file());
+	opt.set_g(cmd->g() ? cmd->g_value() : 1.0f);
 	
 	// Setup QLBparser
 	QLBparser parser(cmd->potential_file(), cmd->initial_file());
@@ -276,6 +277,8 @@ void callback_display()
 			if(!UI->paused())
 			{
 				// Overlap computation and drawing
+				if(QLB_system->V() == 3) QLB_system->set_potential_array();
+
 				for(std::size_t tid = 0; tid < threadpool.size(); ++tid)
 					threadpool[tid] = std::thread( &QLB::evolution_CPU_thread, 
 					                               QLB_system, 

@@ -17,7 +17,7 @@ QLB::float_t QLB::V_harmonic(int i, int j) const
 	const float_t x  = dx_*(i-0.5*(L_-1));
 	const float_t y  = dx_*(j-0.5*(L_-1));
 
-	return -0.5*mass_*w0*w0*(x*x + y*y);
+	return g_ * ( -0.5*mass_*w0*w0*(x*x + y*y) );
 }
 
 QLB::float_t QLB::V_free(int i, int j) const
@@ -30,8 +30,15 @@ QLB::float_t QLB::V_barrier(int i, int j) const
 	const float_t delta0_2 = delta0_ * delta0_;
 	const float_t V0 = L_*L_ / (32.0 * mass_ * delta0_2);
 	
-	return float_t(i < 1./3.*L_ && i > 1./6. * L_) * V0;
+	return g_ * float_t(i < 1./3.*L_ && i > 1./6. * L_) * V0;
 }
+
+QLB::float_t QLB::V_GP(int i, int j) const
+{
+	return g_ * ( std::norm(spinor_(i,j,0)) + std::norm(spinor_(i,j,1)) +
+	              std::norm(spinor_(i,j,2)) + std::norm(spinor_(i,j,3)) );
+}
+
 
 // === SIMULATION ===
 
@@ -111,6 +118,8 @@ void QLB::evolution_CPU_serial()
 	cmat_t Q(4);
 	int ia, ja;
 	int ik, jk;
+
+	if(V_indx_ == 3) set_potential_array();
 
 	// Rotate with X^(-1)
 	for(int i = 0; i < L; ++i)

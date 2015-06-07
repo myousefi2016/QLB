@@ -241,12 +241,19 @@ public:
 				potential_ = 1;
 			else if(potential.is_present() && compare(potential.str(),"barrier"))
 				potential_ = 2;
+			else if(potential.is_present() && compare(potential.str(),"GP"))
+				potential_ = 3;
 			else if(potential.is_present())
 			{
-				potential_ = 3;
+				potential_ = 4;
 				potential_file_ = potential.str();
 			}
-			
+
+			// --g=X
+			auto g = find_numeric<float>("--g");
+			g_ = g.is_present();
+			g_value_ = g.value();
+
 			// --initial=S
 			auto initial = find_string("--initial");
 			initial_file_ = initial.is_present() ? initial.str() : "";
@@ -381,6 +388,8 @@ public:
 	inline unsigned tmax_value() const { return tmax_value_; }
 	inline bool dump() const { return dump_; }
 	inline unsigned dump_value() const { return dump_value_; }
+	inline bool g() const { return g_; }
+	inline float g_value() const { return g_value_; }
 	inline bool static_viewer() const { return static_viewer_; }
 	inline std::string static_viewer_file() const { return static_viewer_file_; }
 	inline int potential() const { return potential_; }
@@ -588,20 +597,25 @@ private:
 		// Print all available options
 		print_help_line("--help","Display this information");
 		print_help_line("--version","Display version information");
-		print_help_line("--verbose","Enable verbose mode");
+		print_help_line("--verbose","Print statistics about the OpenGL and CUDA runtime");
 		print_help_line("--no-gui","Turn off visualization");
 		print_help_line("--fullscreen","Start in fullscreen mode (if possible)");
 		std::string expl_potential[2] = {
 		             "Set the potential to S, where S is either an input file",
-                     "(see InputGenerator.py) or one of [free|harmonic|barrier]"};
+                     "(see InputGenerator.py) or one of [free|harmonic|barrier|GP]"};
 		print_help_line("--potential=S", svec_t(expl_potential, expl_potential+2));
-		std::string expl_intial[3] = {
+		print_help_line("--g=S","Set the coupling constant of the potentials [default 1.0]");
+		std::string expl_intial[4] = {
 		            "Set the initial condition to S, where S an input file",
-                    "(see InputGenerator.py) by default a gaussian with spread",
-                    "delta0 is being used which can be controlled by '--delta0=X'"};
-		print_help_line("--initial=S", svec_t(expl_intial, expl_intial+3));
+                    "(see InputGenerator.py or InputGenerator.m). By default a", 
+					"gaussian with spread delta0 is being used which can be ",
+					"controlled by '--delta0=X'"};
+		print_help_line("--initial=S", svec_t(expl_intial, expl_intial+4));
 		print_help_line("--tmax=X","Run the simulation in the interval [0, X*dt]" );
-		print_help_line("--L=X","Set the length of the grid to X [default: 128]");
+		std::string expl_X[2] = {
+			             "Set the number of grid points in each dimension",
+	                     "to X [default: 128]"};
+		print_help_line("--L=X", svec_t(expl_X, expl_X+2));
 		print_help_line("--dx=X","Set spatial discretization to X [default: 1.5625]");
 		print_help_line("--dt=X","Set temporal discretization to X [default: 1.5625]");
 		print_help_line("--delta0=X","Set initial spread to X [default: 14.0]");
@@ -802,6 +816,8 @@ private:
 	unsigned tmax_value_;
 	bool dump_;
 	unsigned dump_value_;
+	bool g_;
+	float g_value_;
 	bool static_viewer_;
 	std::string static_viewer_file_;
 	bool gui_;

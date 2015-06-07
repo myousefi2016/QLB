@@ -27,6 +27,7 @@
  *                 2 :   GPU (CUDA)
  *  - tnhreads     Number of threads used by the CPU implementation.
  *	- config_file  Name of the configuration file.
+ *  - g            Coupling constant of the built-in potentials.
  */
 
 #ifndef QLB_OPT_HPP
@@ -45,18 +46,19 @@ public:
 	
 	// === Constructor ===
 	QLBopt()
-		:	plot_(0), verbose_(false), device_(0), nthreads_(1), config_file_("")
+		:	plot_(0), verbose_(false), device_(0), nthreads_(1), config_file_(""),
+		    g_(1.0)
 	{}
 	
 	QLBopt(unsigned int plot, bool verb, int device, unsigned int nthreads,
-	       std::string config_file)
+	       std::string config_file, float g)
 		:	plot_(plot), verbose_(verb), device_(device), nthreads_(nthreads),
-			config_file_(config_file)
+			config_file_(config_file), g_(g)
 	{}
 	
 	QLBopt(const QLBopt& opt)
 		:	plot_(opt.plot()), verbose_(opt.verbose()), device_(opt.device()),
-			nthreads_(opt.nthreads()), config_file_(opt.config_file())
+			nthreads_(opt.nthreads()), config_file_(opt.config_file()), g_(opt.g())
 	{}
 	
 	// === Getter ===
@@ -65,6 +67,7 @@ public:
 	inline int device() const { return device_; }
 	inline unsigned int nthreads() const { return nthreads_; }
 	inline std::string config_file() const { return config_file_; }
+	inline float g() const { return g_; }
 
 	// === Setter ===
 	inline void set_plot(unsigned int plot) { plot_ = plot; }
@@ -72,6 +75,7 @@ public:
 	inline void set_device(int device) { device_ = device; }
 	inline void set_nthreads(unsigned int nthreads) { nthreads_ = nthreads; }
 	inline void set_config_file(std::string file) { config_file_ = file; }
+	inline void set_g(float g) { g_ = g; }
 
 private:
 	unsigned int plot_;
@@ -79,6 +83,7 @@ private:
 	int device_;
 	unsigned int nthreads_;
 	std::string config_file_;
+	float g_;
 };
 
 #endif /* QLBopt.hpp */

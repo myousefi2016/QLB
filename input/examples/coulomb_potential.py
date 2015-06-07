@@ -22,7 +22,7 @@ import InputGenerator as ig
 
 # Define the system size, spatial discretization
 dx     = 1.5625
-L      = 1024
+L      = 128
 
 # Initialize the library
 InputObj = ig.InputGenerator(L, dx)
@@ -33,7 +33,7 @@ InputObj = ig.InputGenerator(L, dx)
 #
 # See also: setPotential, setPotentialArray
 
-Vfunc = lambda x,y: -1.0*L*L/(x*x + y*y)
+Vfunc = lambda x,y: -1.0/(x*x + y*y)
 InputObj.setPotential(Vfunc)
 
 # Write the potential to an output-file. Optionally one can also specify a title
