@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
 	std::printf("QLBoptimizer - v1.0\n");
 	std::printf("Config file will be generated for device : [%s]\n",deviceProp.name);
 	std::printf("\nNOTE: To obtain accurate results, close all other" 
-	            "applications which might\nuse the GPU!\n");
+	            " applications which might\nuse the GPU!\n");
 	std::printf("\n-------------------------------------------------------\n");
 	std::printf("| %-15s | %-15s | %-15s |\n", "Grid Size (L)", "Block1", 
 	            "Block4");
