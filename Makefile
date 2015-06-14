@@ -31,7 +31,7 @@
 #
 
 # Compiler
-CXX        = clang++
+CXX        = g++
 CXX_NV     = g++
 NVCC       = nvcc
 
@@ -88,7 +88,7 @@ DEBUG        =
 PROFILING    = 
 INCLUDE      = -I./include/$(OS)
 OPT          = -O2 -march=native
-CUDAOPT      = -O2 #-ptxas=-v
+CUDAOPT      = -O2
 CXXSTD       = -std=c++11
 CUDAFLAGS    = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(CUDAOPT)
 CXXFLAGS     = $(DEBUG) $(INCLUDE) $(CXXSTD) $(DEFINES) $(OPT) $(WARNINGS) $(PROFILING)

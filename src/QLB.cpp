@@ -557,8 +557,8 @@ const QLB::complex_t QLB::img(0.0,1.0);
 //       as well as the corresponding Cuda kernels 'kernel_collide_Q_X' and 
 //       'kernel_collide_Q_Y'.
 
-#define SQRT_1 QLB::complex_t(0.70710678118654752440, 0)
-#define SQRT_i QLB::complex_t(0, 0.70710678118654752440)
+#define SQRT_1 QLB::complex_t(0.70710678118654752440, 0) // == sqrt(2)/2
+#define SQRT_i QLB::complex_t(0, 0.70710678118654752440) // == sqrt(2)/2 * i
 
 // X
 static const QLB::complex_t X_[] =  

@@ -347,6 +347,9 @@ public:
 			// --disable-progressbar
 			progressbar_ = !find("--disable-progressbar").is_present();
 			
+			auto scaling = find_numeric<int>("--start-scaling");
+			start_scaling_ = scaling.is_present() ? scaling.value() : 1;
+			
 			// --disable-light
 			light_ = !find("--disable-light").is_present();
 		
@@ -398,12 +401,15 @@ public:
 	inline std::string config_file() const { return config_file_; }
 	inline bool gui() const { return gui_; } 
 	inline unsigned int plot() const { return plot_; }
+	inline bool progressbar() const { return progressbar_; }
+	inline int device() const { return device_; }
+	
+	// undocumented
 	inline bool start_rotating() const { return start_rotating_; }
 	inline bool start_paused() const { return start_paused_; }
-	inline bool progressbar() const { return progressbar_; }
+	inline int  start_sclaing() const { return start_scaling_; }
 	inline bool light() { return light_; }
-	inline int device() const { return device_; }
-
+	
 private:
 
 	/**
@@ -831,6 +837,7 @@ private:
 	bool start_paused_;
 	bool progressbar_;
 	bool light_;
+	int start_scaling_;
 	
 	// === IO ===
 	std::size_t width_cmd;

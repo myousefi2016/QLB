@@ -386,7 +386,7 @@ __global__ void kernel_collide_Q_Y(cuFloatComplex* spinorrot,
 }
 
 /**
- *	Updat the potential array using the GP potential
+ *	Update the potential array using the GP potential
  *	@param V         device pointer potential array
  *	@param spinor    device pointer spinor
  */
@@ -517,7 +517,7 @@ void QLB::calculate_vertex_cuda()
 	CUDA_CHECK_KERNEL
 
 	vbo_vertex.unmap();
-#else
+#else // Mac OSX 
 
 	if(current_scene_ < 5)
 		kernel_calculate_vertex_scene<<< grid1_, block1_ >>>(d_vertex_ptr_, d_spinor_, NULL, NULL);
@@ -570,7 +570,7 @@ void QLB::calculate_vertex_V_cuda()
 	CUDA_CHECK_KERNEL
 	
 	vbo_vertex.unmap();
-#else
+#else // Mac OSX 
 	kernel_calculate_vertex_V<<< grid1_, block1_ >>>(d_vertex_ptr_, d_V_);
 	CUDA_CHECK_KERNEL
 	
@@ -680,7 +680,8 @@ void QLB::calculate_normal_cuda()
 
 	vbo_normal.unmap();
 
-#else
+#else // Mac OSX 
+
 	if(current_scene_ < 5)
 		kernel_calculate_normal_scene<<< grid1_, block1_ >>>(d_normal_ptr_, d_spinor_, NULL, NULL);
 	else if(current_scene_ == 5)
@@ -753,7 +754,7 @@ void QLB::calculate_normal_V_cuda()
 
 	vbo_normal.unmap();
 	
-#else
+#else // Mac OSX 
 	kernel_calculate_normal_V<<< grid1_, block1_ >>>(d_normal_ptr_, d_V_);
 	CUDA_CHECK_KERNEL
 	

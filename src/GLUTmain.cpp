@@ -72,6 +72,10 @@ void QLB_run_glut(int argc, char* argv[])
 	
 	QLB_system->init_GL(cmd->static_viewer());
 	
+	// Adjust the initial scaling (undocumented feature -- default do nothing)
+	for(int i = 0, scal = cmd->start_sclaing(); i < std::abs(scal); ++i)
+		QLB_system->change_scaling((scal > 0) - (scal < 0));
+	
 	// Run the simulation
 	glutMainLoop();
 	cleanup_and_exit();
@@ -198,6 +202,7 @@ void init_GL(int argc, char* argv[])
 	glRotatef(UI->rotate_x(), 1.0f, 0.0f, 0.0f);
 	glRotatef(UI->rotate_y(), 0.0f, 1.0f, 0.0f);
 
+	// Set some default behaviour
 	if(cmd->light())
 		UI->init_light();
 
@@ -206,7 +211,7 @@ void init_GL(int argc, char* argv[])
 	
 	if(cmd->start_paused())
 		UI->set_paused(true);
-
+		
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
